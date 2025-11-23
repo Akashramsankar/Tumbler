@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TUMBLER - The Lockpick Game</title>
+    <style>
+        :root {
+            /* Palette inspired by clean, modern puzzle games */
+            --bg-color: #f0f2f5;
+            --grid-gap: 8px;
+            --tile-size: 65px;
+            --text-color: #2c3e50;
+            
+            /* Status Colors */
+            --color-correct: #27ae60;      /* Green - Unlocked */
+            --color-close: #f39c12;        /* Orange - Close (+/- 9) */
+            --color-far: #c0392b;          /* Red - Far (> 9) */
+            --color-default: #ffffff;
+            --color-border: #bdc3c7;
+            
+            /* UI Elements */
+            --key-bg: #dfe4ea;
+            --key-text: #2f3542;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            height: 100vh;
+            margin: 0;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        header {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        h1 {
+            margin: 0;
+            letter-spacing: 2px;
+            font-size: 2rem;
+            text-transform: uppercase;
+        }
+
+        .sub-text {
+            font-size: 0.9rem;
+            color: #7f8c8d;
+            margin-top: 5px;
+        }
+
+        /* The Game Grid */
+        #game-board {
+            display: grid;
+            grid-template-rows: repeat(6, 1fr);
+            grid-gap: var(--grid-gap);
+            margin: 20px;
+        }
+
+        .row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            grid-gap: var(--grid-gap);
+        }
+
+        .tile {
+            width: var(--tile-size);
+            height: var(--tile-size);
+            background-color: var(--color-default);
+            border: 2px solid var(--color-border);
+            border-radius: 8px; /* Slightly rounded for 'button' feel */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            position: relative;
+            transition: transform 0.1s, background-color 0.3s, border-color 0.3s;
+            box-shadow: 0 2px 0 #bdc3c7; /* Tactile depth */
+        }
+
+        /* Active typing animation */
+        .tile[data-status="filled"] {
+            border-color: #7f8c8d;
+            transform: scale(1.05);
+        }
+
+        /* Feedback Indicators (Arrows) */
+        .indicator {
+            font-size: 0.8rem;
+            position: absolute;
+            bottom: 2px;
+            width: 100%;
+            text-align: center;
+            opacity: 0;
+            font-weight: 900;
+        }
+
+        /* Evaluated States */
+        .tile.correct {
+            background-color: var(--color-correct);
+            color: white;
+            border-color: #219150;
+            box-shadow: none;
+        }
+
+        .tile.close {
+            background-color: var(--color-close);
+            color: white;
+            border-color: #d35400;
+            box-shadow: none;
+        }
+
+        .tile.far {
+            background-color: var(--color-far);
+            color: white;
+            border-color: #96281b;
+            box-shadow: none;
+        }
+
+        /* Show the indicator when tile is evaluated */
+        .tile.evaluated .indicator {
+            opacity: 1;
+        }
+
+        /* Keyboard */
+        #keyboard {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            width: 100%;
+            max-width: 500px;
+            padding: 0 10px;
+        }
+
+        .key-row {
+            display: flex;
+            gap: 5px;
+            width: 100%;
+            justify-content: center;
+        }
+
+        .key {
+            background-color: var(--key-bg);
+            color: var(--key-text);
+            font-weight: bold;
+            border-radius: 4px;
+            border: none;
+            padding: 0;
+            height: 50px;
+            flex: 1;
+            cursor: pointer;
+            text-transform: uppercase;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: manipulation;
+            box-shadow: 0 2px 0 #bdc3c7;
+        }
+
+        .key:active {
+            transform: translateY(2px);
+            box-shadow: none;
+        }
+
+        .key.wide {
+            flex: 1.5;
+            font-size: 0.8rem;
+        }
+
+        /* Messages */
+        #message-container {
+            height: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .toast {
+            background-color: #333;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            animation: fadeIn 0.3s;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Legend for instructions */
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.75rem;
+            margin-bottom: 10px;
+        }
+        .legend-item { display: flex; align-items: center; gap: 4px; }
+        .dot { width: 10px; height: 10px; border-radius: 50%; }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Tumbler</h1>
+        <div class="sub-text">Crack the code. Pick the lock.</div>
+    </header>
+
+    <div id="message-container"></div>
+
+    <div id="game-board"></div>
+
+    <div class="legend">
+        <div class="legend-item"><div class="dot" style="background:var(--color-far)"></div> Far (>9)</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-close)"></div> Close (<9)</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-correct)"></div> Solved</div>
+    </div>
+
+    <div id="keyboard">
+        </div>
+
+<script>
+    // --- GAME CONFIGURATION ---
+    
+    // In a real app, you'd fetch this from a file. 
+    // This is a small sample list for the demo.
+    const WORD_LIST = [
+        "HAWK", "LION", "WOLF", "CART", "JUMP", "FISH", "BIRD", "CODE", "LOCK", "KEYS",
+        "READ", "BLUE", "SOUL", "DARK", "MIND", "TIME", "PLAY", "GAME", "LOVE", "HOPE"
+    ];
+
+    // Select a random target
+    const TARGET_WORD = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+    const WORD_LENGTH = 4;
+    const MAX_TRIES = 6;
+
+    let currentRow = 0;
+    let currentTile = 0;
+    let guesses = [
+        ["", "", "", ""],
+        ["", "", "", ""],
+        ["", "", "", ""],
+        ["", "", "", ""],
+        ["", "", "", ""],
+        ["", "", "", ""]
+    ];
+    let isGameOver = false;
+
+    // --- INITIALIZATION ---
+
+    const board = document.getElementById('game-board');
+    const keyboardContainer = document.getElementById('keyboard');
+    const messageContainer = document.getElementById('message-container');
+
+    function initGame() {
+        console.log("Target Word (For Testing):", TARGET_WORD); // Cheat in console if needed
+        createBoard();
+        createKeyboard();
+        document.addEventListener('keydown', handleKeydown);
+    }
+
+    function createBoard() {
+        for (let r = 0; r < MAX_TRIES; r++) {
+            const rowDiv = document.createElement('div');
+            rowDiv.classList.add('row');
+            rowDiv.setAttribute('id', `row-${r}`);
+            
+            for (let c = 0; c < WORD_LENGTH; c++) {
+                const tileDiv = document.createElement('div');
+                tileDiv.classList.add('tile');
+                tileDiv.setAttribute('id', `row-${r}-tile-${c}`);
+                
+                // Create span for letter
+                const letterSpan = document.createElement('span');
+                letterSpan.classList.add('letter');
+                tileDiv.appendChild(letterSpan);
+
+                // Create span for indicator (arrow)
+                const indicatorSpan = document.createElement('span');
+                indicatorSpan.classList.add('indicator');
+                tileDiv.appendChild(indicatorSpan);
+
+                rowDiv.appendChild(tileDiv);
+            }
+            board.appendChild(rowDiv);
+        }
+    }
+
+    function createKeyboard() {
+        const rows = [
+            "QWERTYUIOP",
+            "ASDFGHJKL",
+            "ZXCVBNM"
+        ];
+
+        rows.forEach((rowString, index) => {
+            const rowDiv = document.createElement('div');
+            rowDiv.classList.add('key-row');
+
+            // Add Enter to last row
+            if (index === 2) {
+                const enterKey = createKey("ENTER", "wide");
+                enterKey.onclick = submitGuess;
+                rowDiv.appendChild(enterKey);
+            }
+
+            for (let char of rowString) {
+                const key = createKey(char, "");
+                key.onclick = () => addLetter(char);
+                rowDiv.appendChild(key);
+            }
+
+            // Add Backspace to last row
+            if (index === 2) {
+                const backKey = createKey("⌫", "wide");
+                backKey.onclick = deleteLetter;
+                rowDiv.appendChild(backKey);
+            }
+
+            keyboardContainer.appendChild(rowDiv);
+        });
+    }
+
+    function createKey(content, className) {
+        const button = document.createElement('button');
+        button.textContent = content;
+        button.classList.add('key');
+        if (className) button.classList.add(className);
+        return button;
+    }
+
+    // --- GAME LOGIC ---
+
+    function getLetterValue(char) {
+        // A=1, B=2 ... Z=26
+        return char.charCodeAt(0) - 64;
+    }
+
+    function addLetter(letter) {
+        if (isGameOver) return;
+        if (currentTile < WORD_LENGTH) {
+            guesses[currentRow][currentTile] = letter;
+            const tile = document.getElementById(`row-${currentRow}-tile-${currentTile}`);
+            tile.querySelector('.letter').textContent = letter;
+            tile.setAttribute('data-status', 'filled');
+            currentTile++;
+        }
+    }
+
+    function deleteLetter() {
+        if (isGameOver) return;
+        if (currentTile > 0) {
+            currentTile--;
+            guesses[currentRow][currentTile] = "";
+            const tile = document.getElementById(`row-${currentRow}-tile-${currentTile}`);
+            tile.querySelector('.letter').textContent = "";
+            tile.removeAttribute('data-status');
+        }
+    }
+
+    function showMessage(msg) {
+        messageContainer.innerHTML = `<div class="toast">${msg}</div>`;
+        setTimeout(() => {
+            messageContainer.innerHTML = '';
+        }, 2000);
+    }
+
+    function submitGuess() {
+        if (isGameOver) return;
+        const guessWordArr = guesses[currentRow];
+        const guessWord = guessWordArr.join("");
+
+        if (currentTile < WORD_LENGTH) {
+            showMessage("Not enough letters");
+            return;
+        }
+
+        // Simple validation (checking if it exists in our small list or is just 4 letters)
+        // In a real game, you would check against a full dictionary here.
+        // For this demo, we accept any 4 letters to make testing the mechanics easier.
+        
+        evaluateGuess(guessWordArr);
+    }
+
+    function evaluateGuess(guessArr) {
+        const targetArr = TARGET_WORD.split("");
+        let correctCount = 0;
+
+        for (let i = 0; i < WORD_LENGTH; i++) {
+            const tile = document.getElementById(`row-${currentRow}-tile-${i}`);
+            const indicator = tile.querySelector('.indicator');
+            const letter = guessArr[i];
+            
+            // Logic: Compare Values
+            const guessVal = getLetterValue(letter);
+            const targetVal = getLetterValue(targetArr[i]);
+            const diff = targetVal - guessVal; // Positive means Target is Higher (Go UP)
+
+            tile.classList.add('evaluated');
+
+            if (diff === 0) {
+                // Correct
+                tile.classList.add('correct');
+                indicator.innerHTML = "&#10003;"; // Checkmark
+                correctCount++;
+            } else {
+                // Direction Logic
+                let symbol = "";
+                let distClass = "";
+                
+                // Determine Distance Heat
+                if (Math.abs(diff) > 9) {
+                    distClass = "far"; // Red
+                    symbol = diff > 0 ? "&#8657;" : "&#8659;"; // Double Up or Double Down
+                } else {
+                    distClass = "close"; // Orange
+                    symbol = diff > 0 ? "&#8593;" : "&#8595;"; // Single Up or Single Down
+                }
+
+                tile.classList.add(distClass);
+                indicator.innerHTML = symbol;
+            }
+        }
+
+        if (correctCount === WORD_LENGTH) {
+            showMessage("UNLOCKED! 🎉");
+            isGameOver = true;
+        } else {
+            if (currentRow < MAX_TRIES - 1) {
+                currentRow++;
+                currentTile = 0;
+            } else {
+                showMessage(`Game Over! Word was ${TARGET_WORD}`);
+                isGameOver = true;
+            }
+        }
+    }
+
+    function handleKeydown(e) {
+        const key = e.key.toUpperCase();
+        if (key === "ENTER") {
+            submitGuess();
+        } else if (key === "BACKSPACE") {
+            deleteLetter();
+        } else if (/^[A-Z]$/.test(key)) {
+            addLetter(key);
+        }
+    }
+
+    // Start
+    initGame();
+
+</script>
+
+</body>
+</html>
