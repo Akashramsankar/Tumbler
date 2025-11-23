@@ -1,419 +1,328 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>TUMBLER - The Lockpick Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700&family=Karnak+Pro:wght@700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --bg-color: #1a1a2e;
-            --card-bg: #16213e;
-            --grid-gap: 10px;
-            --tile-size: 70px;
-            --text-color: #eaeaea;
+            /* THEME: Premium Dark Heist */
+            --bg-grad-start: #121212;
+            --bg-grad-end: #1e293b;
             
-            --color-correct: #27ae60;
-            --color-close: #f39c12;
-            --color-far: #e74c3c;
-            --color-default: #0f3460;
-            --color-border: #1e3a5f;
+            --safe-body: #1e293b;
+            --safe-inset: #0f172a;
+            --safe-border: #334155;
             
-            --key-bg: #1e3a5f;
-            --key-text: #eaeaea;
-            --key-hover: #2d5a87;
+            /* UPDATED PALETTE */
+            --color-correct: #6aaa64;  /* NYT Green */
+            --color-close: #c9b458;    /* NYT Yellow */
+            --color-far: #ef4444;      /* RED (Replaced Gray) */
+            
+            --text-color: #f8fafc;
+            --key-bg: #334155;
+            --key-text: #e2e8f0;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
-            font-family: 'Segoe UI', 'SF Pro Display', system-ui, -apple-system, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            font-family: 'Chivo Mono', monospace;
+            background: linear-gradient(135deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
             color: var(--text-color);
             display: flex;
             flex-direction: column;
             align-items: center;
-            min-height: 100vh;
+            height: 100vh;
             margin: 0;
             padding: 10px;
             user-select: none;
+            overflow: hidden;
         }
 
+        /* --- HEADER --- */
         header {
+            margin-top: 15px;
             text-align: center;
-            padding: 20px 0 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 15px;
+            width: 100%;
+            max-width: 500px;
         }
 
         h1 {
             margin: 0;
-            letter-spacing: 4px;
-            font-size: 2.5rem;
+            font-family: serif;
+            font-size: 2.2rem;
+            letter-spacing: 1px;
+            color: #fff;
+            text-transform: capitalize;
             font-weight: 700;
-            text-transform: uppercase;
-            background: linear-gradient(135deg, #f39c12, #e74c3c);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
         }
 
         .sub-text {
-            font-size: 0.95rem;
-            color: #95a5a6;
-            margin-top: 8px;
-            font-weight: 300;
+            font-size: 0.8rem;
+            color: #94a3b8;
             letter-spacing: 1px;
+            margin-top: 5px;
+            text-transform: uppercase;
         }
 
+        /* --- GAME BOARD --- */
         #game-board {
-            display: grid;
-            grid-template-rows: repeat(6, 1fr);
-            grid-gap: var(--grid-gap);
-            margin: 20px 0;
-            padding: 20px;
-            background: var(--card-bg);
-            border-radius: 16px;
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
             position: relative;
+            padding: 20px;
+            background: var(--safe-body);
+            border-radius: 16px;
+            box-shadow: 
+                inset 0 1px 1px rgba(255, 255, 255, 0.1),
+                0 20px 40px rgba(0, 0, 0, 0.5),
+                0 0 0 1px var(--safe-border);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: auto;
         }
 
-        /* Safe Door Frame */
-        #game-board::before {
+        /* Safe Bolts */
+        #game-board::before, #game-board::after {
             content: '';
             position: absolute;
-            inset: -8px;
-            background: linear-gradient(135deg, #34495e, #2c3e50);
-            border-radius: 20px;
-            z-index: -1;
-            box-shadow: 
-                inset 0 2px 4px rgba(255,255,255,0.1),
-                0 10px 40px rgba(0,0,0,0.5);
+            width: 8px;
+            height: 8px;
+            background: #0f172a;
+            border-radius: 50%;
+            box-shadow: 0 1px 0 rgba(255,255,255,0.1);
         }
-
-        /* Safe Door Bolts */
-        #game-board::after {
-            content: '';
-            position: absolute;
-            top: 50%;
-            left: -20px;
-            width: 16px;
-            height: 60%;
-            transform: translateY(-50%);
-            background: 
-                radial-gradient(circle at center, #7f8c8d 30%, #34495e 100%);
-            border-radius: 8px 0 0 8px;
-            box-shadow: 
-                inset -2px 0 4px rgba(0,0,0,0.5),
-                0 4px 8px rgba(0,0,0,0.3);
-        }
-
-        .safe-bolt-right {
-            position: absolute;
-            top: 50%;
-            right: -20px;
-            width: 16px;
-            height: 60%;
-            transform: translateY(-50%);
-            background: 
-                radial-gradient(circle at center, #7f8c8d 30%, #34495e 100%);
-            border-radius: 0 8px 8px 0;
-            box-shadow: 
-                inset 2px 0 4px rgba(0,0,0,0.5),
-                0 4px 8px rgba(0,0,0,0.3);
-        }
+        #game-board::before { top: 10px; left: 10px; }
+        #game-board::after { bottom: 10px; right: 10px; }
 
         .row {
             display: grid;
             grid-template-columns: repeat(4, 1fr);
-            grid-gap: var(--grid-gap);
+            gap: 10px;
+            background: var(--safe-inset);
+            padding: 8px;
+            border-radius: 30px;
+            border: 1px solid rgba(255,255,255,0.03);
+            transition: all 0.3s ease;
+        }
+        
+        .row.active {
+            box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
+            background: #182234;
         }
 
+        /* --- TUMBLERS (Dials) --- */
         .tile {
-            width: var(--tile-size);
-            height: var(--tile-size);
-            background: 
-                radial-gradient(circle at 30% 30%, #1a4d7a, var(--color-default));
-            border: 3px solid var(--color-border);
-            border-radius: 50%;
+            width: 58px;
+            height: 58px;
+            border-radius: 50%; 
+            background: radial-gradient(circle at 30% 30%, #475569, #1e293b);
+            border: 2px solid #334155;
             display: flex;
             flex-direction: column;
             justify-content: center;
             align-items: center;
-            font-size: 2rem;
+            font-size: 1.8rem;
             font-weight: 700;
-            text-transform: uppercase;
             position: relative;
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            box-shadow: 
-                0 4px 0 var(--color-border), 
-                inset 0 1px 0 rgba(255,255,255,0.1),
-                inset 0 -2px 8px rgba(0,0,0,0.3);
+            color: #cbd5e1;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
         }
 
-        /* Tumbler dial notches */
         .tile::before {
             content: '';
             position: absolute;
-            width: 6px;
+            top: 4px;
+            width: 4px;
             height: 6px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
-            top: 8px;
-            box-shadow: 
-                0 0 2px rgba(255,255,255,0.4),
-                inset 0 1px 1px rgba(0,0,0,0.3);
-        }
-
-        /* Center dial indicator */
-        .tile::after {
-            content: '';
-            position: absolute;
-            width: 3px;
-            height: 12px;
-            background: linear-gradient(to bottom, #e74c3c, #c0392b);
-            top: -2px;
+            background: rgba(0,0,0,0.5);
             border-radius: 2px;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.3);
         }
 
         .tile[data-status="filled"] {
-            border-color: #3498db;
-            transform: scale(1.08) rotate(15deg);
-            box-shadow: 0 4px 0 #2980b9, 0 0 20px rgba(52, 152, 219, 0.4);
+            border-color: #94a3b8;
+            color: #fff;
+            transform: scale(1.05);
         }
 
-        .tile[data-status="filled"]::after {
-            transform: rotate(15deg);
-            background: linear-gradient(to bottom, #3498db, #2980b9);
-        }
+        .letter { z-index: 2; margin-top: 2px; }
 
+        /* --- INDICATORS --- */
         .indicator {
-            font-size: 1.1rem;
+            font-size: 0.8rem;
             position: absolute;
-            bottom: 4px;
             width: 100%;
             text-align: center;
             opacity: 0;
-            font-weight: 900;
+            font-weight: 700;
             transition: opacity 0.3s;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
         }
 
+        /* --- FEEDBACK STATES --- */
+        .tile.evaluated {
+            transition: 
+                transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+                background 0.3s,
+                border-color 0.3s;
+        }
+
+        /* CORRECT (Green) */
         .tile.correct {
-            background: radial-gradient(circle at 30% 30%, #52c97a, #27ae60);
-            color: white;
-            border-color: #1e8449;
-            box-shadow: 
-                0 4px 0 #1e8449, 
-                0 0 30px rgba(39, 174, 96, 0.6),
-                inset 0 2px 8px rgba(255,255,255,0.3);
-            animation: unlock 0.6s ease-out;
+            border-color: var(--color-correct);
+            color: var(--color-correct);
+            box-shadow: 0 0 15px rgba(106, 170, 100, 0.2);
+            transform: rotate(360deg);
         }
 
-        .tile.correct::after {
-            background: linear-gradient(to bottom, #f1c40f, #f39c12);
-            height: 16px;
-            box-shadow: 0 0 8px rgba(241, 196, 15, 0.8);
-        }
-
+        /* CLOSE (Yellow) */
         .tile.close {
-            background: radial-gradient(circle at 30% 30%, #f5b041, #f39c12);
-            color: white;
-            border-color: #d68910;
-            box-shadow: 0 4px 0 #d68910, inset 0 2px 6px rgba(255,255,255,0.2);
+            border-color: var(--color-close);
+            color: var(--color-close);
+        }
+        .tile.close.up { transform: rotate(25deg); }
+        .tile.close.down { transform: rotate(-25deg); }
+        .tile.close .indicator { 
+            color: var(--color-close); 
+            bottom: -20px;
         }
 
+        /* FAR (RED - Updated) */
         .tile.far {
-            background: radial-gradient(circle at 30% 30%, #ec7063, #e74c3c);
-            color: white;
-            border-color: #a93226;
-            box-shadow: 0 4px 0 #a93226, inset 0 2px 6px rgba(255,255,255,0.2);
+            border-color: var(--color-far);
+            color: var(--color-far);
+            opacity: 0.9;
+        }
+        .tile.far.up { transform: rotate(50deg); }
+        .tile.far.down { transform: rotate(-50deg); }
+        .tile.far .indicator { 
+            color: var(--color-far);
+            bottom: -20px;
         }
 
-        .tile.evaluated .indicator {
-            opacity: 1;
-        }
+        .tile.evaluated .indicator { opacity: 1; }
 
-        @keyframes unlock {
-            0% { 
-                transform: scale(1) rotate(0deg); 
-            }
-            25% { 
-                transform: scale(1.15) rotate(-90deg); 
-            }
-            50% { 
-                transform: scale(1.1) rotate(90deg); 
-            }
-            75% { 
-                transform: scale(1.12) rotate(-45deg); 
-            }
-            100% { 
-                transform: scale(1) rotate(0deg); 
-            }
-        }
-
+        /* --- KEYBOARD (A-Z Layout) --- */
         #keyboard {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 8px;
             width: 100%;
             max-width: 600px;
-            padding: 0 10px;
+            padding: 0 5px;
             margin-bottom: 20px;
         }
 
         .key-row {
             display: flex;
-            gap: 6px;
             width: 100%;
+            margin: 0 auto 6px;
+            gap: 4px;
             justify-content: center;
         }
 
         .key {
-            background: var(--key-bg);
-            color: var(--key-text);
-            font-weight: 600;
-            font-size: 0.9rem;
-            border-radius: 8px;
-            border: none;
-            padding: 0;
-            height: 58px;
-            min-width: 32px;
+            font-family: 'Chivo Mono', monospace;
             flex: 1;
-            max-width: 48px;
-            cursor: pointer;
-            text-transform: uppercase;
             display: flex;
             justify-content: center;
             align-items: center;
-            touch-action: manipulation;
-            box-shadow: 0 3px 0 #0f2744;
-            transition: all 0.1s;
+            height: 50px;
+            background-color: var(--key-bg);
+            color: var(--key-text);
+            font-weight: 700;
+            border-radius: 6px;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 3px 0 #0f172a;
             position: relative;
+            font-size: 1rem;
         }
-
-        .key:hover {
-            background: var(--key-hover);
-            transform: translateY(-2px);
-            box-shadow: 0 5px 0 #0f2744;
-        }
-
-        .key:active {
-            transform: translateY(3px);
-            box-shadow: 0 0 0 #0f2744;
-        }
-
-        .key.wide {
-            flex: 1.8;
-            max-width: 80px;
-            font-size: 0.75rem;
-            letter-spacing: 0.5px;
-        }
-
+        
+        .key:active { transform: translateY(3px); box-shadow: none; }
+        
         .key::after {
             content: attr(data-value);
             position: absolute;
             top: 2px;
             right: 3px;
-            font-size: 0.65rem;
-            opacity: 0.5;
-            font-weight: 400;
+            font-size: 0.45rem;
+            color: #64748b;
         }
 
-        .key.wide::after {
-            content: none;
+        .key.wide { flex: 1.5; font-size: 0.8rem; }
+        .key.wide::after { content: ''; }
+
+        /* Key States - ONLY GREEN lights up now */
+        .key.correct { 
+            background-color: var(--color-correct); 
+            color: #fff; 
+            border: 1px solid rgba(255,255,255,0.2); 
         }
+        /* No styling for .close or .far on keyboard as requested */
+
+
+        /* --- LEGEND --- */
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.75rem;
+            margin-bottom: 15px;
+            background: rgba(15, 23, 42, 0.8);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .legend-item { display: flex; align-items: center; gap: 6px; color: #cbd5e1; }
+        .dot { width: 8px; height: 8px; border-radius: 50%; }
 
         #message-container {
-            height: 40px;
+            height: 30px;
             display: flex;
             justify-content: center;
             align-items: center;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
         }
-
         .toast {
-            background: linear-gradient(135deg, #2d3436, #000000);
-            color: white;
-            padding: 12px 24px;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-            animation: slideIn 0.3s ease-out;
+            background: #f8fafc;
+            color: #0f172a;
+            padding: 8px 16px;
+            border-radius: 4px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        }
+        
+        @media (max-width: 400px) {
+            .tile { width: 50px; height: 50px; font-size: 1.5rem; }
+            #game-board { padding: 15px; }
+            .key { height: 45px; font-size: 0.9rem; }
         }
 
-        @keyframes slideIn {
-            from { 
-                opacity: 0; 
-                transform: translateY(-20px);
-            }
-            to { 
-                opacity: 1; 
-                transform: translateY(0);
-            }
-        }
-
-        .legend {
-            display: flex;
-            gap: 20px;
-            font-size: 0.8rem;
-            margin-bottom: 15px;
-            background: var(--card-bg);
-            padding: 12px 24px;
-            border-radius: 12px;
-            box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-        }
-
-        .legend-item { 
-            display: flex; 
-            align-items: center; 
-            gap: 8px;
-            font-weight: 500;
-        }
-
-        .dot { 
-            width: 12px; 
-            height: 12px; 
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
-        }
-
-        @media (max-width: 600px) {
-            :root {
-                --tile-size: 60px;
-            }
-
-            h1 {
-                font-size: 2rem;
-            }
-
-            .key {
-                height: 52px;
-                font-size: 0.85rem;
-            }
-
-            #game-board {
-                padding: 15px;
-            }
-        }
     </style>
 </head>
 <body>
 
     <header>
-        <h1>TUMBLER</h1>
-        <div class="sub-text">Crack the code. Pick the lock.</div>
+        <h1>Tumbler</h1>
+        <div class="sub-text">Crack the code</div>
     </header>
 
     <div id="message-container"></div>
 
-    <div id="game-board"></div>
+    <div id="game-board">
+        </div>
 
     <div class="legend">
-        <div class="legend-item"><div class="dot" style="background:var(--color-far)"></div> Far (>9)</div>
-        <div class="legend-item"><div class="dot" style="background:var(--color-close)"></div> Close (≤9)</div>
-        <div class="legend-item"><div class="dot" style="background:var(--color-correct)"></div> Unlocked</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-far)"></div> Far</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-close)"></div> Close</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-correct)"></div> Open</div>
     </div>
 
     <div id="keyboard"></div>
@@ -442,6 +351,7 @@
         createBoard();
         createKeyboard();
         document.addEventListener('keydown', handleKeydown);
+        updateActiveRow();
     }
 
     function createBoard() {
@@ -467,11 +377,14 @@
             }
             board.appendChild(rowDiv);
         }
-        
-        // Add right safe bolt
-        const boltRight = document.createElement('div');
-        boltRight.classList.add('safe-bolt-right');
-        board.appendChild(boltRight);
+    }
+
+    function updateActiveRow() {
+        document.querySelectorAll('.row').forEach(row => row.classList.remove('active'));
+        if (!isGameOver && currentRow < MAX_TRIES) {
+            const row = document.getElementById(`row-${currentRow}`);
+            if(row) row.classList.add('active');
+        }
     }
 
     function createKeyboard() {
@@ -480,11 +393,10 @@
             "KLMNOPQRST",
             "UVWXYZ"
         ];
-
         rows.forEach((rowString, index) => {
             const rowDiv = document.createElement('div');
             rowDiv.classList.add('key-row');
-
+            
             if (index === 2) {
                 const enterKey = createKey("ENTER", "wide");
                 enterKey.onclick = submitGuess;
@@ -493,6 +405,7 @@
 
             for (let char of rowString) {
                 const key = createKey(char, "");
+                key.id = `key-${char}`;
                 key.onclick = () => addLetter(char);
                 rowDiv.appendChild(key);
             }
@@ -502,7 +415,6 @@
                 backKey.onclick = deleteLetter;
                 rowDiv.appendChild(backKey);
             }
-
             keyboardContainer.appendChild(rowDiv);
         });
     }
@@ -512,17 +424,10 @@
         button.textContent = content;
         button.classList.add('key');
         if (className) button.classList.add(className);
-        
         if (!className && content.length === 1) {
-            const value = content.charCodeAt(0) - 64;
-            button.setAttribute('data-value', value);
+            button.setAttribute('data-value', content.charCodeAt(0) - 64);
         }
-        
         return button;
-    }
-
-    function getLetterValue(char) {
-        return char.charCodeAt(0) - 64;
     }
 
     function addLetter(letter) {
@@ -549,22 +454,16 @@
 
     function showMessage(msg) {
         messageContainer.innerHTML = `<div class="toast">${msg}</div>`;
-        setTimeout(() => {
-            messageContainer.innerHTML = '';
-        }, 2000);
+        setTimeout(() => messageContainer.innerHTML = '', 2000);
     }
 
     function submitGuess() {
         if (isGameOver) return;
-        const guessWordArr = guesses[currentRow];
-        const guessWord = guessWordArr.join("");
-
         if (currentTile < WORD_LENGTH) {
-            showMessage("Not enough letters");
+            showMessage("Too short");
             return;
         }
-
-        evaluateGuess(guessWordArr);
+        evaluateGuess(guesses[currentRow]);
     }
 
     function evaluateGuess(guessArr) {
@@ -576,60 +475,65 @@
             const indicator = tile.querySelector('.indicator');
             const letter = guessArr[i];
             
-            const guessVal = getLetterValue(letter);
-            const targetVal = getLetterValue(targetArr[i]);
+            const guessVal = letter.charCodeAt(0) - 64;
+            const targetVal = targetArr[i].charCodeAt(0) - 64;
             const diff = targetVal - guessVal;
+            
+            const key = document.getElementById(`key-${letter}`);
 
             setTimeout(() => {
                 tile.classList.add('evaluated');
 
                 if (diff === 0) {
                     tile.classList.add('correct');
-                    indicator.innerHTML = "✓";
                     correctCount++;
+                    // Only color keyboard if correct
+                    if(key) key.classList.add('correct');
                 } else {
                     let symbol = "";
                     let distClass = "";
+                    let rotateClass = diff > 0 ? "up" : "down"; 
                     
                     if (Math.abs(diff) > 9) {
-                        distClass = "far";
-                        symbol = diff > 0 ? "⇑" : "⇓";
+                        distClass = "far"; // RED now
+                        symbol = diff > 0 ? "▲▲" : "▼▼";
+                        // Do NOT color keyboard
                     } else {
-                        distClass = "close";
-                        symbol = diff > 0 ? "↑" : "↓";
+                        distClass = "close"; // Yellow
+                        symbol = diff > 0 ? "▲" : "▼";
+                        // Do NOT color keyboard
                     }
 
                     tile.classList.add(distClass);
+                    tile.classList.add(rotateClass); 
                     indicator.innerHTML = symbol;
                 }
-            }, i * 150);
+            }, i * 200); 
         }
 
         setTimeout(() => {
             if (correctCount === WORD_LENGTH) {
-                showMessage("🎉 UNLOCKED!");
+                showMessage("UNLOCKED");
                 isGameOver = true;
+                document.getElementById(`row-${currentRow}`).style.borderColor = "#6aaa64";
             } else {
                 if (currentRow < MAX_TRIES - 1) {
                     currentRow++;
                     currentTile = 0;
+                    updateActiveRow();
                 } else {
-                    showMessage(`Game Over! Word was ${TARGET_WORD}`);
+                    showMessage(TARGET_WORD);
                     isGameOver = true;
                 }
             }
-        }, WORD_LENGTH * 150 + 200);
+        }, WORD_LENGTH * 200 + 300);
     }
 
     function handleKeydown(e) {
         const key = e.key.toUpperCase();
-        if (key === "ENTER") {
-            submitGuess();
-        } else if (key === "BACKSPACE") {
-            deleteLetter();
-        } else if (/^[A-Z]$/.test(key)) {
-            addLetter(key);
-        }
+        if (key === "ENTER") submitGuess();
+        else if (key === "BACKSPACE") deleteLetter();
+        else if (/^[A-Z]$/.test(key)) addLetter(key);
     }
 
     initGame();
