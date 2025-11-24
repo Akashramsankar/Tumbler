@@ -55,6 +55,7 @@
             padding-bottom: 15px;
             width: 100%;
             max-width: 500px;
+            position: relative;
         }
 
         h1 {
@@ -73,6 +74,81 @@
             letter-spacing: 1px;
             margin-top: 5px;
             text-transform: uppercase;
+        }
+
+        .stats-btn {
+            position: absolute;
+            top: 15px;
+            right: 10px;
+            background: var(--key-bg);
+            color: var(--text-color);
+            border: none;
+            padding: 8px 12px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+        
+        .stats-btn:hover {
+            background: #475569;
+        }
+
+        .stats-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .stats-content {
+            background: var(--safe-body);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 400px;
+            width: 90%;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--color-correct);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+        }
+
+        .close-stats {
+            background: var(--color-correct);
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 20px;
         }
 
         /* --- GAME BOARD --- */
@@ -373,7 +449,29 @@
     <header>
         <h1>Tumbler</h1>
         <div class="sub-text">Crack the code</div>
+        <button class="stats-btn" onclick="showStats()">📊 Stats</button>
     </header>
+
+    <div id="stats-modal" class="stats-modal">
+        <div class="stats-content">
+            <h2 style="margin-top:0; text-align:center;">Your Stats</h2>
+            <div class="stats-grid">
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-played">0</div>
+                    <div class="stat-label">Played</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-winrate">0</div>
+                    <div class="stat-label">Win %</div>
+                </div>
+                <div class="stat-item">
+                    <div class="stat-value" id="stat-streak">0</div>
+                    <div class="stat-label">Streak 🔥</div>
+                </div>
+            </div>
+            <button class="close-stats" onclick="closeStats()">Close</button>
+        </div>
+    </div>
 
     <div id="message-container"></div>
 
@@ -381,9 +479,9 @@
         </div>
 
     <div class="legend">
-        <div class="legend-item"><div class="dot" style="background:var(--color-far)"></div> Far</div>
-        <div class="legend-item"><div class="dot" style="background:var(--color-close)"></div> Close</div>
-        <div class="legend-item"><div class="dot" style="background:var(--color-correct)"></div> Open</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-far)"></div> Far (10+)</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-close)"></div> Close (1-9)</div>
+        <div class="legend-item"><div class="dot" style="background:var(--color-correct)"></div> Locked In</div>
     </div>
 
     <div id="keyboard"></div>
@@ -402,10 +500,14 @@
     let currentTile = 0;
     let guesses = Array(6).fill(null).map(() => Array(4).fill(""));
     let isGameOver = false;
+    let startTime = Date.now();
 
     const board = document.getElementById('game-board');
     const keyboardContainer = document.getElementById('keyboard');
     const messageContainer = document.getElementById('message-container');
+
+    // Load stats from localStorage
+    let stats = JSON.parse(localStorage.getItem('tumblerStats') || '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0]}');
 
     function initGame() {
         console.log("Target Word:", TARGET_WORD);
@@ -467,7 +569,11 @@
             for (let char of rowString) {
                 const key = createKey(char, "");
                 key.id = `key-${char}`;
-                key.onclick = () => addLetter(char);
+                key.onclick = () => {
+                    if (!isGameOver && currentTile < WORD_LENGTH) {
+                        addLetter(char);
+                    }
+                };
                 rowDiv.appendChild(key);
             }
 
@@ -493,13 +599,19 @@
 
     function addLetter(letter) {
         if (isGameOver) return;
-        if (currentTile < WORD_LENGTH) {
-            guesses[currentRow][currentTile] = letter;
-            const tile = document.getElementById(`row-${currentRow}-tile-${currentTile}`);
-            tile.querySelector('.letter').textContent = letter;
-            tile.setAttribute('data-status', 'filled');
-            currentTile++;
+        if (currentTile >= WORD_LENGTH) return; // Prevent overflow
+        
+        guesses[currentRow][currentTile] = letter;
+        const tile = document.getElementById(`row-${currentRow}-tile-${currentTile}`);
+        
+        if (!tile) {
+            console.error('Tile not found:', currentRow, currentTile);
+            return;
         }
+        
+        tile.querySelector('.letter').textContent = letter;
+        tile.setAttribute('data-status', 'filled');
+        currentTile++;
     }
 
     function deleteLetter() {
@@ -521,7 +633,7 @@
     function submitGuess() {
         if (isGameOver) return;
         if (currentTile < WORD_LENGTH) {
-            showMessage("Too short");
+            showMessage("Need full combination!");
             return;
         }
         evaluateGuess(guesses[currentRow]);
@@ -574,16 +686,44 @@
 
         setTimeout(() => {
             if (correctCount === WORD_LENGTH) {
-                showMessage("UNLOCKED");
+                // EPIC WIN ANIMATION
+                const currentRowEl = document.getElementById(`row-${currentRow}`);
+                currentRowEl.style.borderColor = "#6aaa64";
+                currentRowEl.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
+                
+                // Make all tiles spin and glow
+                for (let i = 0; i < WORD_LENGTH; i++) {
+                    const tile = document.getElementById(`row-${currentRow}-tile-${i}`);
+                    setTimeout(() => {
+                        tile.style.transform = "rotate(720deg) scale(1.2)";
+                        tile.style.boxShadow = "0 0 20px rgba(106, 170, 100, 0.8)";
+                    }, i * 100);
+                }
+                
+                // Big celebration message
+                setTimeout(() => {
+                    const solveTime = Math.floor((Date.now() - startTime) / 1000);
+                    stats.played++;
+                    stats.won++;
+                    stats.currentStreak++;
+                    stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+                    stats.guessDistribution[currentRow]++;
+                    localStorage.setItem('tumblerStats', JSON.stringify(stats));
+                    
+                    showMessage(`🎉 VAULT BREACHED in ${currentRow + 1}! Time: ${solveTime}s 🎉`);
+                }, 400);
+                
                 isGameOver = true;
-                document.getElementById(`row-${currentRow}`).style.borderColor = "#6aaa64";
             } else {
                 if (currentRow < MAX_TRIES - 1) {
                     currentRow++;
                     currentTile = 0;
                     updateActiveRow();
                 } else {
-                    showMessage(TARGET_WORD);
+                    stats.played++;
+                    stats.currentStreak = 0;
+                    localStorage.setItem('tumblerStats', JSON.stringify(stats));
+                    showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
                     isGameOver = true;
                 }
             }
@@ -596,6 +736,24 @@
         else if (key === "BACKSPACE") deleteLetter();
         else if (/^[A-Z]$/.test(key)) addLetter(key);
     }
+
+    function showStats() {
+        const modal = document.getElementById('stats-modal');
+        modal.style.display = 'flex';
+        
+        document.getElementById('stat-played').textContent = stats.played;
+        document.getElementById('stat-winrate').textContent = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
+        document.getElementById('stat-streak').textContent = stats.currentStreak;
+    }
+
+    function closeStats() {
+        document.getElementById('stats-modal').style.display = 'none';
+    }
+
+    // Close modal on outside click
+    document.getElementById('stats-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'stats-modal') closeStats();
+    });
 
     initGame();
 </script>
