@@ -151,6 +151,125 @@
             margin-top: 20px;
         }
 
+        /* HOW TO PLAY MODAL */
+        .tutorial-modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 1001;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .tutorial-content {
+            background: var(--safe-body);
+            padding: 30px;
+            border-radius: 16px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 80vh;
+            overflow-y: auto;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+        }
+
+        .tutorial-content h2 {
+            margin-top: 0;
+            text-align: center;
+            color: var(--color-correct);
+        }
+
+        .tutorial-content p {
+            line-height: 1.6;
+            color: #cbd5e1;
+            margin: 15px 0;
+        }
+
+        .example-row {
+            display: flex;
+            gap: 10px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+
+        .example-tile {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #475569, #1e293b);
+            border: 2px solid #334155;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #cbd5e1;
+            position: relative;
+        }
+
+        .example-tile.correct {
+            border-color: var(--color-correct);
+            color: var(--color-correct);
+        }
+
+        .example-tile.close {
+            border-color: var(--color-close);
+            color: var(--color-close);
+        }
+
+        .example-tile.far {
+            border-color: var(--color-far);
+            color: var(--color-far);
+        }
+
+        .example-arrow {
+            font-size: 0.7rem;
+            margin-top: 2px;
+            color: inherit;
+        }
+
+        .tutorial-btn {
+            background: var(--color-correct);
+            color: #fff;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 700;
+            width: 100%;
+            margin-top: 20px;
+            font-size: 1rem;
+        }
+
+        .tutorial-btn:hover {
+            background: #5a9455;
+        }
+
+        .help-icon {
+            position: absolute;
+            top: 15px;
+            left: 10px;
+            background: var(--key-bg);
+            color: var(--text-color);
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .help-icon:hover {
+            background: #475569;
+        }
+
         /* --- GAME BOARD --- */
         #game-board {
             position: relative;
@@ -447,10 +566,46 @@
 <body>
 
     <header>
+        <button class="help-icon" onclick="showTutorial()">?</button>
         <h1>Tumbler</h1>
         <div class="sub-text">Crack the code</div>
         <button class="stats-btn" onclick="showStats()">📊 Stats</button>
     </header>
+
+    <div id="tutorial-modal" class="tutorial-modal">
+        <div class="tutorial-content">
+            <h2>🔐 How To Play</h2>
+            
+            <p><strong>Crack the safe by guessing the 4-letter code!</strong></p>
+            
+            <p>Each guess shows you how close you are:</p>
+            
+            <div style="margin: 20px 0;">
+                <p style="margin-bottom: 10px;"><strong>Example:</strong> If the code is <strong>LOCK</strong></p>
+                
+                <div class="example-row">
+                    <div class="example-tile correct">L<div class="example-arrow">🔓</div></div>
+                    <div class="example-tile close">P<div class="example-arrow">▼</div></div>
+                    <div class="example-tile far">B<div class="example-arrow">▼▼</div></div>
+                    <div class="example-tile close">N<div class="example-arrow">▲</div></div>
+                </div>
+                
+                <ul style="text-align: left; color: #cbd5e1; line-height: 1.8;">
+                    <li><span style="color: var(--color-correct);">🔓 Green</span> = Correct letter, locked in!</li>
+                    <li><span style="color: var(--color-close);">▼ Yellow</span> = Close (1-9 letters away)</li>
+                    <li><span style="color: var(--color-far);">▼▼ Red</span> = Far (10+ letters away)</li>
+                    <li><strong>▲ = Go higher</strong> in the alphabet</li>
+                    <li><strong>▼ = Go lower</strong> in the alphabet</li>
+                </ul>
+            </div>
+            
+            <p><strong>💡 Pro Tip:</strong> Use the numbers on each key (A=1, B=2, Z=26) to navigate faster!</p>
+            
+            <p>You have <strong>6 attempts</strong> to crack the safe. Good luck! 🎯</p>
+            
+            <button class="tutorial-btn" onclick="closeTutorial()">Start Cracking! 🔓</button>
+        </div>
+    </div>
 
     <div id="stats-modal" class="stats-modal">
         <div class="stats-content">
@@ -515,6 +670,12 @@
         createKeyboard();
         document.addEventListener('keydown', handleKeydown);
         updateActiveRow();
+        
+        // Show tutorial on first visit
+        if (!localStorage.getItem('tumblerTutorialSeen')) {
+            showTutorial();
+            localStorage.setItem('tumblerTutorialSeen', 'true');
+        }
     }
 
     function createBoard() {
@@ -750,9 +911,21 @@
         document.getElementById('stats-modal').style.display = 'none';
     }
 
+    function showTutorial() {
+        document.getElementById('tutorial-modal').style.display = 'flex';
+    }
+
+    function closeTutorial() {
+        document.getElementById('tutorial-modal').style.display = 'none';
+    }
+
     // Close modal on outside click
     document.getElementById('stats-modal').addEventListener('click', (e) => {
         if (e.target.id === 'stats-modal') closeStats();
+    });
+
+    document.getElementById('tutorial-modal').addEventListener('click', (e) => {
+        if (e.target.id === 'tutorial-modal') closeTutorial();
     });
 
     initGame();
