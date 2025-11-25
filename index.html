@@ -664,6 +664,8 @@
     const MAX_TRIES = 6;
     const ASCII_A = 65;
     const ASCII_Z = 90;
+    const CLOSE_DISTANCE = 9;   // Yellow -> within 1-9 letters
+    const FAR_DISTANCE = 10;    // Red -> skip 10 letters (guess + nine following)
 
     let currentRow = 0;
     let currentTile = 0;
@@ -672,12 +674,14 @@
     let startTime = Date.now();
     
     // NEW: Tracks the valid alphabet range (ASCII 65=A, 90=Z) for each slot.
-    let slotConstraints = [
-        { min: ASCII_A, max: ASCII_Z },
-        { min: ASCII_A, max: ASCII_Z },
-        { min: ASCII_A, max: ASCII_Z },
-        { min: ASCII_A, max: ASCII_Z }
-    ];
+    let slotConstraints = [];
+
+    function resetSlotConstraints() {
+        slotConstraints = Array.from({ length: WORD_LENGTH }, () => ({
+            min: ASCII_A,
+            max: ASCII_Z
+        }));
+    }
 
     const board = document.getElementById('game-board');
     const keyboardContainer = document.getElementById('keyboard');
@@ -688,6 +692,7 @@
 
     function initGame() {
         console.log("Target Word:", TARGET_WORD);
+        resetSlotConstraints();
         createBoard();
         createKeyboard();
         document.addEventListener('keydown', handleKeydown);
@@ -796,6 +801,7 @@
         }
 
         const range = slotConstraints[currentTile];
+        if (!range) return;
 
         document.querySelectorAll('.key').forEach(key => {
             // Only check alphabet keys
@@ -885,18 +891,7 @@
             
             const key = document.getElementById(`key-${letter}`);
 
-            // NEW: CONSTRAINTS UPDATE (This runs BEFORE the animation)
-            if (diff > 0) {
-                // Target is higher (▲) -> The minimum possible value for this slot becomes Guess + 1
-                slotConstraints[i].min = Math.max(slotConstraints[i].min, guessVal + 1);
-            } else if (diff < 0) {
-                // Target is lower (▼) -> The maximum possible value for this slot becomes Guess - 1
-                slotConstraints[i].max = Math.min(slotConstraints[i].max, guessVal - 1);
-            } else {
-                // Correct -> Lock the range to this letter only
-                slotConstraints[i].min = guessVal;
-                slotConstraints[i].max = guessVal;
-            }
+            applyFeedbackConstraint(i, guessVal, diff);
 
             setTimeout(() => {
                 tile.classList.add('evaluated');
@@ -976,6 +971,45 @@
         if (key === "ENTER") submitGuess();
         else if (key === "BACKSPACE") deleteLetter();
         else if (/^[A-Z]$/.test(key)) addLetter(key);
+    }
+
+    function applyFeedbackConstraint(slotIndex, guessVal, diff) {
+        const constraint = slotConstraints[slotIndex];
+        if (!constraint) return;
+
+        if (diff === 0) {
+            constraint.min = guessVal;
+            constraint.max = guessVal;
+            return;
+        }
+
+        const absDiff = Math.abs(diff);
+        if (diff > 0) {
+            const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
+            const newMin = Math.min(guessVal + step, ASCII_Z);
+            constraint.min = Math.max(constraint.min, newMin);
+
+            if (absDiff <= CLOSE_DISTANCE) {
+                const newMax = Math.min(guessVal + CLOSE_DISTANCE, ASCII_Z);
+                constraint.max = Math.min(constraint.max, newMax);
+            }
+        } else {
+            const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
+            const newMax = Math.max(guessVal - step, ASCII_A);
+            constraint.max = Math.min(constraint.max, newMax);
+
+            if (absDiff <= CLOSE_DISTANCE) {
+                const newMin = Math.max(guessVal - CLOSE_DISTANCE, ASCII_A);
+                constraint.min = Math.max(constraint.min, newMin);
+            }
+        }
+
+        constraint.min = Math.min(Math.max(constraint.min, ASCII_A), ASCII_Z);
+        constraint.max = Math.max(Math.min(constraint.max, ASCII_Z), ASCII_A);
+
+        if (constraint.min > constraint.max) {
+            constraint.min = constraint.max;
+        }
     }
     
     // ... (Modal functions remain the same) ...
