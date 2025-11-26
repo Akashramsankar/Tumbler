@@ -1,1153 +1,1711 @@
-
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <title>TUMBLER - The Lockpick Game</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700&family=Karnak+Pro:wght@700&display=swap" rel="stylesheet">
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700&family=Karnak+Pro:wght@700&display=swap"
+      rel="stylesheet"
+    />
+
     <style>
-        :root {
-            /* THEME: Premium Dark Heist */
-            --bg-grad-start: #121212;
-            --bg-grad-end: #1e293b;
-            
-            --safe-body: #1e293b;
-            --safe-inset: #0f172a;
-            --safe-border: #334155;
-            
-            /* UPDATED PALETTE */
-            --color-correct: #6aaa64;  /* NYT Green */
-            --color-close: #c9b458;    /* NYT Yellow */
-            --color-far: #ef4444;      /* RED (Replaced Gray) */
-            
-            --text-color: #f8fafc;
-            --key-bg: #334155;
-            --key-text: #e2e8f0;
-            --key-disabled: #0f172a; /* NEW: Darker shade for disabled keys */
-            
-            /* NEW: Cash Color */
-            --color-cash: #00ff6a;
+      :root {
+        /* THEME: Premium Dark Heist */
+        --bg-grad-start: #121212;
+        --bg-grad-end: #1e293b;
+
+        --safe-body: #1e293b;
+        --safe-inset: #0f172a;
+        --safe-border: #334155;
+
+        /* UPDATED PALETTE */
+        --color-correct: #6aaa64; /* NYT Green */
+        --color-close: #c9b458; /* NYT Yellow */
+        --color-far: #ef4444; /* RED (Replaced Gray) */
+
+        --text-color: #f8fafc;
+        --key-bg: #334155;
+        --key-text: #e2e8f0;
+        --key-disabled: #0f172a; /* NEW: Darker shade for disabled keys */
+
+        /* NEW: Cash Color */
+        --color-cash: #00ff6a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Chivo Mono", monospace;
+        background: linear-gradient(
+          135deg,
+          var(--bg-grad-start) 0%,
+          var(--bg-grad-end) 100%
+        );
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        height: auto;
+        margin: 0;
+        padding: 10px;
+        user-select: none;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      /* --- HEADER --- */
+      header {
+        margin-top: 15px;
+        text-align: center;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 15px;
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: serif;
+        font-size: 2.2rem;
+        letter-spacing: 1px;
+        color: #fff;
+        text-transform: capitalize;
+        font-weight: 700;
+      }
+
+      .sub-text {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        letter-spacing: 1px;
+        margin-top: 5px;
+        text-transform: uppercase;
+      }
+
+      .stats-btn {
+        position: absolute;
+        top: 15px;
+        right: 10px;
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .stats-btn:hover {
+        background: #475569;
+      }
+
+      .stats-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000; /* Keep this */
+        justify-content: center;
+        align-items: center;
+      }
+
+      .stats-modal.active {
+        pointer-events: auto; /* ADD THIS - enables clicks when visible */
+      }
+
+      .stats-content {
+        background: var(--safe-body);
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        text-align: center; /* Center content in modal */
+      }
+
+      /* NEW: Stash Display */
+      .stash-display {
+        background: var(--safe-inset);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid var(--safe-border);
+      }
+
+      .stash-label {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+
+      .stash-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--color-cash);
+        text-shadow: 0 0 10px rgba(0, 255, 106, 0.4);
+      }
+
+      .stats-btn {
+        position: absolute;
+        top: 15px;
+        right: 10px;
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 700;
+        z-index: 10;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin: 20px 0;
+        padding-top: 15px;
+        border-top: 1px solid var(--safe-border);
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--color-correct);
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+      }
+
+      .close-stats {
+        background: var(--color-correct);
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 700;
+        width: 100%;
+        margin-top: 20px;
+      }
+
+      .timer-display {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-family: "Chivo Mono", monospace;
+        letter-spacing: 0.5px;
+        padding: 4px 12px;
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .timer-display.warning {
+        color: var(--color-close);
+        border-color: var(--color-close);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .timer-display.danger {
+        color: var(--color-far);
+        border-color: var(--color-far);
+        animation: pulse 1s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
         }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.02);
+        }
+      }
 
-        * { box-sizing: border-box; }
+      .timer-icon {
+        width: 14px;
+        height: 14px;
+        color: inherit;
+      }
 
+      #timer {
+        font-weight: 700;
+        color: inherit;
+        min-width: 45px;
+        text-align: center;
+      }
+
+      /* HOW TO PLAY MODAL (No changes here) */
+      .tutorial-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.9);
+        z-index: 1001;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .tutorial-content {
+        background: var(--safe-body);
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 500px;
+        width: 90%;
+        max-height: 80vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      }
+
+      .tutorial-content h2 {
+        margin-top: 0;
+        text-align: center;
+        color: var(--color-correct);
+      }
+
+      .tutorial-content p {
+        line-height: 1.6;
+        color: #cbd5e1;
+        margin: 15px 0;
+      }
+
+      .example-row {
+        display: flex;
+        gap: 10px;
+        justify-content: center;
+        margin: 20px 0;
+      }
+
+      .example-tile {
+        width: 50px;
+        height: 50px;
+        border-radius: 50%;
+        background: radial-gradient(circle at 30% 30%, #475569, #1e293b);
+        border: 2px solid #334155;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #cbd5e1;
+        position: relative;
+      }
+
+      .example-tile.correct {
+        border-color: var(--color-correct);
+        color: var(--color-correct);
+      }
+
+      .example-tile.close {
+        border-color: var(--color-close);
+        color: var(--color-close);
+      }
+
+      .example-tile.far {
+        border-color: var(--color-far);
+        color: var(--color-far);
+      }
+
+      .example-arrow {
+        font-size: 0.7rem;
+        margin-top: 2px;
+        color: inherit;
+      }
+
+      .tutorial-btn {
+        background: var(--color-correct);
+        color: #fff;
+        border: none;
+        padding: 12px 24px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 700;
+        width: 100%;
+        margin-top: 20px;
+        font-size: 1rem;
+      }
+
+      .tutorial-btn:hover {
+        background: #5a9455;
+      }
+
+      .help-icon {
+        position: absolute;
+        top: 15px;
+        left: 10px;
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .help-icon:hover {
+        background: #475569;
+      }
+
+      /* --- GAME BOARD --- */
+      #game-board {
+        position: relative;
+        padding: 20px;
+        background: var(--safe-body);
+        border-radius: 16px;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
+          0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--safe-border);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 350px;
+      }
+
+      /* Safe Bolts */
+      #game-board::before,
+      #game-board::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #0f172a;
+        border-radius: 50%;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+      #game-board::before {
+        top: 10px;
+        left: 10px;
+      }
+      #game-board::after {
+        bottom: 10px;
+        right: 10px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        background: var(--safe-inset);
+        padding: 8px;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        transition: all 0.3s ease;
+      }
+
+      .row.active {
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+        background: #182234;
+      }
+
+      /* --- TUMBLERS (Dials) --- */
+      .tile {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: repeating-conic-gradient(
+            from 0deg,
+            #334155 0deg 3.46deg,
+            transparent 3.46deg 6.92deg
+          ),
+          radial-gradient(circle at 30% 30%, #475569, #1e293b);
+        border: 2px solid #334155;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        position: relative;
+        color: #cbd5e1;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .tile::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        width: 4px;
+        height: 6px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 2px;
+      }
+
+      .tile::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at center,
+          transparent 60%,
+          rgba(0, 0, 0, 0.3) 60%,
+          rgba(0, 0, 0, 0.3) 65%,
+          transparent 65%
+        );
+        pointer-events: none;
+      }
+
+      .tile[data-status="filled"] {
+        border-color: #94a3b8;
+        color: #fff;
+        transform: scale(1.05);
+      }
+
+      .letter {
+        z-index: 2;
+        margin-top: 2px;
+      }
+
+      /* --- INDICATORS --- */
+      .indicator {
+        font-size: 0.8rem;
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        opacity: 0;
+        font-weight: 700;
+        transition: opacity 0.3s;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      }
+
+      .distribution-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .distribution-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .distribution-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        width: 15px;
+        text-align: right;
+      }
+
+      .distribution-bar {
+        background: var(--safe-inset);
+        height: 24px;
+        min-width: 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        transition: width 0.3s ease;
+      }
+
+      .distribution-bar.current {
+        background: var(--color-correct);
+        color: #fff;
+      }
+
+      /* --- FEEDBACK STATES --- */
+      .tile.evaluated {
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+          background 0.3s, border-color 0.3s;
+      }
+
+      /* CORRECT (Green) */
+      .tile.correct {
+        border-color: var(--color-correct);
+        color: var(--color-correct);
+        box-shadow: 0 0 15px rgba(106, 170, 100, 0.2);
+        transform: rotate(360deg);
+        z-index: 1;
+      }
+
+      /* CLOSE (Yellow) */
+      .tile.close {
+        border-color: var(--color-close);
+        color: var(--color-close);
+        z-index: 2;
+      }
+      .tile.close.up {
+        transform: rotate(15deg);
+      }
+      .tile.close.down {
+        transform: rotate(-15deg);
+      }
+      .tile.close .indicator {
+        color: var(--color-close);
+        bottom: -20px;
+      }
+
+      /* FAR (RED - Updated) */
+      .tile.far {
+        border-color: var(--color-far);
+        color: var(--color-far);
+        opacity: 0.9;
+        z-index: 3;
+      }
+      .tile.far.up {
+        transform: rotate(30deg);
+      }
+      .tile.far.down {
+        transform: rotate(-30deg);
+      }
+      .tile.far .indicator {
+        color: var(--color-far);
+        bottom: -20px;
+      }
+
+      .tile.evaluated .indicator {
+        opacity: 1;
+      }
+
+      /* --- KEYBOARD (A-Z Layout) --- */
+      #keyboard {
+        width: 100%;
+        max-width: 600px;
+        padding: 0 5px;
+        margin-bottom: 10px;
+      }
+
+      .key-row {
+        display: flex;
+        width: 100%;
+        margin: 0 auto 6px;
+        gap: 4px;
+        justify-content: center;
+      }
+
+      .key {
+        font-family: "Chivo Mono", monospace;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 50px;
+        background-color: var(--key-bg);
+        color: var(--key-text);
+        font-weight: 700;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 3px 0 #0f172a;
+        position: relative;
+        font-size: 1rem;
+        transition: opacity 0.1s, transform 0.1s, background-color 0.3s;
+      }
+
+      .key:active {
+        transform: translateY(3px);
+        box-shadow: none;
+      }
+
+      /* NEW: Disabled/Impossible Keys */
+      .key[data-disabled="true"] {
+        background-color: var(--key-disabled) !important;
+        opacity: 0.3 !important;
+        cursor: default;
+        pointer-events: none !important;
+      }
+
+      .key::after {
+        content: attr(data-value);
+        position: absolute;
+        top: 3px;
+        right: 5px;
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 700;
+      }
+
+      /* MODIFIED: Increased flex to make Backspace/Enter larger */
+      .key.wide {
+        flex: 2.2;
+        font-size: 1.2rem;
+      }
+      .key.wide::after {
+        content: "";
+      }
+
+      /* Key States */
+      .key.correct {
+        background-color: var(--color-correct);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+
+      /* --- LEGEND --- */
+      .legend {
+        display: flex;
+        gap: 15px;
+        font-size: 0.75rem;
+        margin-bottom: 15px;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #cbd5e1;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      #message-container {
+        height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 5px;
+      }
+      .toast {
+        background: #f8fafc;
+        color: #0f172a;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      }
+
+      @media (max-width: 600px) {
         body {
-            font-family: 'Chivo Mono', monospace;
-            background: linear-gradient(135deg, var(--bg-grad-start) 0%, var(--bg-grad-end) 100%);
-            color: var(--text-color);
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            min-height: 100vh;
-            height: auto;
-            margin: 0;
-            padding: 10px;
-            user-select: none;
-            overflow-x: hidden;
-            overflow-y: auto;
+          padding: 5px;
         }
-
-        /* --- HEADER --- */
-        header {
-            margin-top: 15px;
-            text-align: center;
-            margin-bottom: 15px;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 15px;
-            width: 100%;
-            max-width: 500px;
-            position: relative;
-        }
-
-        h1 {
-            margin: 0;
-            font-family: serif;
-            font-size: 2.2rem;
-            letter-spacing: 1px;
-            color: #fff;
-            text-transform: capitalize;
-            font-weight: 700;
-        }
-
-        .sub-text {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            letter-spacing: 1px;
-            margin-top: 5px;
-            text-transform: uppercase;
-        }
-
-        .stats-btn {
-            position: absolute;
-            top: 15px;
-            right: 10px;
-            background: var(--key-bg);
-            color: var(--text-color);
-            border: none;
-            padding: 8px 12px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-size: 0.9rem;
-            font-weight: 700;
-        }
-        
-        .stats-btn:hover {
-            background: #475569;
-        }
-
-        .stats-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .stats-content {
-            background: var(--safe-body);
-            padding: 30px;
-            border-radius: 16px;
-            max-width: 400px;
-            width: 90%;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-            text-align: center; /* Center content in modal */
-        }
-
-        /* NEW: Stash Display */
-        .stash-display {
-            background: var(--safe-inset);
-            padding: 15px;
-            border-radius: 10px;
-            margin-bottom: 20px;
-            border: 1px solid var(--safe-border);
-        }
-        
-        .stash-label {
-            font-size: 0.9rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-            margin-bottom: 5px;
-        }
-        
-        .stash-value {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: var(--color-cash);
-            text-shadow: 0 0 10px rgba(0, 255, 106, 0.4);
-        }
-
-        .stats-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin: 20px 0;
-            padding-top: 15px;
-            border-top: 1px solid var(--safe-border);
-        }
-
-        .stat-item {
-            text-align: center;
-        }
-
-        .stat-value {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--color-correct);
-        }
-
-        .stat-label {
-            font-size: 0.75rem;
-            color: #94a3b8;
-            text-transform: uppercase;
-        }
-
-        .close-stats {
-            background: var(--color-correct);
-            color: #fff;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            width: 100%;
-            margin-top: 20px;
-        }
-
-        /* HOW TO PLAY MODAL (No changes here) */
-        .tutorial-modal {
-            display: none;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.9);
-            z-index: 1001;
-            justify-content: center;
-            align-items: center;
-        }
-
-        .tutorial-content {
-            background: var(--safe-body);
-            padding: 30px;
-            border-radius: 16px;
-            max-width: 500px;
-            width: 90%;
-            max-height: 80vh;
-            overflow-y: auto;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.8);
-        }
-
-        .tutorial-content h2 {
-            margin-top: 0;
-            text-align: center;
-            color: var(--color-correct);
-        }
-
-        .tutorial-content p {
-            line-height: 1.6;
-            color: #cbd5e1;
-            margin: 15px 0;
-        }
-
-        .example-row {
-            display: flex;
-            gap: 10px;
-            justify-content: center;
-            margin: 20px 0;
-        }
-
-        .example-tile {
-            width: 50px;
-            height: 50px;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, #475569, #1e293b);
-            border: 2px solid #334155;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #cbd5e1;
-            position: relative;
-        }
-
-        .example-tile.correct {
-            border-color: var(--color-correct);
-            color: var(--color-correct);
-        }
-
-        .example-tile.close {
-            border-color: var(--color-close);
-            color: var(--color-close);
-        }
-
-        .example-tile.far {
-            border-color: var(--color-far);
-            color: var(--color-far);
-        }
-
-        .example-arrow {
-            font-size: 0.7rem;
-            margin-top: 2px;
-            color: inherit;
-        }
-
-        .tutorial-btn {
-            background: var(--color-correct);
-            color: #fff;
-            border: none;
-            padding: 12px 24px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 700;
-            width: 100%;
-            margin-top: 20px;
-            font-size: 1rem;
-        }
-
-        .tutorial-btn:hover {
-            background: #5a9455;
-        }
-
-        .help-icon {
-            position: absolute;
-            top: 15px;
-            left: 10px;
-            background: var(--key-bg);
-            color: var(--text-color);
-            border: none;
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            cursor: pointer;
-            font-size: 1rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .help-icon:hover {
-            background: #475569;
-        }
-
-        /* --- GAME BOARD --- */
-        #game-board {
-            position: relative;
-            padding: 20px;
-            background: var(--safe-body);
-            border-radius: 16px;
-            box-shadow: 
-                inset 0 1px 1px rgba(255, 255, 255, 0.1),
-                0 20px 40px rgba(0, 0, 0, 0.5),
-                0 0 0 1px var(--safe-border);
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            margin-bottom: 20px;
-            width: 100%;
-            max-width: 350px;
-        }
-
-        /* Safe Bolts */
-        #game-board::before, #game-board::after {
-            content: '';
-            position: absolute;
-            width: 8px;
-            height: 8px;
-            background: #0f172a;
-            border-radius: 50%;
-            box-shadow: 0 1px 0 rgba(255,255,255,0.1);
-        }
-        #game-board::before { top: 10px; left: 10px; }
-        #game-board::after { bottom: 10px; right: 10px; }
-
-        .row {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            background: var(--safe-inset);
-            padding: 8px;
-            border-radius: 30px;
-            border: 1px solid rgba(255,255,255,0.03);
-            transition: all 0.3s ease;
-        }
-        
-        .row.active {
-            box-shadow: 0 0 0 1px rgba(255,255,255,0.15);
-            background: #182234;
-        }
-
-        /* --- TUMBLERS (Dials) --- */
         .tile {
-            width: 58px;
-            height: 58px;
-            border-radius: 50%; 
-            background: 
-                repeating-conic-gradient(
-                    from 0deg,
-                    #334155 0deg 3.46deg,
-                    transparent 3.46deg 6.92deg
-                ),
-                radial-gradient(circle at 30% 30%, #475569, #1e293b);
-            border: 2px solid #334155;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            font-size: 1.8rem;
-            font-weight: 700;
-            position: relative;
-            color: #cbd5e1;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
-            transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+          width: 54px;
+          height: 54px;
+          font-size: 1.6rem;
         }
+        .row {
+          gap: 12px;
+          padding: 6px;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        #game-board {
+          padding: 16px;
+          max-width: 320px;
+        }
+        header {
+          margin-top: 10px;
+          margin-bottom: 10px;
+          padding-bottom: 10px;
+        }
+      }
 
-        .tile::before {
-            content: '';
-            position: absolute;
-            top: 4px;
-            width: 4px;
-            height: 6px;
-            background: rgba(0,0,0,0.5);
-            border-radius: 2px;
+      @media (max-width: 480px) {
+        body {
+          padding: 5px;
         }
-        
-        .tile::after {
-            content: '';
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            background: radial-gradient(circle at center, transparent 60%, rgba(0,0,0,0.3) 60%, rgba(0,0,0,0.3) 65%, transparent 65%);
-            pointer-events: none;
+        .tile {
+          width: 48px;
+          height: 48px;
+          font-size: 1.4rem;
         }
-
-        .tile[data-status="filled"] {
-            border-color: #94a3b8;
-            color: #fff;
-            transform: scale(1.05);
+        .row {
+          gap: 10px;
+          padding: 6px;
         }
-
-        .letter { z-index: 2; margin-top: 2px; }
-
-        /* --- INDICATORS --- */
-        .indicator {
-            font-size: 0.8rem;
-            position: absolute;
-            width: 100%;
-            text-align: center;
-            opacity: 0;
-            font-weight: 700;
-            transition: opacity 0.3s;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+        #game-board {
+          padding: 14px;
+          max-width: 280px;
         }
-
-        /* --- FEEDBACK STATES --- */
-        .tile.evaluated {
-            transition: 
-                transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-                background 0.3s,
-                border-color 0.3s;
-        }
-
-        /* CORRECT (Green) */
-        .tile.correct {
-            border-color: var(--color-correct);
-            color: var(--color-correct);
-            box-shadow: 0 0 15px rgba(106, 170, 100, 0.2);
-            transform: rotate(360deg);
-            z-index: 1;
-        }
-
-        /* CLOSE (Yellow) */
-        .tile.close {
-            border-color: var(--color-close);
-            color: var(--color-close);
-            z-index: 2;
-        }
-        .tile.close.up { transform: rotate(15deg); }
-        .tile.close.down { transform: rotate(-15deg); }
-        .tile.close .indicator { 
-            color: var(--color-close); 
-            bottom: -20px;
-        }
-
-        /* FAR (RED - Updated) */
-        .tile.far {
-            border-color: var(--color-far);
-            color: var(--color-far);
-            opacity: 0.9;
-            z-index: 3;
-        }
-        .tile.far.up { transform: rotate(30deg); }
-        .tile.far.down { transform: rotate(-30deg); }
-        .tile.far .indicator { 
-            color: var(--color-far);
-            bottom: -20px;
-        }
-
-        .tile.evaluated .indicator { opacity: 1; }
-
-        /* --- KEYBOARD (A-Z Layout) --- */
-        #keyboard {
-            width: 100%;
-            max-width: 600px;
-            padding: 0 5px;
-            margin-bottom: 10px;
-        }
-
-        .key-row {
-            display: flex;
-            width: 100%;
-            margin: 0 auto 6px;
-            gap: 4px;
-            justify-content: center;
-        }
-
         .key {
-            font-family: 'Chivo Mono', monospace;
-            flex: 1;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 50px;
-            background-color: var(--key-bg);
-            color: var(--key-text);
-            font-weight: 700;
-            border-radius: 6px;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 3px 0 #0f172a;
-            position: relative;
-            font-size: 1rem;
-            transition: opacity 0.1s, transform 0.1s, background-color 0.3s;
+          height: 45px;
+          font-size: 0.9rem;
         }
-        
-        .key:active { transform: translateY(3px); box-shadow: none; }
-        
-        /* NEW: Disabled/Impossible Keys */
-        .key[data-disabled="true"] {
-            background-color: var(--key-disabled) !important;
-            opacity: 0.3 !important;
-            cursor: default;
-            pointer-events: none !important;
+        .key-row {
+          gap: 3px;
+          margin-bottom: 5px;
         }
-
-        .key::after {
-            content: attr(data-value);
-            position: absolute;
-            top: 3px;
-            right: 5px;
-            font-size: 0.7rem;
-            color: #64748b;
-            font-weight: 700;
+        h1 {
+          font-size: 1.8rem;
         }
-
-        /* MODIFIED: Increased flex to make Backspace/Enter larger */
-        .key.wide { flex: 2.2; font-size: 1.2rem; }
-        .key.wide::after { content: ''; }
-
-        /* Key States */
-        .key.correct { 
-            background-color: var(--color-correct); 
-            color: #fff; 
-            border: 1px solid rgba(255,255,255,0.2); 
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-
-
-        /* --- LEGEND --- */
         .legend {
-            display: flex;
-            gap: 15px;
-            font-size: 0.75rem;
-            margin-bottom: 15px;
-            background: rgba(15, 23, 42, 0.8);
-            padding: 8px 16px;
-            border-radius: 20px;
-            border: 1px solid rgba(255,255,255,0.05);
+          font-size: 0.7rem;
+          gap: 10px;
+          padding: 6px 12px;
+          margin-bottom: 10px;
         }
-        .legend-item { display: flex; align-items: center; gap: 6px; color: #cbd5e1; }
-        .dot { width: 8px; height: 8px; border-radius: 50%; }
+        header {
+          margin-top: 8px;
+          margin-bottom: 8px;
+        }
+      }
 
-        #message-container {
-            height: 30px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            margin-bottom: 5px;
+      @media (max-width: 380px) {
+        body {
+          padding: 3px;
         }
-        .toast {
-            background: #f8fafc;
-            color: #0f172a;
-            padding: 8px 16px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.9rem;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+        .tile {
+          width: 42px;
+          height: 42px;
+          font-size: 1.2rem;
         }
-        
-        @media (max-width: 600px) {
-            body { padding: 5px; }
-            .tile { width: 54px; height: 54px; font-size: 1.6rem; }
-            .row { gap: 12px; padding: 6px; }
-            h1 { font-size: 2rem; }
-            #game-board { padding: 16px; max-width: 320px; }
-            header { margin-top: 10px; margin-bottom: 10px; padding-bottom: 10px; }
+        .row {
+          gap: 8px;
+          padding: 5px;
         }
+        #game-board {
+          padding: 12px;
+          max-width: 250px;
+        }
+        .key {
+          height: 42px;
+          font-size: 0.85rem;
+        }
+        .key::after {
+          font-size: 0.6rem;
+        }
+        .key-row {
+          gap: 2px;
+          margin-bottom: 4px;
+        }
+        h1 {
+          font-size: 1.6rem;
+        }
+        .legend {
+          font-size: 0.65rem;
+          gap: 8px;
+          padding: 5px 10px;
+        }
+      }
 
-        @media (max-width: 480px) {
-            body { padding: 5px; }
-            .tile { width: 48px; height: 48px; font-size: 1.4rem; }
-            .row { gap: 10px; padding: 6px; }
-            #game-board { padding: 14px; max-width: 280px; }
-            .key { height: 45px; font-size: 0.9rem; }
-            .key-row { gap: 3px; margin-bottom: 5px; }
-            h1 { font-size: 1.8rem; }
-            .legend { font-size: 0.7rem; gap: 10px; padding: 6px 12px; margin-bottom: 10px; }
-            header { margin-top: 8px; margin-bottom: 8px; }
+      @media (max-width: 340px) {
+        body {
+          padding: 2px;
         }
-
-        @media (max-width: 380px) {
-            body { padding: 3px; }
-            .tile { width: 42px; height: 42px; font-size: 1.2rem; }
-            .row { gap: 8px; padding: 5px; }
-            #game-board { padding: 12px; max-width: 250px; }
-            .key { height: 42px; font-size: 0.85rem; }
-            .key::after { font-size: 0.6rem; }
-            .key-row { gap: 2px; margin-bottom: 4px; }
-            h1 { font-size: 1.6rem; }
-            .legend { font-size: 0.65rem; gap: 8px; padding: 5px 10px; }
+        .tile {
+          width: 38px;
+          height: 38px;
+          font-size: 1.1rem;
         }
-
-        @media (max-width: 340px) {
-            body { padding: 2px; }
-            .tile { width: 38px; height: 38px; font-size: 1.1rem; }
-            .row { gap: 6px; padding: 5px; }
-            #game-board { padding: 10px; max-width: 220px; }
-            .key { height: 40px; font-size: 0.8rem; }
-            .key::after { font-size: 0.55rem; }
-            h1 { font-size: 1.4rem; }
-            .legend { font-size: 0.6rem; gap: 6px; padding: 4px 8px; }
+        .row {
+          gap: 6px;
+          padding: 5px;
         }
-
+        #game-board {
+          padding: 10px;
+          max-width: 220px;
+        }
+        .key {
+          height: 40px;
+          font-size: 0.8rem;
+        }
+        .key::after {
+          font-size: 0.55rem;
+        }
+        h1 {
+          font-size: 1.4rem;
+        }
+        .legend {
+          font-size: 0.6rem;
+          gap: 6px;
+          padding: 4px 8px;
+        }
+      }
     </style>
-</head>
-<body>
-
+  </head>
+  <body>
     <header>
-        <button class="help-icon" onclick="showTutorial()">?</button>
-        <h1>Tumbler</h1>
-        <div class="sub-text">Crack the code</div>
-        <button class="stats-btn" onclick="showStats()">📊 Stats</button>
+      <button class="help-icon" onclick="showTutorial()">?</button>
+      <h1>Tumbler</h1>
+      <div class="sub-text">Crack the code</div>
+      <!-- ADD THIS TIMER -->
+      <div class="timer-display">
+        <svg
+          class="timer-icon"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span id="timer">00:00</span>
+      </div>
+      <button class="stats-btn" onclick="showStats()">📊 Stats</button>
     </header>
 
     <div id="tutorial-modal" class="tutorial-modal">
-        <div class="tutorial-content">
-            <h2>🔐 How To Play</h2>
-            
-            <p><strong>Crack the safe by guessing the 4-letter code!</strong></p>
-            
-            <p>Each guess shows you how close you are:</p>
-            
-            <div style="margin: 20px 0;">
-                <p style="margin-bottom: 10px;"><strong>Example:</strong> If the code is <strong>LOCK</strong></p>
-                
-                <div class="example-row">
-                    <div class="example-tile correct">L<div class="example-arrow">🔓</div></div>
-                    <div class="example-tile close">P<div class="example-arrow">▼</div></div>
-                    <div class="example-tile far">B<div class="example-arrow">▼▼</div></div>
-                    <div class="example-tile close">N<div class="example-arrow">▲</div></div>
-                </div>
-                
-                <ul style="text-align: left; color: #cbd5e1; line-height: 1.8;">
-                    <li><span style="color: var(--color-correct);">🔓 Green</span> = Correct letter, locked in!</li>
-                    <li><span style="color: var(--color-close);">▼ Yellow</span> = Close (1-9 letters away)</li>
-                    <li><span style="color: var(--color-far);">▼▼ Red</span> = Far (10+ letters away)</li>
-                    <li><strong>▲ = Go higher</strong> in the alphabet</li>
-                    <li><strong>▼ = Go lower</strong> in the alphabet</li>
-                </ul>
+      <div class="tutorial-content">
+        <h2>🔐 How To Play</h2>
+
+        <p><strong>Crack the safe by guessing the 4-letter code!</strong></p>
+
+        <p>Each guess shows you how close you are:</p>
+
+        <div style="margin: 20px 0">
+          <p style="margin-bottom: 10px">
+            <strong>Example:</strong> If the code is <strong>LOCK</strong>
+          </p>
+
+          <div class="example-row">
+            <div class="example-tile correct">
+              L
+              <div class="example-arrow">🔓</div>
             </div>
-            
-            <p><strong>💡 Pro Tip:</strong> Use the numbers on each key (A=1, B=2, Z=26) to navigate faster! **The keyboard will now automatically dim letters that are mathematically impossible based on previous clues!**</p>
-            
-            <p>You have <strong>6 attempts</strong> to crack the safe. Good luck! 🎯</p>
-            
-            <button class="tutorial-btn" onclick="closeTutorial()">Start Cracking! 🔓</button>
+            <div class="example-tile close">
+              P
+              <div class="example-arrow">▼</div>
+            </div>
+            <div class="example-tile far">
+              B
+              <div class="example-arrow">▼▼</div>
+            </div>
+            <div class="example-tile close">
+              N
+              <div class="example-arrow">▲</div>
+            </div>
+          </div>
+
+          <ul style="text-align: left; color: #cbd5e1; line-height: 1.8">
+            <li>
+              <span style="color: var(--color-correct)">🔓 Green</span> =
+              Correct letter, locked in!
+            </li>
+            <li>
+              <span style="color: var(--color-close)">▼ Yellow</span> = Close
+              (1-9 letters away)
+            </li>
+            <li>
+              <span style="color: var(--color-far)">▼▼ Red</span> = Far (10+
+              letters away)
+            </li>
+            <li><strong>▲ = Go higher</strong> in the alphabet</li>
+            <li><strong>▼ = Go lower</strong> in the alphabet</li>
+          </ul>
         </div>
+
+        <p>
+          <strong>💡 Pro Tip:</strong> Use the numbers on each key (A=1, B=2,
+          Z=26) to navigate faster! **The keyboard will now automatically dim
+          letters that are mathematically impossible based on previous clues!**
+        </p>
+
+        <p>
+          You have <strong>6 attempts</strong> to crack the safe. Good luck! 🎯
+        </p>
+
+        <button class="tutorial-btn" onclick="closeTutorial()">
+          Start Cracking! 🔓
+        </button>
+      </div>
     </div>
 
     <div id="stats-modal" class="stats-modal">
-        <div class="stats-content">
-            <h2 style="margin-top:0; text-align:center;">Your Stash & Stats</h2>
-            
-            <div class="stash-display">
-                <div class="stash-label">Total Stash Value</div>
-                <div class="stash-value" id="stat-total-cash">$0</div>
-            </div>
+      <div class="stats-content">
+        <h2 style="margin-top: 0; text-align: center">Your Stash & Stats</h2>
 
-            <div class="stats-grid">
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-played">0</div>
-                    <div class="stat-label">Played</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-winrate">0</div>
-                    <div class="stat-label">Win %</div>
-                </div>
-                <div class="stat-item">
-                    <div class="stat-value" id="stat-streak">0</div>
-                    <div class="stat-label">Streak 🔥</div>
-                </div>
-            </div>
-            <button class="close-stats" onclick="closeStats()">Close</button>
+        <div class="stash-display">
+          <div class="stash-label">Total Stash Value</div>
+          <div class="stash-value" id="stat-total-cash">$0</div>
         </div>
+
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-played">0</div>
+            <div class="stat-label">Played</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-winrate">0</div>
+            <div class="stat-label">Win %</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-label">Streak 🔥</div>
+          </div>
+        </div>
+        <button class="close-stats" onclick="closeStats()">Close</button>
+      </div>
+    </div>
+
+    <div id="win-modal" class="tutorial-modal">
+      <div class="tutorial-content">
+        <h2>🎉 VAULT BREACHED!</h2>
+
+        <div class="stash-display">
+          <div class="stash-label">You Stole</div>
+          <div class="stash-value" id="win-cash-earned">$0</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="win-attempts">0</div>
+            <div class="stat-label">Attempts</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="win-time">0s</div>
+            <div class="stat-label">Time</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="win-total-cash">$0</div>
+            <div class="stat-label">Total Stash</div>
+          </div>
+        </div>
+
+        <div style="margin: 20px 0; text-align: center">
+          <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px">
+            GUESS DISTRIBUTION
+          </div>
+          <div id="distribution-bars"></div>
+        </div>
+
+        <button class="tutorial-btn" onclick="shareResult()">
+          📤 Share Result
+        </button>
+        <button class="close-stats" onclick="closeWinModal()">Close</button>
+      </div>
     </div>
 
     <div id="message-container"></div>
 
-    <div id="game-board">
-        </div>
+    <div id="game-board"></div>
 
     <div class="legend">
-        <div class="legend-item"><div class="dot" style="background:var(--color-far)"></div> Far (10+)</div>
-        <div class="legend-item"><div class="dot" style="background:var(--color-close)"></div> Close (1-9)</div>
-        <div class="legend-item"><div class="dot" style="background:var(--color-correct)"></div> Locked In</div>
+      <div class="legend-item">
+        <div class="dot" style="background: var(--color-far)"></div>
+        Far (10+)
+      </div>
+      <div class="legend-item">
+        <div class="dot" style="background: var(--color-close)"></div>
+        Close (1-9)
+      </div>
+      <div class="legend-item">
+        <div class="dot" style="background: var(--color-correct)"></div>
+        Locked In
+      </div>
     </div>
 
     <div id="keyboard"></div>
 
-<script>
-    // --- CONFIGURATION ---
-    const WORD_LENGTH = 4;
-    const MAX_TRIES = 6;
-    const ASCII_A = 65;
-    const ASCII_Z = 90;
-    const CLOSE_DISTANCE = 9;   
-    const FAR_DISTANCE = 10;    
-    const GAME_EPOCH = new Date("January 1, 2024 00:00:00"); 
-    
-    // CASH CALCULATION CONSTANTS
-    const CASH_BASE_VALUE = 10000;
-    const CASH_ATTEMPT_PENALTY = 1000;
-    const CASH_SPEED_BONUS_CAP = 60; // seconds
-    const CASH_PER_SECOND_BONUS = 20;
-    const CASH_MINIMUM_PAYOUT = 500;
+    <script>
+      // --- CONFIGURATION ---
+      const WORD_LENGTH = 4;
+      const MAX_TRIES = 6;
+      const ASCII_A = 65;
+      const ASCII_Z = 90;
+      const CLOSE_DISTANCE = 9;
+      const FAR_DISTANCE = 10;
+      const GAME_EPOCH = new Date("January 1, 2024 00:00:00");
 
-    // --- STATE VARIABLES ---
-    let TARGET_WORD = ""; 
-    let currentRow = 0;
-    let currentTile = 0;
-    let guesses = Array(6).fill(null).map(() => Array(4).fill(""));
-    let isGameOver = false;
-    let startTime = Date.now();
-    
-    let dictionary = new Set(); 
-    let answerList = [];        
-    let slotConstraints = [];
+      // CASH CALCULATION CONSTANTS
+      const CASH_BASE_VALUE = 10000;
+      const CASH_ATTEMPT_PENALTY = 1000;
+      const CASH_SPEED_BONUS_CAP = 60; // seconds
+      const CASH_PER_SECOND_BONUS = 20;
+      const CASH_MINIMUM_PAYOUT = 500;
 
-    const board = document.getElementById('game-board');
-    const keyboardContainer = document.getElementById('keyboard');
-    const messageContainer = document.getElementById('message-container');
+      // --- STATE VARIABLES ---
+      let TARGET_WORD = "";
+      let currentRow = 0;
+      let currentTile = 0;
+      let guesses = Array(6)
+        .fill(null)
+        .map(() => Array(4).fill(""));
+      let isGameOver = false;
+      let startTime = Date.now();
+      let timerInterval = null;
 
-    // Load stats from localStorage, including NEW: totalCash
-    let stats = JSON.parse(localStorage.getItem('tumblerStats') || '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}');
+      let dictionary = new Set();
+      let answerList = [];
+      let slotConstraints = [];
 
-    async function initGame() {
+      const board = document.getElementById("game-board");
+      const keyboardContainer = document.getElementById("keyboard");
+      const messageContainer = document.getElementById("message-container");
+
+      // Load stats from localStorage, including NEW: totalCash
+      let stats = JSON.parse(
+        localStorage.getItem("tumblerStats") ||
+          '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
+      );
+
+      async function initGame() {
         try {
-            await loadDictionaries(); 
-            
-            TARGET_WORD = getDailyWord();
-            
-            resetSlotConstraints();
-            createBoard();
-            createKeyboard();
-            document.addEventListener('keydown', handleKeydown);
-            updateActiveRow();
-            updateKeyboardVisuals(); 
-            
-            if (!localStorage.getItem('tumblerTutorialSeen')) {
-                showTutorial();
-                localStorage.setItem('tumblerTutorialSeen', 'true');
-            }
+          await loadDictionaries();
+
+          TARGET_WORD = getDailyWord();
+
+          resetSlotConstraints();
+          createBoard();
+          createKeyboard();
+          document.addEventListener("keydown", handleKeydown);
+          updateActiveRow();
+          updateKeyboardVisuals();
+
+          startTimer();
+
+          if (!localStorage.getItem("tumblerTutorialSeen")) {
+            showTutorial();
+            localStorage.setItem("tumblerTutorialSeen", "true");
+          }
         } catch (error) {
-            console.error("Game Initialization Error:", error);
-            showMessage("Error loading word lists. Please refresh.");
+          console.error("Game Initialization Error:", error);
+          showMessage("Error loading word lists. Please refresh.");
         }
-    }
+      }
 
-    async function loadDictionaries() {
-        const dictResponse = await fetch('4-letter-words.json');
+      function startTimer() {
+        const timerElement = document.getElementById("timer");
+        const timerDisplay = document.querySelector(".timer-display");
+
+        timerInterval = setInterval(() => {
+          if (isGameOver) {
+            clearInterval(timerInterval);
+            return;
+          }
+
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const minutes = Math.floor(elapsed / 60);
+          const seconds = elapsed % 60;
+
+          timerElement.textContent = `${String(minutes).padStart(
+            2,
+            "0"
+          )}:${String(seconds).padStart(2, "0")}`;
+
+          // Visual feedback based on time
+          timerDisplay.classList.remove("warning", "danger");
+          if (elapsed >= 120) {
+            // 2 minutes
+            timerDisplay.classList.add("danger");
+          } else if (elapsed >= 60) {
+            // 1 minute
+            timerDisplay.classList.add("warning");
+          }
+        }, 1000);
+      }
+
+      // ADD THIS FUNCTION
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+
+      // Get current puzzle number (days since epoch)
+      function getPuzzleNumber() {
+        const now = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
+
+        // Set your game's launch date here
+        const LAUNCH_DATE = new Date("November 26, 2025 00:00:00"); // TODAY
+
+        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
+        const launchMidnight = new Date(LAUNCH_DATE).setHours(0, 0, 0, 0);
+
+        const daysPassed = Math.floor(
+          (currentMidnight - launchMidnight) / msPerDay
+        );
+        return daysPassed + 1; // Today is #1
+      }
+
+      // Save today's game state
+      function saveTodayGame(attempts, cashWon, gameGrid) {
+        const puzzleNum = getPuzzleNumber();
+        const gameData = {
+          puzzleNumber: puzzleNum,
+          attempts: attempts,
+          cashWon: cashWon,
+          grid: gameGrid,
+          timestamp: Date.now(),
+        };
+        localStorage.setItem("tumblerTodayGame", JSON.stringify(gameData));
+      }
+
+      // Check if already played today
+      function hasPlayedToday() {
+        const saved = localStorage.getItem("tumblerTodayGame");
+        if (!saved) return false;
+        const data = JSON.parse(saved);
+        return data.puzzleNumber === getPuzzleNumber();
+      }
+
+      function generateShareText(attempts, cashWon) {
+        const puzzleNum = getPuzzleNumber();
+        const totalCash = stats.totalCash;
+
+        let shareText = `Tumbler #${puzzleNum} 🔓\n`;
+        shareText += `💰 Stole: $${new Intl.NumberFormat("en-US").format(
+          cashWon
+        )}\n`;
+        shareText += `💼 Total: $${new Intl.NumberFormat("en-US").format(
+          totalCash
+        )}\n\n`;
+
+        // Generate grid with simple arrows and locks
+        for (let r = 0; r <= currentRow; r++) {
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tile = document.getElementById(`row-${r}-tile-${c}`);
+            if (tile.classList.contains("correct")) {
+              shareText += "🔒"; // Lock for correct
+            } else if (
+              tile.classList.contains("close") ||
+              tile.classList.contains("far")
+            ) {
+              const hasUp = tile.classList.contains("up");
+              shareText += hasUp ? "⬆️" : "⬇️";
+            }
+          }
+          shareText += "\n";
+        }
+
+        return shareText;
+      }
+
+      async function shareResult() {
+        const saved = localStorage.getItem("tumblerTodayGame");
+        const gameData = JSON.parse(saved);
+        const shareText = generateShareText(
+          gameData.attempts,
+          gameData.cashWon
+        );
+
+        if (navigator.share) {
+          try {
+            await navigator.share({ text: shareText });
+          } catch (err) {
+            if (err.name !== "AbortError") {
+              copyToClipboard(shareText);
+            }
+          }
+        } else {
+          copyToClipboard(shareText);
+        }
+      }
+
+      function copyToClipboard(text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            showMessage("📋 Copied to clipboard!");
+          })
+          .catch(() => {
+            showMessage("❌ Failed to copy");
+          });
+      }
+
+      async function loadDictionaries() {
+        const dictResponse = await fetch("4-letter-words.json");
         const dictData = await dictResponse.json();
-        dictionary = new Set(dictData.map(w => w.toUpperCase()));
+        dictionary = new Set(dictData.map((w) => w.toUpperCase()));
 
-        const answersResponse = await fetch('Common-used.json');
+        const answersResponse = await fetch("Common-used.json");
         const answersData = await answersResponse.json();
-        answerList = answersData.map(w => w.toUpperCase());
-    }
+        answerList = answersData.map((w) => w.toUpperCase());
+      }
 
-    function getDailyWord() {
-        if (answerList.length === 0) return "LOVE"; 
+      function getDailyWord() {
+        if (answerList.length === 0) return "LOVE";
 
         const now = new Date();
         const msPerDay = 24 * 60 * 60 * 1000;
-        
-        const currentMidnight = new Date(now).setHours(0,0,0,0);
-        const epochMidnight = new Date(GAME_EPOCH).setHours(0,0,0,0);
-        
+
+        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
+        const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
+
         const timeDiff = currentMidnight - epochMidnight;
         const daysPassed = Math.floor(timeDiff / msPerDay);
-        
+
         const index = daysPassed % answerList.length;
-        
+
         const safeIndex = index < 0 ? index + answerList.length : index;
         return answerList[safeIndex];
-    }
-    
-    // NEW: Function to calculate cash prize
-    function calculateCash(attempts, timeInSeconds) {
+      }
+
+      // NEW: Function to calculate cash prize
+      function calculateCash(attempts, timeInSeconds) {
         // Base value less penalty for attempts
-        let cash = CASH_BASE_VALUE - (attempts * CASH_ATTEMPT_PENALTY);
+        let cash = CASH_BASE_VALUE - attempts * CASH_ATTEMPT_PENALTY;
 
         // Add speed bonus (capped at 60 seconds)
         const timeFactor = Math.max(0, CASH_SPEED_BONUS_CAP - timeInSeconds);
-        cash += (timeFactor * CASH_PER_SECOND_BONUS);
-        
+        cash += timeFactor * CASH_PER_SECOND_BONUS;
+
         // Ensure minimum payout
         return Math.max(CASH_MINIMUM_PAYOUT, cash);
-    }
-    
-    function resetSlotConstraints() {
+      }
+
+      function resetSlotConstraints() {
         slotConstraints = Array.from({ length: WORD_LENGTH }, () => ({
-            min: ASCII_A,
-            max: ASCII_Z
+          min: ASCII_A,
+          max: ASCII_Z,
         }));
-    }
+      }
 
-    function createBoard() {
+      function createBoard() {
         for (let r = 0; r < MAX_TRIES; r++) {
-            const rowDiv = document.createElement('div');
-            rowDiv.classList.add('row');
-            rowDiv.setAttribute('id', `row-${r}`);
-            
-            for (let c = 0; c < WORD_LENGTH; c++) {
-                const tileDiv = document.createElement('div');
-                tileDiv.classList.add('tile');
-                tileDiv.setAttribute('id', `row-${r}-tile-${c}`);
-                
-                const letterSpan = document.createElement('span');
-                letterSpan.classList.add('letter');
-                tileDiv.appendChild(letterSpan);
+          const rowDiv = document.createElement("div");
+          rowDiv.classList.add("row");
+          rowDiv.setAttribute("id", `row-${r}`);
 
-                const indicatorSpan = document.createElement('span');
-                indicatorSpan.classList.add('indicator');
-                tileDiv.appendChild(indicatorSpan);
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tileDiv = document.createElement("div");
+            tileDiv.classList.add("tile");
+            tileDiv.setAttribute("id", `row-${r}-tile-${c}`);
 
-                rowDiv.appendChild(tileDiv);
-            }
-            board.appendChild(rowDiv);
+            const letterSpan = document.createElement("span");
+            letterSpan.classList.add("letter");
+            tileDiv.appendChild(letterSpan);
+
+            const indicatorSpan = document.createElement("span");
+            indicatorSpan.classList.add("indicator");
+            tileDiv.appendChild(indicatorSpan);
+
+            rowDiv.appendChild(tileDiv);
+          }
+          board.appendChild(rowDiv);
         }
-    }
+      }
 
-    function updateActiveRow() {
-        document.querySelectorAll('.row').forEach(row => row.classList.remove('active'));
+      function updateActiveRow() {
+        document
+          .querySelectorAll(".row")
+          .forEach((row) => row.classList.remove("active"));
         if (!isGameOver && currentRow < MAX_TRIES) {
-            const row = document.getElementById(`row-${currentRow}`);
-            if(row) row.classList.add('active');
+          const row = document.getElementById(`row-${currentRow}`);
+          if (row) row.classList.add("active");
         }
-    }
-    
-    function createKey(content, className) {
-        const button = document.createElement('button');
+      }
+
+      function createKey(content, className) {
+        const button = document.createElement("button");
         button.textContent = content;
-        button.classList.add('key');
+        button.classList.add("key");
         if (className) button.classList.add(className);
         if (!className && content.length === 1) {
-            button.setAttribute('data-value', content.charCodeAt(0) - ASCII_A + 1); 
+          button.setAttribute(
+            "data-value",
+            content.charCodeAt(0) - ASCII_A + 1
+          );
         }
         return button;
-    }
+      }
 
-    function createKeyboard() {
-        const rows = [
-            "ABCDEFGHIJ",
-            "KLMNOPQRST",
-            "UVWXYZ"
-        ];
+      function createKeyboard() {
+        const rows = ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ"];
         rows.forEach((rowString, index) => {
-            const rowDiv = document.createElement('div');
-            rowDiv.classList.add('key-row');
-            
-            if (index === 2) {
-                const enterKey = createKey("ENTER", "wide");
-                enterKey.onclick = submitGuess;
-                rowDiv.appendChild(enterKey);
-            }
+          const rowDiv = document.createElement("div");
+          rowDiv.classList.add("key-row");
 
-            for (let char of rowString) {
-                const key = createKey(char, "");
-                key.id = `key-${char}`;
-                key.onclick = () => {
-                    if (!isGameOver && currentTile < WORD_LENGTH) {
-                        addLetter(char);
-                    }
-                };
-                rowDiv.appendChild(key);
-            }
+          if (index === 2) {
+            const enterKey = createKey("ENTER", "wide");
+            enterKey.onclick = submitGuess;
+            rowDiv.appendChild(enterKey);
+          }
 
-            if (index === 2) {
-                const backKey = createKey("⌫", "wide");
-                backKey.onclick = deleteLetter;
-                rowDiv.appendChild(backKey);
-            }
-            keyboardContainer.appendChild(rowDiv);
+          for (let char of rowString) {
+            const key = createKey(char, "");
+            key.id = `key-${char}`;
+            key.onclick = () => {
+              if (!isGameOver && currentTile < WORD_LENGTH) {
+                addLetter(char);
+              }
+            };
+            rowDiv.appendChild(key);
+          }
+
+          if (index === 2) {
+            const backKey = createKey("⌫", "wide");
+            backKey.onclick = deleteLetter;
+            rowDiv.appendChild(backKey);
+          }
+          keyboardContainer.appendChild(rowDiv);
         });
-    }
+      }
 
-    function updateKeyboardVisuals() {
+      function updateKeyboardVisuals() {
         if (isGameOver || currentRow >= MAX_TRIES) return;
-        
+
         if (currentTile >= WORD_LENGTH) {
-             document.querySelectorAll('.key').forEach(k => {
-                k.removeAttribute('data-disabled'); 
-            });
-            return;
+          document.querySelectorAll(".key").forEach((k) => {
+            k.removeAttribute("data-disabled");
+          });
+          return;
         }
 
         const range = slotConstraints[currentTile];
         if (!range) return;
 
-        document.querySelectorAll('.key').forEach(key => {
-            if (key.classList.contains('wide') || key.classList.contains('correct')) return;
-
-            const keyVal = key.textContent.charCodeAt(0);
-
-            if (keyVal < range.min || keyVal > range.max) {
-                key.setAttribute('data-disabled', 'true');
-            } else {
-                key.removeAttribute('data-disabled');
-            }
-        });
-    }
-
-    function addLetter(letter) {
-        if (isGameOver) return;
-        if (currentTile >= WORD_LENGTH) return; 
-        
-        const keyEl = document.getElementById(`key-${letter}`);
-        if(keyEl && keyEl.hasAttribute('data-disabled')) {
-            showMessage("Invalid letter for this position!");
-            shakeRow();
+        document.querySelectorAll(".key").forEach((key) => {
+          if (
+            key.classList.contains("wide") ||
+            key.classList.contains("correct")
+          )
             return;
+
+          const keyVal = key.textContent.charCodeAt(0);
+
+          if (keyVal < range.min || keyVal > range.max) {
+            key.setAttribute("data-disabled", "true");
+          } else {
+            key.removeAttribute("data-disabled");
+          }
+        });
+      }
+
+      function addLetter(letter) {
+        if (isGameOver) return;
+        if (currentTile >= WORD_LENGTH) return;
+
+        const keyEl = document.getElementById(`key-${letter}`);
+        if (keyEl && keyEl.hasAttribute("data-disabled")) {
+          showMessage("Invalid letter for this position!");
+          shakeRow();
+          return;
         }
 
         guesses[currentRow][currentTile] = letter;
-        const tile = document.getElementById(`row-${currentRow}-tile-${currentTile}`);
-        
-        if (!tile) return;
-        
-        tile.querySelector('.letter').textContent = letter;
-        tile.setAttribute('data-status', 'filled');
-        currentTile++;
-        
-        updateKeyboardVisuals(); 
-    }
+        const tile = document.getElementById(
+          `row-${currentRow}-tile-${currentTile}`
+        );
 
-    function deleteLetter() {
+        if (!tile) return;
+
+        tile.querySelector(".letter").textContent = letter;
+        tile.setAttribute("data-status", "filled");
+        currentTile++;
+
+        updateKeyboardVisuals();
+      }
+
+      function deleteLetter() {
         if (isGameOver) return;
         if (currentTile > 0) {
-            currentTile--;
-            guesses[currentRow][currentTile] = "";
-            const tile = document.getElementById(`row-${currentRow}-tile-${currentTile}`);
-            tile.querySelector('.letter').textContent = "";
-            tile.removeAttribute('data-status');
-            
-            updateKeyboardVisuals(); 
+          currentTile--;
+          guesses[currentRow][currentTile] = "";
+          const tile = document.getElementById(
+            `row-${currentRow}-tile-${currentTile}`
+          );
+          tile.querySelector(".letter").textContent = "";
+          tile.removeAttribute("data-status");
+
+          updateKeyboardVisuals();
         }
-    }
+      }
 
-    function showMessage(msg) {
+      function showMessage(msg) {
         messageContainer.innerHTML = `<div class="toast">${msg}</div>`;
-        setTimeout(() => messageContainer.innerHTML = '', 2000);
-    }
+        setTimeout(() => (messageContainer.innerHTML = ""), 2000);
+      }
 
-    function shakeRow() {
+      function shakeRow() {
         const row = document.getElementById(`row-${currentRow}`);
         row.style.transform = "translateX(5px)";
-        setTimeout(() => row.style.transform = "translateX(-5px)", 100);
-        setTimeout(() => row.style.transform = "translateX(5px)", 200);
-        setTimeout(() => row.style.transform = "translateX(0)", 300);
-    }
+        setTimeout(() => (row.style.transform = "translateX(-5px)"), 100);
+        setTimeout(() => (row.style.transform = "translateX(5px)"), 200);
+        setTimeout(() => (row.style.transform = "translateX(0)"), 300);
+      }
 
-    function submitGuess() {
+      function submitGuess() {
         if (isGameOver) return;
-        
+
         if (currentTile < WORD_LENGTH) {
-            showMessage("Need full combination!");
-            shakeRow();
-            return;
+          showMessage("Need full combination!");
+          shakeRow();
+          return;
         }
 
         const currentWord = guesses[currentRow].join("");
         if (!dictionary.has(currentWord)) {
-            showMessage("Not in word list!");
-            shakeRow();
-            return;
+          showMessage("Not in word list!");
+          shakeRow();
+          return;
         }
 
         evaluateGuess(guesses[currentRow]);
-    }
+      }
 
-    function evaluateGuess(guessArr) {
+      function evaluateGuess(guessArr) {
         const targetArr = TARGET_WORD.split("");
         let correctCount = 0;
 
         for (let i = 0; i < WORD_LENGTH; i++) {
-            const tile = document.getElementById(`row-${currentRow}-tile-${i}`);
-            const indicator = tile.querySelector('.indicator');
-            const letter = guessArr[i];
-            
-            const guessVal = letter.charCodeAt(0); 
-            const targetVal = targetArr[i].charCodeAt(0); 
-            const diff = targetVal - guessVal;
-            
-            const key = document.getElementById(`key-${letter}`);
+          const tile = document.getElementById(`row-${currentRow}-tile-${i}`);
+          const indicator = tile.querySelector(".indicator");
+          const letter = guessArr[i];
 
-            applyFeedbackConstraint(i, guessVal, diff);
+          const guessVal = letter.charCodeAt(0);
+          const targetVal = targetArr[i].charCodeAt(0);
+          const diff = targetVal - guessVal;
 
-            setTimeout(() => {
-                tile.classList.add('evaluated');
+          const key = document.getElementById(`key-${letter}`);
 
-                if (diff === 0) {
-                    tile.classList.add('correct');
-                    correctCount++;
-                    if(key) key.classList.add('correct');
-                } else {
-                    let symbol = "";
-                    let distClass = "";
-                    let rotateClass = diff > 0 ? "up" : "down"; 
-                    
-                    if (Math.abs(diff) > 9) {
-                        distClass = "far"; 
-                        symbol = diff > 0 ? "▲▲" : "▼▼";
-                    } else {
-                        distClass = "close"; 
-                        symbol = diff > 0 ? "▲" : "▼";
-                    }
+          applyFeedbackConstraint(i, guessVal, diff);
 
-                    tile.classList.add(distClass);
-                    tile.classList.add(rotateClass); 
-                    indicator.innerHTML = symbol;
-                }
-            }, i * 200); 
+          setTimeout(() => {
+            tile.classList.add("evaluated");
+
+            if (diff === 0) {
+              tile.classList.add("correct");
+              correctCount++;
+              if (key) key.classList.add("correct");
+            } else {
+              let symbol = "";
+              let distClass = "";
+              let rotateClass = diff > 0 ? "up" : "down";
+
+              if (Math.abs(diff) > 9) {
+                distClass = "far";
+                symbol = diff > 0 ? "▲▲" : "▼▼";
+              } else {
+                distClass = "close";
+                symbol = diff > 0 ? "▲" : "▼";
+              }
+
+              tile.classList.add(distClass);
+              tile.classList.add(rotateClass);
+              indicator.innerHTML = symbol;
+            }
+          }, i * 200);
         }
 
         setTimeout(() => {
-            if (correctCount === WORD_LENGTH) {
-                
-                const solveTime = Math.floor((Date.now() - startTime) / 1000);
-                const cashWon = calculateCash(currentRow + 1, solveTime);
+          if (correctCount === WORD_LENGTH) {
+            stopTimer();
+            const solveTime = Math.floor((Date.now() - startTime) / 1000);
+            const cashWon = calculateCash(currentRow + 1, solveTime);
 
-                // Update Stats
-                stats.played++;
-                stats.won++;
-                stats.currentStreak++;
-                stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
-                stats.guessDistribution[currentRow]++;
-                // NEW: Update Total Cash
-                stats.totalCash += cashWon;
-                localStorage.setItem('tumblerStats', JSON.stringify(stats));
-                
-                // Win Animation
-                const currentRowEl = document.getElementById(`row-${currentRow}`);
-                currentRowEl.style.borderColor = "#6aaa64";
-                currentRowEl.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
-                
-                for (let i = 0; i < WORD_LENGTH; i++) {
-                    const tile = document.getElementById(`row-${currentRow}-tile-${i}`);
-                    setTimeout(() => {
-                        tile.style.transform = "rotate(720deg) scale(1.2)";
-                        tile.style.boxShadow = "0 0 20px rgba(106, 170, 100, 0.8)";
-                    }, i * 100);
-                }
-                
-                setTimeout(() => {
-                    const cashString = new Intl.NumberFormat('en-US').format(cashWon);
-                    showMessage(`💰 VAULT BREACHED! You stole $${cashString}.`);
-                }, 400);
-                
-                isGameOver = true;
-            } else {
-                if (currentRow < MAX_TRIES - 1) {
-                    currentRow++;
-                    currentTile = 0;
-                    updateActiveRow();
-                    updateKeyboardVisuals(); 
-                } else {
-                    stats.played++;
-                    stats.currentStreak = 0;
-                    localStorage.setItem('tumblerStats', JSON.stringify(stats));
-                    showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
-                    isGameOver = true;
-                }
+            // Update Stats
+            stats.played++;
+            stats.won++;
+            stats.currentStreak++;
+            stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+            stats.guessDistribution[currentRow]++;
+            stats.totalCash += cashWon;
+            localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+            // Save today's game
+            saveTodayGame(currentRow + 1, cashWon, null);
+
+            // Win Animation
+            const currentRowEl = document.getElementById(`row-${currentRow}`);
+            currentRowEl.style.borderColor = "#6aaa64";
+            currentRowEl.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
+
+            for (let i = 0; i < WORD_LENGTH; i++) {
+              const tile = document.getElementById(
+                `row-${currentRow}-tile-${i}`
+              );
+              setTimeout(() => {
+                tile.style.transform = "rotate(720deg) scale(1.2)";
+                tile.style.boxShadow = "0 0 20px rgba(106, 170, 100, 0.8)";
+              }, i * 100);
             }
-        }, WORD_LENGTH * 200 + 300);
-    }
 
-    function handleKeydown(e) {
+            setTimeout(() => {
+              showWinModal(currentRow + 1, cashWon, solveTime);
+            }, WORD_LENGTH * 200 + 500);
+
+            isGameOver = true;
+          } else {
+            if (currentRow < MAX_TRIES - 1) {
+              currentRow++;
+              currentTile = 0;
+              updateActiveRow();
+              updateKeyboardVisuals();
+            } else {
+              stats.played++;
+              stats.currentStreak = 0;
+              stopTimer();
+              localStorage.setItem("tumblerStats", JSON.stringify(stats));
+              showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
+              isGameOver = true;
+            }
+          }
+        }, WORD_LENGTH * 200 + 300);
+      }
+
+      function handleKeydown(e) {
         const key = e.key.toUpperCase();
         if (key === "ENTER") submitGuess();
         else if (key === "BACKSPACE") deleteLetter();
         else if (/^[A-Z]$/.test(key)) addLetter(key);
-    }
+      }
 
-    function applyFeedbackConstraint(slotIndex, guessVal, diff) {
+      function applyFeedbackConstraint(slotIndex, guessVal, diff) {
         const constraint = slotConstraints[slotIndex];
         if (!constraint) return;
 
         if (diff === 0) {
-            constraint.min = guessVal;
-            constraint.max = guessVal;
-            return;
+          constraint.min = guessVal;
+          constraint.max = guessVal;
+          return;
         }
 
         const absDiff = Math.abs(diff);
         if (diff > 0) {
-            const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
-            const newMin = Math.min(guessVal + step, ASCII_Z);
-            constraint.min = Math.max(constraint.min, newMin);
+          const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
+          const newMin = Math.min(guessVal + step, ASCII_Z);
+          constraint.min = Math.max(constraint.min, newMin);
 
-            if (absDiff <= CLOSE_DISTANCE) {
-                const newMax = Math.min(guessVal + CLOSE_DISTANCE, ASCII_Z);
-                constraint.max = Math.min(constraint.max, newMax);
-            }
-        } else {
-            const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
-            const newMax = Math.max(guessVal - step, ASCII_A);
+          if (absDiff <= CLOSE_DISTANCE) {
+            const newMax = Math.min(guessVal + CLOSE_DISTANCE, ASCII_Z);
             constraint.max = Math.min(constraint.max, newMax);
+          }
+        } else {
+          const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
+          const newMax = Math.max(guessVal - step, ASCII_A);
+          constraint.max = Math.min(constraint.max, newMax);
 
-            if (absDiff <= CLOSE_DISTANCE) {
-                const newMin = Math.max(guessVal - CLOSE_DISTANCE, ASCII_A);
-                constraint.min = Math.max(constraint.min, newMin);
-            }
+          if (absDiff <= CLOSE_DISTANCE) {
+            const newMin = Math.max(guessVal - CLOSE_DISTANCE, ASCII_A);
+            constraint.min = Math.max(constraint.min, newMin);
+          }
         }
 
         constraint.min = Math.min(Math.max(constraint.min, ASCII_A), ASCII_Z);
         constraint.max = Math.max(Math.min(constraint.max, ASCII_Z), ASCII_A);
 
         if (constraint.min > constraint.max) {
-            constraint.min = constraint.max;
+          constraint.min = constraint.max;
         }
-    }
-    
-    // MODIFIED: Show Stats now displays total cash
-    function showStats() {
-        const modal = document.getElementById('stats-modal');
-        modal.style.display = 'flex';
-        
+      }
+
+      function showStats() {
+        const modal = document.getElementById("stats-modal");
+        modal.style.display = "flex";
+
         // Format cash for display
-        const totalCashString = new Intl.NumberFormat('en-US').format(stats.totalCash);
+        const totalCashString = new Intl.NumberFormat("en-US").format(
+          stats.totalCash
+        );
 
-        document.getElementById('stat-total-cash').textContent = `$${totalCashString}`;
-        document.getElementById('stat-played').textContent = stats.played;
-        document.getElementById('stat-winrate').textContent = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
-        document.getElementById('stat-streak').textContent = stats.currentStreak;
-    }
+        document.getElementById(
+          "stat-total-cash"
+        ).textContent = `$${totalCashString}`;
+        document.getElementById("stat-played").textContent = stats.played;
+        document.getElementById("stat-winrate").textContent =
+          stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
+        document.getElementById("stat-streak").textContent =
+          stats.currentStreak;
+      }
 
-    function closeStats() {
-        document.getElementById('stats-modal').style.display = 'none';
-    }
+      // MODIFIED: Show Stats now displays total cash
+      function showWinModal(attempts, cashWon, solveTime) {
+        const modal = document.getElementById("win-modal");
+        modal.style.display = "flex";
 
-    function showTutorial() {
-        document.getElementById('tutorial-modal').style.display = 'flex';
-    }
+        document.getElementById(
+          "win-cash-earned"
+        ).textContent = `$${new Intl.NumberFormat("en-US").format(cashWon)}`;
+        document.getElementById("win-attempts").textContent = attempts;
+        document.getElementById("win-time").textContent = `${solveTime}s`;
+        document.getElementById(
+          "win-total-cash"
+        ).textContent = `$${new Intl.NumberFormat("en-US").format(
+          stats.totalCash
+        )}`;
 
-    function closeTutorial() {
-        document.getElementById('tutorial-modal').style.display = 'none';
-    }
+        // Build distribution bars
+        const maxGuesses = Math.max(...stats.guessDistribution, 1);
+        const barsHTML = stats.guessDistribution
+          .map((count, idx) => {
+            const percentage = (count / maxGuesses) * 100;
+            const width = Math.max(percentage, 10); // Minimum 10%
+            const isCurrent = idx === attempts - 1;
+            return `
+            <div class="distribution-row">
+                <div class="distribution-label">${idx + 1}</div>
+                <div class="distribution-bar ${isCurrent ? "current" : ""}" 
+                     style="width: ${width}%">
+                    ${count}
+                </div>
+            </div>
+        `;
+          })
+          .join("");
 
-    document.getElementById('stats-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'stats-modal') closeStats();
-    });
+        document.getElementById("distribution-bars").innerHTML = barsHTML;
+      }
 
-    document.getElementById('tutorial-modal').addEventListener('click', (e) => {
-        if (e.target.id === 'tutorial-modal') closeTutorial();
-    });
+      function closeWinModal() {
+        document.getElementById("win-modal").style.display = "none";
+      }
 
-    initGame();
-</script>
+      function closeStats() {
+        document.getElementById("stats-modal").style.display = "none";
+      }
 
-</body>
+      function showTutorial() {
+        document.getElementById("tutorial-modal").style.display = "flex";
+      }
+
+      function closeTutorial() {
+        document.getElementById("tutorial-modal").style.display = "none";
+      }
+
+      document.getElementById("stats-modal").addEventListener("click", (e) => {
+        if (e.target.id === "stats-modal") closeStats();
+      });
+
+      document.getElementById("win-modal").addEventListener("click", (e) => {
+        if (e.target.id === "win-modal") closeWinModal();
+      });
+
+      document
+        .getElementById("tutorial-modal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "tutorial-modal") closeTutorial();
+        });
+
+      initGame();
+    </script>
+  </body>
 </html>
