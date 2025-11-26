@@ -1164,7 +1164,7 @@
       }
 
       // Save today's game state
-      function saveTodayGame(attempts, cashWon, gameGrid) {
+      function saveTodayGame(attempts, cashWon) {
         const puzzleNum = getPuzzleNumber();
 
         // Save the actual game grid for display
@@ -1173,16 +1173,19 @@
           const rowState = [];
           for (let c = 0; c < WORD_LENGTH; c++) {
             const tile = document.getElementById(`row-${r}-tile-${c}`);
-            rowState.push({
-              letter: tile.querySelector(".letter").textContent,
-              status: tile.classList.contains("correct")
-                ? "correct"
-                : tile.classList.contains("close")
-                ? "close"
-                : tile.classList.contains("far")
-                ? "far"
-                : "",
-            });
+            if (tile) {
+              const letterEl = tile.querySelector(".letter");
+              rowState.push({
+                letter: letterEl ? letterEl.textContent : "",
+                status: tile.classList.contains("correct")
+                  ? "correct"
+                  : tile.classList.contains("close")
+                  ? "close"
+                  : tile.classList.contains("far")
+                  ? "far"
+                  : "",
+              });
+            }
           }
           gridState.push(rowState);
         }
@@ -1190,7 +1193,7 @@
         const gameData = {
           puzzleNumber: puzzleNum,
           attempts: attempts,
-          cashWon: cashWon,
+          cashWon: cashWon || 0,
           grid: gridState,
           timestamp: Date.now(),
         };
@@ -1272,20 +1275,22 @@
 
       function generateShareText(attempts, cashWon) {
         const puzzleNum = getPuzzleNumber();
-        const totalCash = stats.totalCash;
+        const totalCash = stats.totalCash || 0;
+        const safeCashWon = cashWon || 0;
 
         let shareText = `Tumbler #${puzzleNum} 🔓\n`;
         shareText += `💰 Stole: $${new Intl.NumberFormat("en-US").format(
-          cashWon
+          safeCashWon
         )}\n`;
         shareText += `💼 Total: $${new Intl.NumberFormat("en-US").format(
           totalCash
         )}\n\n`;
 
         // Generate grid with simple arrows and locks
-        for (let r = 0; r <= currentRow; r++) {
+        for (let r = 0; r <= attempts; r++) {
           for (let c = 0; c < WORD_LENGTH; c++) {
             const tile = document.getElementById(`row-${r}-tile-${c}`);
+            if (!tile) continue;
             if (tile.classList.contains("correct")) {
               shareText += "🔒"; // Lock for correct
             } else if (
@@ -1304,7 +1309,18 @@
 
       async function shareResult() {
         const saved = localStorage.getItem("tumblerTodayGame");
+        if (!saved) {
+          showMessage("No game data to share!");
+          return;
+        }
+
         const gameData = JSON.parse(saved);
+
+        // Validate game data
+        if (!gameData.attempts || gameData.cashWon === undefined) {
+          showMessage("Invalid game data!");
+          return;
+        }
         const shareText = generateShareText(
           gameData.attempts,
           gameData.cashWon
@@ -1625,7 +1641,7 @@
             localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
             // Save today's game
-            saveTodayGame(currentRow + 1, cashWon, null);
+            saveTodayGame(currentRow + 1, cashWon);
 
             // Win Animation
             const currentRowEl = document.getElementById(`row-${currentRow}`);
@@ -1754,14 +1770,16 @@
             const width = Math.max(percentage, 10); // Minimum 10%
             const isCurrent = idx === attempts - 1;
             return `
-            <div class="distribution-row">
-                <div class="distribution-label">${idx + 1}</div>
-                <div class="distribution-bar ${isCurrent ? "current" : ""}" 
-                     style="width: ${width}%">
-                    ${count}
-                </div>
-            </div>
-        `;
+                  <div class="distribution-row">
+                      <div class="distribution-label">${idx + 1}</div>
+                      <div class="distribution-bar ${
+                        isCurrent ? "current" : ""
+                      }"
+                           style="width: ${width}%">
+                          ${count}
+                      </div>
+                  </div>
+              `;
           })
           .join("");
 
