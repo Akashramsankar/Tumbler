@@ -879,6 +879,14 @@
         <span id="timer">00:00</span>
       </div>
       <button class="stats-btn" onclick="showStats()">📊 Stats</button>
+      <button class="stats-btn" onclick="showStats()">📊 Stats</button>
+      <button
+        class="mute-btn stats-btn"
+        onclick="toggleMute()"
+        style="right: 90px"
+      >
+        🔊
+      </button>
     </header>
 
     <div id="tutorial-modal" class="tutorial-modal">
@@ -1049,6 +1057,93 @@
       const CASH_SPEED_BONUS_CAP = 60; // seconds
       const CASH_PER_SECOND_BONUS = 20;
       const CASH_MINIMUM_PAYOUT = 500;
+
+      // ==================== SOUND EFFECTS ====================
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      let isMuted = localStorage.getItem("tumblerMuted") === "true";
+
+      function playSound(type) {
+        if (isMuted) return;
+
+        const now = audioContext.currentTime;
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        switch (type) {
+          case "keypress":
+            oscillator.frequency.setValueAtTime(400, now);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+            break;
+
+          case "correct":
+            oscillator.frequency.setValueAtTime(523.25, now); // C5
+            oscillator.frequency.setValueAtTime(659.25, now + 0.1); // E5
+            oscillator.frequency.setValueAtTime(783.99, now + 0.2); // G5
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+            break;
+
+          case "close":
+            oscillator.frequency.setValueAtTime(440, now);
+            gainNode.gain.setValueAtTime(0.15, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            oscillator.start(now);
+            oscillator.stop(now + 0.15);
+            break;
+
+          case "far":
+            oscillator.frequency.setValueAtTime(200, now);
+            gainNode.gain.setValueAtTime(0.15, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            oscillator.start(now);
+            oscillator.stop(now + 0.2);
+            break;
+
+          case "error":
+            oscillator.frequency.setValueAtTime(150, now);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+            break;
+
+          case "win":
+            // Ascending victory fanfare
+            const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+              const osc = audioContext.createOscillator();
+              const gain = audioContext.createGain();
+              osc.connect(gain);
+              gain.connect(audioContext.destination);
+              osc.frequency.setValueAtTime(freq, now + i * 0.15);
+              gain.gain.setValueAtTime(0.3, now + i * 0.15);
+              gain.gain.exponentialRampToValueAtTime(
+                0.01,
+                now + i * 0.15 + 0.4
+              );
+              osc.start(now + i * 0.15);
+              osc.stop(now + i * 0.15 + 0.4);
+            });
+            break;
+        }
+      }
+
+      function toggleMute() {
+        isMuted = !isMuted;
+        localStorage.setItem("tumblerMuted", isMuted);
+        const btn = document.querySelector(".mute-btn");
+        btn.textContent = isMuted ? "🔇" : "🔊";
+        playSound("keypress"); // Test sound
+      }
 
       // --- STATE VARIABLES ---
       let TARGET_WORD = "";
@@ -1524,6 +1619,7 @@
         if (keyEl && keyEl.hasAttribute("data-disabled")) {
           showMessage("Invalid letter for this position!");
           shakeRow();
+          playSound("error");
           return;
         }
 
@@ -1537,6 +1633,8 @@
         tile.querySelector(".letter").textContent = letter;
         tile.setAttribute("data-status", "filled");
         currentTile++;
+
+        playSound("keypress");
 
         updateKeyboardVisuals();
       }
@@ -1575,6 +1673,7 @@
         if (currentTile < WORD_LENGTH) {
           showMessage("Need full combination!");
           shakeRow();
+          playSound("error"); 
           return;
         }
 
@@ -1582,6 +1681,7 @@
         if (!dictionary.has(currentWord)) {
           showMessage("Not in word list!");
           shakeRow();
+          playSound("error"); 
           return;
         }
 
@@ -1612,6 +1712,7 @@
               tile.classList.add("correct");
               correctCount++;
               if (key) key.classList.add("correct");
+              playSound("correct"); 
             } else {
               let symbol = "";
               let distClass = "";
@@ -1620,9 +1721,11 @@
               if (Math.abs(diff) > 9) {
                 distClass = "far";
                 symbol = diff > 0 ? "▲▲" : "▼▼";
+                playSound("far");
               } else {
                 distClass = "close";
                 symbol = diff > 0 ? "▲" : "▼";
+                playSound("close");
               }
 
               tile.classList.add(distClass);
@@ -1634,6 +1737,7 @@
 
         setTimeout(() => {
           if (correctCount === WORD_LENGTH) {
+            playSound("win");
             stopTimer();
             const solveTime = Math.floor((Date.now() - startTime) / 1000);
             const cashWon = calculateCash(currentRow + 1, solveTime);
