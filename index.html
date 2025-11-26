@@ -855,6 +855,101 @@
           padding: 4px 8px;
         }
       }
+      /* ==================== WIN ANIMATIONS ==================== */
+      @keyframes confetti-fall {
+        0% {
+          transform: translateY(-100vh) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes cash-float {
+        0% {
+          transform: translateY(-20px) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(180deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes safe-open {
+        0% {
+          transform: perspective(1000px) rotateY(0deg);
+        }
+        100% {
+          transform: perspective(1000px) rotateY(-90deg);
+        }
+      }
+
+      @keyframes glow-pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(106, 170, 100, 0.6),
+            0 0 40px rgba(106, 170, 100, 0.4), 0 0 60px rgba(106, 170, 100, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 30px rgba(106, 170, 100, 0.8),
+            0 0 60px rgba(106, 170, 100, 0.6), 0 0 90px rgba(106, 170, 100, 0.4);
+        }
+      }
+
+      @keyframes screen-flash {
+        0% {
+          background: rgba(106, 170, 100, 0);
+        }
+        50% {
+          background: rgba(106, 170, 100, 0.2);
+        }
+        100% {
+          background: rgba(106, 170, 100, 0);
+        }
+      }
+
+      .confetti-piece {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        top: -10px;
+        z-index: 999;
+        animation: confetti-fall 3s linear forwards;
+        pointer-events: none;
+      }
+
+      .cash-bill {
+        position: fixed;
+        font-size: 2rem;
+        top: -50px;
+        z-index: 999;
+        animation: cash-float 4s ease-in forwards;
+        pointer-events: none;
+      }
+
+      .screen-flash {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 998;
+        animation: screen-flash 0.5s ease-out;
+      }
+
+      .win-glow {
+        animation: glow-pulse 1.5s ease-in-out infinite;
+      }
     </style>
   </head>
   <body>
@@ -1169,6 +1264,84 @@
         localStorage.getItem("tumblerStats") ||
           '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
       );
+
+      // ==================== WIN ANIMATIONS ====================
+      function createConfetti() {
+        const colors = ["#6aaa64", "#c9b458", "#00ff6a", "#f8fafc", "#fbbf24"];
+        const confettiCount = 50;
+
+        for (let i = 0; i < confettiCount; i++) {
+          setTimeout(() => {
+            const confetti = document.createElement("div");
+            confetti.classList.add("confetti-piece");
+            confetti.style.left = Math.random() * 100 + "%";
+            confetti.style.backgroundColor =
+              colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 0.5 + "s";
+            confetti.style.animationDuration = Math.random() * 2 + 2 + "s";
+            document.body.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 5000);
+          }, i * 30);
+        }
+      }
+
+      function createCashRain() {
+        const cashSymbols = ["💵", "💰", "💸", "💴", "💶"];
+        const cashCount = 20;
+
+        for (let i = 0; i < cashCount; i++) {
+          setTimeout(() => {
+            const cash = document.createElement("div");
+            cash.classList.add("cash-bill");
+            cash.textContent =
+              cashSymbols[Math.floor(Math.random() * cashSymbols.length)];
+            cash.style.left = Math.random() * 100 + "%";
+            cash.style.animationDelay = Math.random() * 0.3 + "s";
+            cash.style.animationDuration = Math.random() * 2 + 3 + "s";
+            document.body.appendChild(cash);
+
+            setTimeout(() => cash.remove(), 7000);
+          }, i * 100);
+        }
+      }
+
+      function createScreenFlash() {
+        const flash = document.createElement("div");
+        flash.classList.add("screen-flash");
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 500);
+      }
+
+      function animateCountUp(elementId, targetValue, duration = 2000) {
+        const element = document.getElementById(elementId);
+        const startValue = 0;
+        const startTime = Date.now();
+
+        const formatter = new Intl.NumberFormat("en-US");
+
+        function update() {
+          const now = Date.now();
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // Easing function for smooth deceleration
+          const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+          const currentValue = Math.floor(
+            startValue + (targetValue - startValue) * easeOutQuart
+          );
+
+          element.textContent = `$${formatter.format(currentValue)}`;
+
+          if (progress < 1) {
+            requestAnimationFrame(update);
+          } else {
+            element.textContent = `$${formatter.format(targetValue)}`;
+          }
+        }
+
+        update();
+      }
 
       async function initGame() {
         try {
@@ -1673,7 +1846,7 @@
         if (currentTile < WORD_LENGTH) {
           showMessage("Need full combination!");
           shakeRow();
-          playSound("error"); 
+          playSound("error");
           return;
         }
 
@@ -1681,7 +1854,7 @@
         if (!dictionary.has(currentWord)) {
           showMessage("Not in word list!");
           shakeRow();
-          playSound("error"); 
+          playSound("error");
           return;
         }
 
@@ -1712,7 +1885,7 @@
               tile.classList.add("correct");
               correctCount++;
               if (key) key.classList.add("correct");
-              playSound("correct"); 
+              playSound("correct");
             } else {
               let symbol = "";
               let distClass = "";
@@ -1754,11 +1927,17 @@
             // Save today's game
             saveTodayGame(currentRow + 1, cashWon);
 
-            // Win Animation
+            // ===== ENHANCED WIN ANIMATION =====
             const currentRowEl = document.getElementById(`row-${currentRow}`);
-            currentRowEl.style.borderColor = "#6aaa64";
-            currentRowEl.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
 
+            // Screen flash
+            createScreenFlash();
+
+            // Pulsing glow on winning row
+            currentRowEl.classList.add("win-glow");
+            currentRowEl.style.borderColor = "#6aaa64";
+            currentRowEl.style.transition = "all 0.3s ease";
+            // Animate each tile with stagger
             for (let i = 0; i < WORD_LENGTH; i++) {
               const tile = document.getElementById(
                 `row-${currentRow}-tile-${i}`
@@ -1769,9 +1948,16 @@
               }, i * 100);
             }
 
+            // Start confetti and cash rain
+            setTimeout(() => {
+              createConfetti();
+              createCashRain();
+            }, 400);
+
+            // Show win modal with animated counter
             setTimeout(() => {
               showWinModal(currentRow + 1, cashWon, solveTime);
-            }, WORD_LENGTH * 200 + 500);
+            }, WORD_LENGTH * 200 + 800);
 
             isGameOver = true;
           } else {
@@ -1862,11 +2048,17 @@
         const modal = document.getElementById("win-modal");
         modal.style.display = "flex";
 
+        // Animate the cash counter
+        animateCountUp("win-cash-earned", cashWon, 2000);
+
         document.getElementById(
           "win-cash-earned"
         ).textContent = `$${new Intl.NumberFormat("en-US").format(cashWon)}`;
         document.getElementById("win-attempts").textContent = attempts;
         document.getElementById("win-time").textContent = `${solveTime}s`;
+
+        // Animate total cash too
+        animateCountUp("win-total-cash", stats.totalCash, 2000);
         document.getElementById(
           "win-total-cash"
         ).textContent = `$${new Intl.NumberFormat("en-US").format(
@@ -1878,19 +2070,17 @@
         const barsHTML = stats.guessDistribution
           .map((count, idx) => {
             const percentage = (count / maxGuesses) * 100;
-            const width = Math.max(percentage, 10); // Minimum 10%
+            const width = Math.max(percentage, 10);
             const isCurrent = idx === attempts - 1;
             return `
-                  <div class="distribution-row">
-                      <div class="distribution-label">${idx + 1}</div>
-                      <div class="distribution-bar ${
-                        isCurrent ? "current" : ""
-                      }"
-                           style="width: ${width}%">
-                          ${count}
-                      </div>
-                  </div>
-              `;
+        <div class="distribution-row">
+          <div class="distribution-label">${idx + 1}</div>
+          <div class="distribution-bar ${isCurrent ? "current" : ""}"
+               style="width: ${width}%">
+            ${count}
+          </div>
+        </div>
+      `;
           })
           .join("");
 
