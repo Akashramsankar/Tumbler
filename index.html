@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -27,6 +28,9 @@
             --key-bg: #334155;
             --key-text: #e2e8f0;
             --key-disabled: #0f172a; /* NEW: Darker shade for disabled keys */
+            
+            /* NEW: Cash Color */
+            --color-cash: #00ff6a;
         }
 
         * { box-sizing: border-box; }
@@ -115,6 +119,30 @@
             max-width: 400px;
             width: 90%;
             box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+            text-align: center; /* Center content in modal */
+        }
+
+        /* NEW: Stash Display */
+        .stash-display {
+            background: var(--safe-inset);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            border: 1px solid var(--safe-border);
+        }
+        
+        .stash-label {
+            font-size: 0.9rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            margin-bottom: 5px;
+        }
+        
+        .stash-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--color-cash);
+            text-shadow: 0 0 10px rgba(0, 255, 106, 0.4);
         }
 
         .stats-grid {
@@ -122,6 +150,8 @@
             grid-template-columns: repeat(3, 1fr);
             gap: 15px;
             margin: 20px 0;
+            padding-top: 15px;
+            border-top: 1px solid var(--safe-border);
         }
 
         .stat-item {
@@ -152,7 +182,7 @@
             margin-top: 20px;
         }
 
-        /* HOW TO PLAY MODAL */
+        /* HOW TO PLAY MODAL (No changes here) */
         .tutorial-modal {
             display: none;
             position: fixed;
@@ -461,7 +491,7 @@
             box-shadow: 0 3px 0 #0f172a;
             position: relative;
             font-size: 1rem;
-            transition: opacity 0.1s, transform 0.1s, background-color 0.3s; /* Added opacity transition */
+            transition: opacity 0.1s, transform 0.1s, background-color 0.3s;
         }
         
         .key:active { transform: translateY(3px); box-shadow: none; }
@@ -484,18 +514,18 @@
             font-weight: 700;
         }
 
-        .key.wide { flex: 1.5; font-size: 0.8rem; }
+        /* MODIFIED: Increased flex to make Backspace/Enter larger */
+        .key.wide { flex: 2.2; font-size: 1.2rem; }
         .key.wide::after { content: ''; }
 
-        /* Key States - ONLY GREEN lights up now */
+        /* Key States */
         .key.correct { 
             background-color: var(--color-correct); 
             color: #fff; 
             border: 1px solid rgba(255,255,255,0.2); 
-            opacity: 1 !important; /* Ensure correct keys are never dimmed */
+            opacity: 1 !important;
             pointer-events: auto !important;
         }
-        /* No styling for .close or .far on keyboard as requested */
 
 
         /* --- LEGEND --- */
@@ -621,7 +651,13 @@
 
     <div id="stats-modal" class="stats-modal">
         <div class="stats-content">
-            <h2 style="margin-top:0; text-align:center;">Your Stats</h2>
+            <h2 style="margin-top:0; text-align:center;">Your Stash & Stats</h2>
+            
+            <div class="stash-display">
+                <div class="stash-label">Total Stash Value</div>
+                <div class="stash-value" id="stat-total-cash">$0</div>
+            </div>
+
             <div class="stats-grid">
                 <div class="stat-item">
                     <div class="stat-value" id="stat-played">0</div>
@@ -654,56 +690,110 @@
     <div id="keyboard"></div>
 
 <script>
-    const WORD_LIST = [
-        "HAWK", "LION", "WOLF", "CART", "JUMP", "FISH", "BIRD", "CODE", "LOCK", "KEYS",
-        "READ", "BLUE", "SOUL", "DARK", "MIND", "TIME", "PLAY", "GAME", "LOVE", "HOPE"
-    ];
-
-    const TARGET_WORD = WORD_LIST[Math.floor(Math.random() * WORD_LIST.length)];
+    // --- CONFIGURATION ---
     const WORD_LENGTH = 4;
     const MAX_TRIES = 6;
     const ASCII_A = 65;
     const ASCII_Z = 90;
-    const CLOSE_DISTANCE = 9;   // Yellow -> within 1-9 letters
-    const FAR_DISTANCE = 10;    // Red -> skip 10 letters (guess + nine following)
+    const CLOSE_DISTANCE = 9;   
+    const FAR_DISTANCE = 10;    
+    const GAME_EPOCH = new Date("January 1, 2024 00:00:00"); 
+    
+    // CASH CALCULATION CONSTANTS
+    const CASH_BASE_VALUE = 10000;
+    const CASH_ATTEMPT_PENALTY = 1000;
+    const CASH_SPEED_BONUS_CAP = 60; // seconds
+    const CASH_PER_SECOND_BONUS = 20;
+    const CASH_MINIMUM_PAYOUT = 500;
 
+    // --- STATE VARIABLES ---
+    let TARGET_WORD = ""; 
     let currentRow = 0;
     let currentTile = 0;
     let guesses = Array(6).fill(null).map(() => Array(4).fill(""));
     let isGameOver = false;
     let startTime = Date.now();
     
-    // NEW: Tracks the valid alphabet range (ASCII 65=A, 90=Z) for each slot.
+    let dictionary = new Set(); 
+    let answerList = [];        
     let slotConstraints = [];
-
-    function resetSlotConstraints() {
-        slotConstraints = Array.from({ length: WORD_LENGTH }, () => ({
-            min: ASCII_A,
-            max: ASCII_Z
-        }));
-    }
 
     const board = document.getElementById('game-board');
     const keyboardContainer = document.getElementById('keyboard');
     const messageContainer = document.getElementById('message-container');
 
-    // Load stats from localStorage
-    let stats = JSON.parse(localStorage.getItem('tumblerStats') || '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0]}');
+    // Load stats from localStorage, including NEW: totalCash
+    let stats = JSON.parse(localStorage.getItem('tumblerStats') || '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}');
 
-    function initGame() {
-        console.log("Target Word:", TARGET_WORD);
-        resetSlotConstraints();
-        createBoard();
-        createKeyboard();
-        document.addEventListener('keydown', handleKeydown);
-        updateActiveRow();
-        updateKeyboardVisuals(); // Initial call to ensure all keys are enabled
-        
-        // Show tutorial on first visit
-        if (!localStorage.getItem('tumblerTutorialSeen')) {
-            showTutorial();
-            localStorage.setItem('tumblerTutorialSeen', 'true');
+    async function initGame() {
+        try {
+            await loadDictionaries(); 
+            
+            TARGET_WORD = getDailyWord();
+            
+            resetSlotConstraints();
+            createBoard();
+            createKeyboard();
+            document.addEventListener('keydown', handleKeydown);
+            updateActiveRow();
+            updateKeyboardVisuals(); 
+            
+            if (!localStorage.getItem('tumblerTutorialSeen')) {
+                showTutorial();
+                localStorage.setItem('tumblerTutorialSeen', 'true');
+            }
+        } catch (error) {
+            console.error("Game Initialization Error:", error);
+            showMessage("Error loading word lists. Please refresh.");
         }
+    }
+
+    async function loadDictionaries() {
+        const dictResponse = await fetch('4-letter-words.json');
+        const dictData = await dictResponse.json();
+        dictionary = new Set(dictData.map(w => w.toUpperCase()));
+
+        const answersResponse = await fetch('Common-used.json');
+        const answersData = await answersResponse.json();
+        answerList = answersData.map(w => w.toUpperCase());
+    }
+
+    function getDailyWord() {
+        if (answerList.length === 0) return "LOVE"; 
+
+        const now = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
+        
+        const currentMidnight = new Date(now).setHours(0,0,0,0);
+        const epochMidnight = new Date(GAME_EPOCH).setHours(0,0,0,0);
+        
+        const timeDiff = currentMidnight - epochMidnight;
+        const daysPassed = Math.floor(timeDiff / msPerDay);
+        
+        const index = daysPassed % answerList.length;
+        
+        const safeIndex = index < 0 ? index + answerList.length : index;
+        return answerList[safeIndex];
+    }
+    
+    // NEW: Function to calculate cash prize
+    function calculateCash(attempts, timeInSeconds) {
+        // Base value less penalty for attempts
+        let cash = CASH_BASE_VALUE - (attempts * CASH_ATTEMPT_PENALTY);
+
+        // Add speed bonus (capped at 60 seconds)
+        const timeFactor = Math.max(0, CASH_SPEED_BONUS_CAP - timeInSeconds);
+        cash += (timeFactor * CASH_PER_SECOND_BONUS);
+        
+        // Ensure minimum payout
+        return Math.max(CASH_MINIMUM_PAYOUT, cash);
+    }
+    
+    function resetSlotConstraints() {
+        slotConstraints = Array.from({ length: WORD_LENGTH }, () => ({
+            min: ASCII_A,
+            max: ASCII_Z
+        }));
     }
 
     function createBoard() {
@@ -745,14 +835,12 @@
         button.classList.add('key');
         if (className) button.classList.add(className);
         if (!className && content.length === 1) {
-            // Store the A=1, B=2, Z=26 value for comparison
             button.setAttribute('data-value', content.charCodeAt(0) - ASCII_A + 1); 
         }
         return button;
     }
 
     function createKeyboard() {
-        // ... (Keyboard structure remains the same) ...
         const rows = [
             "ABCDEFGHIJ",
             "KLMNOPQRST",
@@ -788,14 +876,12 @@
         });
     }
 
-    // NEW FUNCTION: Updates the keyboard appearance based on constraints for the current tile
     function updateKeyboardVisuals() {
-        // If row is complete or game is over, keep all keys active (unless already 'correct')
         if (isGameOver || currentRow >= MAX_TRIES) return;
         
         if (currentTile >= WORD_LENGTH) {
              document.querySelectorAll('.key').forEach(k => {
-                k.removeAttribute('data-disabled'); // Re-enable all (except correct ones) for submit focus
+                k.removeAttribute('data-disabled'); 
             });
             return;
         }
@@ -804,47 +890,38 @@
         if (!range) return;
 
         document.querySelectorAll('.key').forEach(key => {
-            // Only check alphabet keys
             if (key.classList.contains('wide') || key.classList.contains('correct')) return;
 
-            // Use the ASCII value for comparison (A=65, B=66...)
             const keyVal = key.textContent.charCodeAt(0);
 
             if (keyVal < range.min || keyVal > range.max) {
-                // INVALID KEY: Disable and dim
                 key.setAttribute('data-disabled', 'true');
             } else {
-                // VALID KEY: Enable
                 key.removeAttribute('data-disabled');
             }
         });
     }
 
-
     function addLetter(letter) {
         if (isGameOver) return;
         if (currentTile >= WORD_LENGTH) return; 
         
-        // Check if the letter is currently disabled by constraints
         const keyEl = document.getElementById(`key-${letter}`);
         if(keyEl && keyEl.hasAttribute('data-disabled')) {
             showMessage("Invalid letter for this position!");
+            shakeRow();
             return;
         }
 
         guesses[currentRow][currentTile] = letter;
         const tile = document.getElementById(`row-${currentRow}-tile-${currentTile}`);
         
-        if (!tile) {
-            console.error('Tile not found:', currentRow, currentTile);
-            return;
-        }
+        if (!tile) return;
         
         tile.querySelector('.letter').textContent = letter;
         tile.setAttribute('data-status', 'filled');
         currentTile++;
         
-        // NEW: Update keyboard for the next tile immediately
         updateKeyboardVisuals(); 
     }
 
@@ -857,7 +934,6 @@
             tile.querySelector('.letter').textContent = "";
             tile.removeAttribute('data-status');
             
-            // NEW: Update keyboard for the now-active tile
             updateKeyboardVisuals(); 
         }
     }
@@ -867,12 +943,30 @@
         setTimeout(() => messageContainer.innerHTML = '', 2000);
     }
 
+    function shakeRow() {
+        const row = document.getElementById(`row-${currentRow}`);
+        row.style.transform = "translateX(5px)";
+        setTimeout(() => row.style.transform = "translateX(-5px)", 100);
+        setTimeout(() => row.style.transform = "translateX(5px)", 200);
+        setTimeout(() => row.style.transform = "translateX(0)", 300);
+    }
+
     function submitGuess() {
         if (isGameOver) return;
+        
         if (currentTile < WORD_LENGTH) {
             showMessage("Need full combination!");
+            shakeRow();
             return;
         }
+
+        const currentWord = guesses[currentRow].join("");
+        if (!dictionary.has(currentWord)) {
+            showMessage("Not in word list!");
+            shakeRow();
+            return;
+        }
+
         evaluateGuess(guesses[currentRow]);
     }
 
@@ -885,8 +979,8 @@
             const indicator = tile.querySelector('.indicator');
             const letter = guessArr[i];
             
-            const guessVal = letter.charCodeAt(0); // ASCII 65-90
-            const targetVal = targetArr[i].charCodeAt(0); // ASCII 65-90
+            const guessVal = letter.charCodeAt(0); 
+            const targetVal = targetArr[i].charCodeAt(0); 
             const diff = targetVal - guessVal;
             
             const key = document.getElementById(`key-${letter}`);
@@ -922,7 +1016,21 @@
 
         setTimeout(() => {
             if (correctCount === WORD_LENGTH) {
-                // ... (Win animation code remains the same) ...
+                
+                const solveTime = Math.floor((Date.now() - startTime) / 1000);
+                const cashWon = calculateCash(currentRow + 1, solveTime);
+
+                // Update Stats
+                stats.played++;
+                stats.won++;
+                stats.currentStreak++;
+                stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+                stats.guessDistribution[currentRow]++;
+                // NEW: Update Total Cash
+                stats.totalCash += cashWon;
+                localStorage.setItem('tumblerStats', JSON.stringify(stats));
+                
+                // Win Animation
                 const currentRowEl = document.getElementById(`row-${currentRow}`);
                 currentRowEl.style.borderColor = "#6aaa64";
                 currentRowEl.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
@@ -936,15 +1044,8 @@
                 }
                 
                 setTimeout(() => {
-                    const solveTime = Math.floor((Date.now() - startTime) / 1000);
-                    stats.played++;
-                    stats.won++;
-                    stats.currentStreak++;
-                    stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
-                    stats.guessDistribution[currentRow]++;
-                    localStorage.setItem('tumblerStats', JSON.stringify(stats));
-                    
-                    showMessage(`🎉 VAULT BREACHED in ${currentRow + 1}! Time: ${solveTime}s 🎉`);
+                    const cashString = new Intl.NumberFormat('en-US').format(cashWon);
+                    showMessage(`💰 VAULT BREACHED! You stole $${cashString}.`);
                 }, 400);
                 
                 isGameOver = true;
@@ -953,7 +1054,6 @@
                     currentRow++;
                     currentTile = 0;
                     updateActiveRow();
-                    // NEW: Update keyboard for the new, first tile of the next row
                     updateKeyboardVisuals(); 
                 } else {
                     stats.played++;
@@ -1012,11 +1112,15 @@
         }
     }
     
-    // ... (Modal functions remain the same) ...
+    // MODIFIED: Show Stats now displays total cash
     function showStats() {
         const modal = document.getElementById('stats-modal');
         modal.style.display = 'flex';
         
+        // Format cash for display
+        const totalCashString = new Intl.NumberFormat('en-US').format(stats.totalCash);
+
+        document.getElementById('stat-total-cash').textContent = `$${totalCashString}`;
         document.getElementById('stat-played').textContent = stats.played;
         document.getElementById('stat-winrate').textContent = stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
         document.getElementById('stat-streak').textContent = stats.currentStreak;
@@ -1034,7 +1138,6 @@
         document.getElementById('tutorial-modal').style.display = 'none';
     }
 
-    // Close modal on outside click
     document.getElementById('stats-modal').addEventListener('click', (e) => {
         if (e.target.id === 'stats-modal') closeStats();
     });
