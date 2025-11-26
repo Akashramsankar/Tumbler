@@ -1081,6 +1081,13 @@
 
           TARGET_WORD = getDailyWord();
 
+          // ADD THIS CHECK
+          if (hasPlayedToday()) {
+            // Show the completed game state
+            loadCompletedGame();
+            return; // Exit early, don't allow new game
+          }
+
           resetSlotConstraints();
           createBoard();
           createKeyboard();
@@ -1159,11 +1166,32 @@
       // Save today's game state
       function saveTodayGame(attempts, cashWon, gameGrid) {
         const puzzleNum = getPuzzleNumber();
+
+        // Save the actual game grid for display
+        const gridState = [];
+        for (let r = 0; r < attempts; r++) {
+          const rowState = [];
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tile = document.getElementById(`row-${r}-tile-${c}`);
+            rowState.push({
+              letter: tile.querySelector(".letter").textContent,
+              status: tile.classList.contains("correct")
+                ? "correct"
+                : tile.classList.contains("close")
+                ? "close"
+                : tile.classList.contains("far")
+                ? "far"
+                : "",
+            });
+          }
+          gridState.push(rowState);
+        }
+
         const gameData = {
           puzzleNumber: puzzleNum,
           attempts: attempts,
           cashWon: cashWon,
-          grid: gameGrid,
+          grid: gridState,
           timestamp: Date.now(),
         };
         localStorage.setItem("tumblerTodayGame", JSON.stringify(gameData));
@@ -1175,6 +1203,71 @@
         if (!saved) return false;
         const data = JSON.parse(saved);
         return data.puzzleNumber === getPuzzleNumber();
+      }
+
+      function loadCompletedGame() {
+        const saved = localStorage.getItem("tumblerTodayGame");
+        if (!saved) return;
+
+        const gameData = JSON.parse(saved);
+
+        // Disable input
+        isGameOver = true;
+        currentRow = gameData.attempts;
+
+        // Create board
+        createBoard();
+
+        // Recreate the completed game state
+        if (gameData.grid && gameData.grid.length > 0) {
+          gameData.grid.forEach((row, rowIndex) => {
+            row.forEach((tileData, colIndex) => {
+              const tile = document.getElementById(
+                `row-${rowIndex}-tile-${colIndex}`
+              );
+              if (tile && tileData.letter) {
+                tile.querySelector(".letter").textContent = tileData.letter;
+                tile.setAttribute("data-status", "filled");
+                tile.classList.add("evaluated");
+
+                if (tileData.status) {
+                  tile.classList.add(tileData.status);
+
+                  // Add visual indicators
+                  if (tileData.status === "correct") {
+                    const key = document.getElementById(
+                      `key-${tileData.letter}`
+                    );
+                    if (key) key.classList.add("correct");
+                  }
+                }
+              }
+            });
+          });
+
+          // Highlight the winning row
+          const winRow = document.getElementById(
+            `row-${gameData.attempts - 1}`
+          );
+          if (winRow) {
+            winRow.style.borderColor = "#6aaa64";
+            winRow.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
+          }
+        }
+
+        // Show completion message
+        const puzzleNum = getPuzzleNumber();
+        const cashString = new Intl.NumberFormat("en-US").format(
+          gameData.cashWon
+        );
+        showMessage(
+          `✅ Tumbler #${puzzleNum} already cracked! You stole $${cashString}`
+        );
+
+        // Auto-show the win modal after a delay
+        setTimeout(() => {
+          showWinModal(gameData.attempts, gameData.cashWon, 0);
+        }, 2500);
       }
 
       function generateShareText(attempts, cashWon) {
