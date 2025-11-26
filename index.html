@@ -1493,15 +1493,13 @@
         if (!range) return;
 
         document.querySelectorAll(".key").forEach((key) => {
-          if (
-            key.classList.contains("wide") ||
-            key.classList.contains("correct")
-          )
-            return;
+          if (key.classList.contains("wide")) return;
 
           const keyVal = key.textContent.charCodeAt(0);
+          const isOutOfRange = keyVal < range.min || keyVal > range.max;
 
-          if (keyVal < range.min || keyVal > range.max) {
+          // NEW: Even correct (green) keys get disabled if out of range for current position
+          if (isOutOfRange) {
             key.setAttribute("data-disabled", "true");
           } else {
             key.removeAttribute("data-disabled");
