@@ -1058,7 +1058,7 @@
         .fill(null)
         .map(() => Array(4).fill(""));
       let isGameOver = false;
-      let startTime = Date.now();
+      let startTime = null;
       let timerInterval = null;
 
       let dictionary = new Set();
@@ -1095,7 +1095,15 @@
           updateActiveRow();
           updateKeyboardVisuals();
 
-          startTimer();
+          // Check if first time user
+          if (!localStorage.getItem("tumblerTutorialSeen")) {
+            showTutorial();
+            localStorage.setItem("tumblerTutorialSeen", "true");
+            // Timer will start when they close tutorial
+          } else {
+            // Returning user - start timer immediately
+            startTimer();
+          }
 
           if (!localStorage.getItem("tumblerTutorialSeen")) {
             showTutorial();
@@ -1110,6 +1118,7 @@
       function startTimer() {
         const timerElement = document.getElementById("timer");
         const timerDisplay = document.querySelector(".timer-display");
+        startTime = Date.now();
 
         timerInterval = setInterval(() => {
           if (isGameOver) {
@@ -1798,6 +1807,10 @@
 
       function closeTutorial() {
         document.getElementById("tutorial-modal").style.display = "none";
+        // Start timer when first-time user closes tutorial
+        if (!timerInterval) {
+          startTimer();
+        }
       }
 
       document.getElementById("stats-modal").addEventListener("click", (e) => {
