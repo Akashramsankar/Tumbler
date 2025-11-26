@@ -123,6 +123,19 @@
         align-items: center;
       }
 
+      .tutorial-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
       .stats-modal.active {
         pointer-events: auto; /* ADD THIS - enables clicks when visible */
       }
@@ -267,101 +280,149 @@
       }
 
       /* HOW TO PLAY MODAL (No changes here) */
-      .tutorial-modal {
-        display: none;
-        position: fixed;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        background: rgba(0, 0, 0, 0.9);
-        z-index: 1001;
-        justify-content: center;
-        align-items: center;
-      }
-
+      /* --- PREMIUM MISSION MODAL --- */
       .tutorial-content {
-        background: var(--safe-body);
-        padding: 30px;
-        border-radius: 16px;
-        max-width: 500px;
+        /* Glass/Metal Heist Look */
+        background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 0 1px #0f172a, 0 20px 50px rgba(0, 0, 0, 0.9);
+        padding: 24px;
+        max-width: 420px;
         width: 90%;
-        max-height: 80vh;
-        overflow-y: auto;
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-      }
-
-      .tutorial-content h2 {
-        margin-top: 0;
-        text-align: center;
-        color: var(--color-correct);
-      }
-
-      .tutorial-content p {
-        line-height: 1.6;
-        color: #cbd5e1;
-        margin: 15px 0;
-      }
-
-      .example-row {
-        display: flex;
-        gap: 10px;
-        justify-content: center;
-        margin: 20px 0;
-      }
-
-      .example-tile {
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        background: radial-gradient(circle at 30% 30%, #475569, #1e293b);
-        border: 2px solid #334155;
+        border-radius: 16px;
+        max-height: 90vh;
         display: flex;
         flex-direction: column;
-        justify-content: center;
-        align-items: center;
-        font-size: 1.5rem;
-        font-weight: 700;
-        color: #cbd5e1;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Add a subtle top highlight */
+      .tutorial-content::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+      }
+
+      .mission-header {
+        text-align: center;
+        margin-bottom: 20px;
         position: relative;
       }
 
-      .example-tile.correct {
-        border-color: var(--color-correct);
-        color: var(--color-correct);
-      }
-
-      .example-tile.close {
-        border-color: var(--color-close);
-        color: var(--color-close);
-      }
-
-      .example-tile.far {
-        border-color: var(--color-far);
-        color: var(--color-far);
-      }
-
-      .example-arrow {
-        font-size: 0.7rem;
-        margin-top: 2px;
-        color: inherit;
-      }
-
-      .tutorial-btn {
-        background: var(--color-correct);
+      .mission-title {
         color: #fff;
-        border: none;
-        padding: 12px 24px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: 700;
-        width: 100%;
-        margin-top: 20px;
-        font-size: 1rem;
+        font-family: serif;
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
       }
 
+      .mission-subtitle {
+        color: var(--color-correct); /* Green */
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        font-weight: 700;
+        opacity: 0.9;
+        margin-top: 5px;
+      }
+
+      /* Recessed panel for examples */
+      .example-set {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px 10px;
+        background: rgba(0, 0, 0, 0.3); /* Darker recess */
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+      }
+
+      .example-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        flex: 1;
+      }
+
+      .example-caption {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        line-height: 1.3;
+        font-family: "Chivo Mono", monospace;
+      }
+
+      /* Information Grid */
+      .rule-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 25px;
+        padding: 0 5px;
+      }
+
+      .rule-line {
+        display: flex;
+        align-items: flex-start; /* Align top */
+        gap: 12px;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+        line-height: 1.4;
+      }
+
+      .icon-box {
+        color: var(--key-text);
+        min-width: 20px;
+        font-size: 1rem;
+        text-align: center;
+        margin-top: 1px; /* Optical alignment */
+      }
+
+      /* --- THE NEW BUTTON (Green Tile Style) --- */
+      .tutorial-btn {
+        background-color: var(--color-correct); /* #6aaa64 */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 16px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        /* 3D Key Effect */
+        box-shadow: 0 4px 0 #538d4e, 0 5px 10px rgba(0, 0, 0, 0.3);
+        transition: all 0.1s ease;
+        width: 100%;
+        margin-top: auto;
+        font-family: "Chivo Mono", monospace;
+      }
+
+      /* Better Hover: Brightens slightly, no color swap */
       .tutorial-btn:hover {
-        background: #5a9455;
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+
+      /* Active: Pressed down effect */
+      .tutorial-btn:active {
+        transform: translateY(4px);
+        box-shadow: 0 0 0 #538d4e; /* Shadow disappears */
       }
 
       .help-icon {
@@ -986,66 +1047,71 @@
 
     <div id="tutorial-modal" class="tutorial-modal">
       <div class="tutorial-content">
-        <h2>🔐 How To Play</h2>
+        <div class="mission-header">
+          <h2 class="mission-title">Mission Briefing</h2>
+          <div class="mission-subtitle">Crack the 4-Letter Code</div>
+        </div>
 
-        <p><strong>Crack the safe by guessing the 4-letter code!</strong></p>
-
-        <p>Each guess shows you how close you are:</p>
-
-        <div style="margin: 20px 0">
-          <p style="margin-bottom: 10px">
-            <strong>Example:</strong> If the code is <strong>LOCK</strong>
-          </p>
-
-          <div class="example-row">
-            <div class="example-tile correct">
-              L
-              <div class="example-arrow">🔓</div>
-            </div>
-            <div class="example-tile close">
-              P
-              <div class="example-arrow">▼</div>
-            </div>
-            <div class="example-tile far">
-              B
-              <div class="example-arrow">▼▼</div>
-            </div>
-            <div class="example-tile close">
-              N
-              <div class="example-arrow">▲</div>
+        <div class="example-set">
+          <div class="example-item">
+            <div class="example-tile correct">C</div>
+            <div class="example-caption">
+              <strong style="color: var(--color-correct)">LOCKED</strong
+              ><br />Correct Letter
             </div>
           </div>
 
-          <ul style="text-align: left; color: #cbd5e1; line-height: 1.8">
-            <li>
-              <span style="color: var(--color-correct)">🔓 Green</span> =
-              Correct letter, locked in!
-            </li>
-            <li>
-              <span style="color: var(--color-close)">▼ Yellow</span> = Close
-              (1-9 letters away)
-            </li>
-            <li>
-              <span style="color: var(--color-far)">▼▼ Red</span> = Far (10+
-              letters away)
-            </li>
-            <li><strong>▲ = Go higher</strong> in the alphabet</li>
-            <li><strong>▼ = Go lower</strong> in the alphabet</li>
-          </ul>
+          <div class="example-item">
+            <div class="example-tile close">
+              J
+              <div class="example-arrow">▲</div>
+            </div>
+            <div class="example-caption">
+              <strong style="color: var(--color-close)">CLOSE</strong
+              ><br />Within 9
+            </div>
+          </div>
+
+          <div class="example-item">
+            <div class="example-tile far">
+              Z
+              <div class="example-arrow">▼▼</div>
+            </div>
+            <div class="example-caption">
+              <strong style="color: var(--color-far)">FAR</strong><br />10+ Away
+            </div>
+          </div>
         </div>
 
-        <p>
-          <strong>💡 Pro Tip:</strong> Use the numbers on each key (A=1, B=2,
-          Z=26) to navigate faster! **The keyboard will now automatically dim
-          letters that are mathematically impossible based on previous clues!**
-        </p>
+        <div class="rule-grid">
+          <div class="rule-line">
+            <div class="icon-box">🎯</div>
+            <div>Guess the secret word in <strong>6 attempts</strong>.</div>
+          </div>
 
-        <p>
-          You have <strong>6 attempts</strong> to crack the safe. Good luck! 🎯
-        </p>
+          <div class="rule-line">
+            <div class="icon-box">↕️</div>
+            <div>
+              <strong>Follow the Arrows:</strong> They point towards the
+              answer.<br />
+              <span style="font-size: 0.8rem; color: #94a3b8">
+                (e.g. <strong>▲</strong> means the real letter is
+                <em>Higher</em> in the alphabet)
+              </span>
+            </div>
+          </div>
+
+          <div class="rule-line">
+            <div class="icon-box">⌨️</div>
+            <div>
+              <strong>Intel Assist:</strong> Impossible keys are automatically
+              disabled to help you.
+            </div>
+          </div>
+        </div>
 
         <button class="tutorial-btn" onclick="closeTutorial()">
-          Start Cracking! 🔓
+          START CRACKING
         </button>
       </div>
     </div>
