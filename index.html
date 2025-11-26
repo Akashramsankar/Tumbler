@@ -1331,6 +1331,11 @@
           '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
       );
 
+      // Ensure totalCash exists (for users upgrading from old version)
+      if (typeof stats.totalCash !== "number") {
+        stats.totalCash = 0;
+      }
+
       // ==================== WIN ANIMATIONS ====================
       function createConfetti() {
         const colors = ["#6aaa64", "#c9b458", "#00ff6a", "#f8fafc", "#fbbf24"];
@@ -2095,8 +2100,9 @@
         modal.style.display = "flex";
 
         // Format cash for display
+        const safeTotalCash = stats.totalCash || 0;
         const totalCashString = new Intl.NumberFormat("en-US").format(
-          stats.totalCash
+          safeTotalCash
         );
 
         document.getElementById(
@@ -2114,6 +2120,10 @@
         const modal = document.getElementById("win-modal");
         modal.style.display = "flex";
 
+        // Ensure cashWon is a valid number
+        const safeCashWon = cashWon || 0;
+        const safeTotalCash = stats.totalCash || 0;
+
         // Animate the cash counter
         animateCountUp("win-cash-earned", cashWon, 2000);
 
@@ -2124,7 +2134,7 @@
         document.getElementById("win-time").textContent = `${solveTime}s`;
 
         // Animate total cash too
-        animateCountUp("win-total-cash", stats.totalCash, 2000);
+        animateCountUp("win-total-cash", safeTotalCash, 2000);
         document.getElementById(
           "win-total-cash"
         ).textContent = `$${new Intl.NumberFormat("en-US").format(
