@@ -446,6 +446,48 @@
         background: #475569;
       }
 
+      .countdown-display {
+        background: var(--safe-inset);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        border: 1px solid var(--safe-border);
+        text-align: center;
+        width: 100%;
+        max-width: 350px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .countdown-label {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+      }
+
+      .countdown-timer {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--color-cash);
+        font-family: "Chivo Mono", monospace;
+        text-shadow: 0 0 10px rgba(0, 255, 106, 0.3);
+      }
+
+      .streak-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(239, 68, 68, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #fbbf24;
+        margin-top: 10px;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+      }
+
       /* --- GAME BOARD --- */
       #game-board {
         position: relative;
@@ -762,11 +804,13 @@
       }
 
       #message-container {
-        height: 30px;
+        min-height: 30px;
         display: flex;
         justify-content: center;
         align-items: center;
         margin-bottom: 5px;
+        width: 100%;
+        max-width: 500px;
       }
       .toast {
         background: #f8fafc;
@@ -1606,19 +1650,86 @@
           }
         }
 
-        // Show completion message
-        const puzzleNum = getPuzzleNumber();
-        const cashString = new Intl.NumberFormat("en-US").format(
-          gameData.cashWon
-        );
-        showMessage(
-          `✅ Tumbler #${puzzleNum} already cracked! You stole $${cashString}`
-        );
+        // NEW: Show countdown to next puzzle
+        showCountdownMessage(gameData);
 
         // Auto-show the win modal after a delay
         setTimeout(() => {
           showWinModal(gameData.attempts, gameData.cashWon, 0);
         }, 2500);
+      }
+
+      // NEW: Show countdown and streak when game already played
+      // NEW: Show countdown and streak when game already played
+      function showCountdownMessage(gameData) {
+        const puzzleNum = getPuzzleNumber();
+        const cashString = new Intl.NumberFormat("en-US").format(
+          gameData.cashWon
+        );
+
+        // Calculate time until next puzzle
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        const msUntilTomorrow = tomorrow - now;
+
+        const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
+        const minutes = Math.floor(
+          (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+        );
+        const seconds = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
+
+        // Create a container ABOVE the game board
+        const countdownContainer = document.createElement("div");
+        countdownContainer.id = "countdown-container";
+        countdownContainer.style.cssText =
+          "width: 100%; display: flex; justify-content: center; margin-bottom: 15px;";
+
+        countdownContainer.innerHTML = `
+    <div class="countdown-display">
+      <div class="countdown-label">✅ Tumbler #${puzzleNum} Cracked!</div>
+      <div style="font-size: 1.2rem; color: var(--color-cash); margin: 10px 0;">
+        💰 $${cashString} Stolen
+      </div>
+      <div class="countdown-label" style="margin-top: 15px;">Next Heist Available In</div>
+      <div class="countdown-timer" id="live-countdown">
+        ${String(hours).padStart(2, "0")}:${String(minutes).padStart(
+          2,
+          "0"
+        )}:${String(seconds).padStart(2, "0")}
+      </div>
+      <div class="streak-badge">
+        🔥 ${stats.currentStreak} Day Streak
+      </div>
+    </div>
+  `;
+
+        // Insert BEFORE the game board
+        const gameBoard = document.getElementById("game-board");
+        gameBoard.parentNode.insertBefore(countdownContainer, gameBoard);
+
+        // Update countdown every second
+        setInterval(() => {
+          const now = new Date();
+          const tomorrow = new Date(now);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          const msUntilTomorrow = tomorrow - now;
+
+          const h = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
+          const m = Math.floor(
+            (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+          );
+          const s = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
+
+          const countdownEl = document.getElementById("live-countdown");
+          if (countdownEl) {
+            countdownEl.textContent = `${String(h).padStart(2, "0")}:${String(
+              m
+            ).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+          }
+        }, 1000);
       }
 
       function generateShareText(attempts, cashWon) {
@@ -1630,12 +1741,13 @@
         shareText += `💰 Stole: $${new Intl.NumberFormat("en-US").format(
           safeCashWon
         )}\n`;
-        shareText += `💼 Total: $${new Intl.NumberFormat("en-US").format(
+        shareText += `🔥 Streak: ${stats.currentStreak} days\n`;
+        shareText += `💼 Total Stash: $${new Intl.NumberFormat("en-US").format(
           totalCash
         )}\n\n`;
 
         // Generate grid with simple arrows and locks
-        for (let r = 0; r <= attempts; r++) {
+        for (let r = 0; r < attempts; r++) {
           for (let c = 0; c < WORD_LENGTH; c++) {
             const tile = document.getElementById(`row-${r}-tile-${c}`);
             if (!tile) continue;
@@ -1651,6 +1763,8 @@
           }
           shareText += "\n";
         }
+
+        shareText += `\nPlay: https://akashramsankar.github.io/Tumbler/`;
 
         return shareText;
       }
@@ -1709,29 +1823,29 @@
       }
 
       function getDailyWord() {
-  const now = new Date();
-  const msPerDay = 24 * 60 * 60 * 1000;
-  
-  const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
-  const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
-  
-  const timeDiff = currentMidnight - epochMidnight;
-  const daysPassed = Math.floor(timeDiff / msPerDay);
-  
-  // MANUAL WORD LIST - Add your daily words here
-  const manualWords = [
-    "ROCK",  // Day 2 (Nov 27, 2025)
-    "SOUL",  // Day 3 (Nov 28, 2025)
-    "FIRE",  // Day 4 (Nov 29, 2025)
-    "THIS",  // Day 5 (Nov 30, 2025)
-    // Add more words for each day...
-  ];
-  
-  const index = daysPassed % manualWords.length;
-  const safeIndex = index < 0 ? index + manualWords.length : index;
-  
-  return manualWords[safeIndex];
-}
+        const now = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
+
+        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
+        const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
+
+        const timeDiff = currentMidnight - epochMidnight;
+        const daysPassed = Math.floor(timeDiff / msPerDay);
+
+        // MANUAL WORD LIST - Add your daily words here
+        const manualWords = [
+          "ROCK", // Day 2 (Nov 27, 2025)
+          "SOUL", // Day 3 (Nov 28, 2025)
+          "FIRE", // Day 4 (Nov 29, 2025)
+          "THIS", // Day 5 (Nov 30, 2025)
+          // Add more words for each day...
+        ];
+
+        const index = daysPassed % manualWords.length;
+        const safeIndex = index < 0 ? index + manualWords.length : index;
+
+        return manualWords[safeIndex];
+      }
 
       // NEW: Function to calculate cash prize
       function calculateCash(attempts, timeInSeconds) {
@@ -2168,6 +2282,34 @@
           .join("");
 
         document.getElementById("distribution-bars").innerHTML = barsHTML;
+        // ADD THIS - Show countdown in win modal too
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        const msUntilTomorrow = tomorrow - now;
+        const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
+        const minutes = Math.floor(
+          (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+        );
+
+        // Add next puzzle info to modal
+        const distributionBars = document.getElementById("distribution-bars");
+        if (distributionBars && distributionBars.parentElement) {
+          const nextPuzzleInfo = document.createElement("div");
+          nextPuzzleInfo.style.cssText =
+            "margin-top: 20px; padding: 15px; background: rgba(15, 23, 42, 0.6); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05);";
+          nextPuzzleInfo.innerHTML = `
+      <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Next Vault Opens In</div>
+      <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
+        ${hours}h ${minutes}m
+      </div>
+      <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">
+        🔥 Keep your ${stats.currentStreak}-day streak alive!
+      </div>
+    `;
+          distributionBars.parentElement.appendChild(nextPuzzleInfo);
+        }
       }
 
       function closeWinModal() {
