@@ -1538,6 +1538,40 @@
         animation: glow-pulse 1.5s ease-in-out infinite;
       }
 
+      /* Prevent board overflow on short laptop screens */
+      @media (max-height: 900px) {
+        .tile {
+          width: 54px;
+          height: 54px;
+          font-size: 1.6rem;
+        }
+        .row {
+          gap: 12px;
+          padding: 6px;
+        }
+      }
+
+      @media (max-height: 800px) {
+        .tile {
+          width: 50px;
+          height: 50px;
+          font-size: 1.5rem;
+        }
+        .row {
+          gap: 10px;
+        }
+      }
+
+      @media (max-height: 720px) {
+        .tile {
+          width: 46px;
+          height: 46px;
+        }
+        .row {
+          gap: 8px;
+        }
+      }
+
       .legend {
         flex-shrink: 1 !important;
         min-height: 0 !important;
