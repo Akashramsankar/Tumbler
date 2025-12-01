@@ -53,25 +53,24 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        min-height: 100vh;
-        height: auto;
+        height: 100vh;
         margin: 0;
-        padding: 10px;
+        padding: 0;
         user-select: none;
-        overflow-x: hidden;
-        overflow-y: auto;
+        overflow: hidden;
       }
 
       /* --- HEADER --- */
       header {
-        margin-top: 15px;
+        margin-top: 8px;
         text-align: center;
-        margin-bottom: 15px;
+        margin-bottom: 8px;
         border-bottom: 1px solid #334155;
-        padding-bottom: 15px;
+        padding-bottom: 8px;
         width: 100%;
         max-width: 500px;
         position: relative;
+        flex-shrink: 0;
       }
 
       h1 {
@@ -491,17 +490,18 @@
       /* --- GAME BOARD --- */
       #game-board {
         position: relative;
-        padding: 20px;
+        padding: 15px;
         background: var(--safe-body);
         border-radius: 16px;
         box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
           0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--safe-border);
         display: flex;
         flex-direction: column;
-        gap: 10px;
-        margin-bottom: 20px;
+        gap: 8px;
+        margin-bottom: 10px;
         width: 100%;
         max-width: 350px;
+        flex-shrink: 0;
       }
 
       /* Safe Bolts */
@@ -710,6 +710,8 @@
         max-width: 600px;
         padding: 0 5px;
         margin-bottom: 10px;
+        flex-shrink: 0;
+        margin-top: auto;
       }
 
       .key-row {
@@ -785,11 +787,12 @@
         display: flex;
         gap: 15px;
         font-size: 0.75rem;
-        margin-bottom: 15px;
+        margin-bottom: 10px;
         background: rgba(15, 23, 42, 0.8);
         padding: 8px 16px;
         border-radius: 20px;
         border: 1px solid rgba(255, 255, 255, 0.05);
+        flex-shrink: 0;
       }
       .legend-item {
         display: flex;
@@ -1826,20 +1829,23 @@
         const now = new Date();
         const msPerDay = 24 * 60 * 60 * 1000;
 
-        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
-        const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
+        // Use the same LAUNCH_DATE as getPuzzleNumber for consistency
+        const LAUNCH_DATE = new Date("November 26, 2025 00:00:00");
 
-        const timeDiff = currentMidnight - epochMidnight;
+        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
+        const launchMidnight = new Date(LAUNCH_DATE).setHours(0, 0, 0, 0);
+
+        const timeDiff = currentMidnight - launchMidnight;
         const daysPassed = Math.floor(timeDiff / msPerDay);
 
         // MANUAL WORD LIST - Add your daily words here
         const manualWords = [
-          "ROCK", // Day 2 (Nov 27, 2025)
-          "SOUL", // Day 3 (Nov 28, 2025)
-          "FIRE", // Day 4 (Nov 29, 2025)
-          "THIS", // Day 5 (Nov 30, 2025)
-          "OPEN", // Day 6 (Dec 1, 2025)
-          "MINT",
+          "ROCK", // Day 1 (Nov 26, 2025) - Launch Day
+          "SOUL", // Day 2 (Nov 27, 2025)
+          "FIRE", // Day 3 (Nov 28, 2025)
+          "THIS", // Day 4 (Nov 29, 2025)
+          "OPEN", // Day 5 (Nov 30, 2025)
+          "MINT", // Day 6 (Dec 1, 2025)
           "GOLD",
           "SAFE",
           "CODE",
@@ -1853,10 +1859,11 @@
           // Add more words for each day...
         ];
 
-        const index = daysPassed % manualWords.length;
-        const safeIndex = index < 0 ? index + manualWords.length : index;
+        // Ensure daysPassed is non-negative, then wrap around with modulo
+        const adjustedDays = Math.max(0, daysPassed);
+        const index = adjustedDays % manualWords.length;
 
-        return manualWords[safeIndex];
+        return manualWords[index];
       }
 
       // NEW: Function to calculate cash prize
