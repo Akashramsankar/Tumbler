@@ -38,6 +38,12 @@
         --color-cash: #00ff6a;
       }
 
+      @supports (height: 100dvh) {
+        :root {
+          --vh: 1dvh;
+        }
+      }
+
       * {
         box-sizing: border-box;
       }
@@ -53,11 +59,15 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        height: 100vh;
+        height: calc(var(--vh) * 100);
         margin: 0;
         padding: 0;
         user-select: none;
         overflow: hidden;
+      }
+
+      body > * {
+        min-height: 0;
       }
 
       /* --- HEADER --- */
@@ -498,10 +508,10 @@
         display: flex;
         flex-direction: column;
         gap: 8px;
-        margin-bottom: 10px;
+        margin-bottom: 5px;
         width: 100%;
         max-width: 350px;
-        flex-shrink: 0;
+        flex-shrink: 1;
       }
 
       /* Safe Bolts */
@@ -713,16 +723,19 @@
         max-width: 600px;
         padding: 0 5px;
         margin-bottom: 10px;
-        flex-shrink: 0;
+        flex-shrink: 1;
         margin-top: auto;
+        box-sizing: border-box;
       }
 
       .key-row {
         display: flex;
         width: 100%;
+        max-width: 100%;
         margin: 0 auto 6px;
         gap: 4px;
         justify-content: center;
+        box-sizing: border-box;
       }
 
       .key {
@@ -769,8 +782,8 @@
 
       /* MODIFIED: Increased flex to make Backspace/Enter larger */
       .key.wide {
-        flex: 2.2;
-        font-size: 1.2rem;
+        flex: 2;
+        font-size: 1.1rem;
       }
       .key.wide::after {
         content: "";
@@ -1517,6 +1530,12 @@
 
       .win-glow {
         animation: glow-pulse 1.5s ease-in-out infinite;
+      }
+
+      @supports not (height: 100dvh) {
+        body {
+          height: calc(100vh - 10px);
+        }
       }
     </style>
   </head>
