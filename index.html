@@ -963,6 +963,184 @@
           padding: 4px 8px;
         }
       }
+
+      /* FIT TO SCREEN - UNIVERSAL */
+      @media (max-height: 800px) {
+        h1 {
+          font-size: 1.5rem;
+        }
+
+        .sub-text {
+          font-size: 0.7rem;
+        }
+
+        header {
+          margin-top: 5px;
+          margin-bottom: 5px;
+          padding-bottom: 5px;
+        }
+
+        .timer-display {
+          font-size: 0.75rem;
+          padding: 3px 10px;
+        }
+
+        #game-board {
+          padding: 10px;
+          gap: 6px;
+          margin-bottom: 8px;
+        }
+
+        .row {
+          gap: 10px;
+          padding: 6px;
+        }
+
+        .tile {
+          width: 50px;
+          height: 50px;
+          font-size: 1.5rem;
+        }
+
+        .legend {
+          font-size: 0.7rem;
+          gap: 10px;
+          padding: 6px 12px;
+          margin-bottom: 8px;
+        }
+
+        .key {
+          height: 44px;
+          font-size: 0.9rem;
+        }
+
+        .key-row {
+          margin-bottom: 4px;
+          gap: 3px;
+        }
+
+        #message-container {
+          min-height: 25px;
+        }
+      }
+
+      @media (max-height: 700px) {
+        h1 {
+          font-size: 1.3rem;
+        }
+
+        header {
+          margin-top: 3px;
+          margin-bottom: 3px;
+          padding-bottom: 3px;
+        }
+
+        .timer-display {
+          font-size: 0.7rem;
+          padding: 2px 8px;
+        }
+
+        #game-board {
+          padding: 8px;
+          gap: 5px;
+          margin-bottom: 5px;
+        }
+
+        .row {
+          gap: 8px;
+          padding: 5px;
+        }
+
+        .tile {
+          width: 42px;
+          height: 42px;
+          font-size: 1.3rem;
+        }
+
+        .legend {
+          font-size: 0.65rem;
+          gap: 8px;
+          padding: 5px 10px;
+          margin-bottom: 5px;
+        }
+
+        .key {
+          height: 38px;
+          font-size: 0.85rem;
+        }
+
+        .key-row {
+          margin-bottom: 3px;
+          gap: 2px;
+        }
+
+        #message-container {
+          min-height: 20px;
+        }
+      }
+
+      @media (max-height: 600px) {
+        h1 {
+          font-size: 1.1rem;
+        }
+
+        .sub-text {
+          font-size: 0.6rem;
+        }
+
+        header {
+          margin-top: 2px;
+          margin-bottom: 2px;
+          padding-bottom: 2px;
+        }
+
+        .timer-display {
+          display: none; /* Hide timer on very short screens */
+        }
+
+        #game-board {
+          padding: 6px;
+          gap: 4px;
+          margin-bottom: 3px;
+        }
+
+        .row {
+          gap: 6px;
+          padding: 4px;
+        }
+
+        .tile {
+          width: 36px;
+          height: 36px;
+          font-size: 1.1rem;
+        }
+
+        .legend {
+          font-size: 0.6rem;
+          gap: 6px;
+          padding: 4px 8px;
+          margin-bottom: 3px;
+        }
+
+        .key {
+          height: 34px;
+          font-size: 0.75rem;
+        }
+
+        .key::after {
+          font-size: 0.55rem;
+        }
+
+        .key-row {
+          margin-bottom: 2px;
+          gap: 2px;
+        }
+
+        #message-container {
+          min-height: 15px;
+          margin-bottom: 3px;
+        }
+      }
       /* ==================== WIN ANIMATIONS ==================== */
       @keyframes confetti-fall {
         0% {
