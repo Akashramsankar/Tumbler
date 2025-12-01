@@ -1538,12 +1538,21 @@
         animation: glow-pulse 1.5s ease-in-out infinite;
       }
 
+      .legend {
+        flex-shrink: 1 !important;
+        min-height: 0 !important;
+      }
+
+      #keyboard {
+        flex-shrink: 1 !important;
+        min-height: 0 !important;
+      }
+
       @supports not (height: 100dvh) {
         body {
           height: calc(100vh - 10px);
         }
       }
-
     </style>
   </head>
   <body>
