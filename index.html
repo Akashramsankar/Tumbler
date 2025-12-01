@@ -506,22 +506,24 @@
 
       /* Safe Bolts */
       #game-board::before,
-      #game-board::after {
+      /* Safe Bolts */
+#game-board::before,
+#game-board::after {
         content: "";
         position: absolute;
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
         background: #0f172a;
         border-radius: 50%;
         box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
       }
       #game-board::before {
-        top: 10px;
-        left: 10px;
+        top: 6px;
+        left: 6px;
       }
       #game-board::after {
-        bottom: 10px;
-        right: 10px;
+        bottom: 6px;
+        right: 6px;
       }
 
       .row {
@@ -1306,6 +1308,72 @@
           padding: 8px;
           font-size: 0.85rem;
           margin-top: 8px;
+        }
+      }
+
+      @media (max-height: 700px) {
+        #game-board::before,
+        #game-board::after {
+          width: 4px;
+          height: 4px;
+        }
+        #game-board::before {
+          top: 4px;
+          left: 4px;
+        }
+        #game-board::after {
+          bottom: 4px;
+          right: 4px;
+        }
+      }
+
+      @media (max-height: 750px) {
+        #win-modal .stats-content h2 {
+          font-size: 1.2rem;
+          margin: 0 0 12px 0;
+        }
+
+        #win-modal .stash-display {
+          padding: 10px;
+          margin-bottom: 12px;
+        }
+
+        #win-modal .stash-value {
+          font-size: 1.8rem;
+        }
+
+        #win-modal .stats-grid {
+          gap: 10px;
+          margin: 12px 0;
+        }
+
+        #win-modal .stat-value {
+          font-size: 1.4rem;
+        }
+
+        /* Hide the "Guess Distribution" section header on short screens */
+        #win-modal .stats-content > div:nth-child(3) > div:first-child {
+          display: none;
+        }
+
+        .distribution-bars {
+          gap: 4px;
+        }
+
+        .distribution-bar {
+          height: 18px;
+          font-size: 0.7rem;
+        }
+
+        .tutorial-btn {
+          padding: 10px;
+          font-size: 0.95rem;
+        }
+
+        .close-stats {
+          padding: 8px;
+          font-size: 0.9rem;
+          margin-top: 10px;
         }
       }
       /* ==================== WIN ANIMATIONS ==================== */
