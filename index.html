@@ -1145,66 +1145,48 @@
         }
       }
 
-      @media (max-height: 600px) {
-        h1 {
-          font-size: 1.1rem;
+      @media (max-width: 600px) {
+        body {
+          padding: 5px;
         }
-
-        .sub-text {
-          font-size: 0.6rem;
-        }
-
-        header {
-          margin-top: 2px;
-          margin-bottom: 2px;
-          padding-bottom: 2px;
-        }
-
-        .timer-display {
-          display: none; /* Hide timer on very short screens */
-        }
-
-        #game-board {
-          padding: 6px;
-          gap: 4px;
-          margin-bottom: 3px;
-        }
-
-        .row {
-          gap: 6px;
-          padding: 4px;
-        }
-
         .tile {
-          width: 36px;
-          height: 36px;
-          font-size: 1.1rem;
+          width: 54px;
+          height: 54px;
+          font-size: 1.6rem;
         }
-
-        .legend {
-          font-size: 0.6rem;
+        .row {
+          gap: 12px;
+          padding: 6px;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        #game-board {
+          padding: 12px;
+          max-width: 320px;
           gap: 6px;
-          padding: 4px 8px;
-          margin-bottom: 3px;
+          margin-bottom: 5px;
         }
-
-        .key {
-          height: 34px;
-          font-size: 0.75rem;
+        header {
+          margin-top: 8px;
+          margin-bottom: 5px;
+          padding-bottom: 8px;
         }
-
-        .key::after {
-          font-size: 0.55rem;
-        }
-
-        .key-row {
-          margin-bottom: 2px;
-          gap: 2px;
-        }
-
         #message-container {
           min-height: 15px;
           margin-bottom: 3px;
+        }
+        .legend {
+          font-size: 0.65rem;
+          gap: 8px;
+          padding: 5px 10px;
+          margin-bottom: 5px;
+        }
+        #keyboard {
+          margin-bottom: 5px;
+        }
+        .key-row {
+          margin-bottom: 4px;
         }
       }
 
