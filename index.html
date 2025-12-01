@@ -841,6 +841,12 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
       }
 
+      #board-section {
+        flex-shrink: 1;
+        min-height: 0;
+        overflow: hidden; /* prevents inner overflow bleed */
+      }
+
       @media (max-width: 600px) {
         body {
           padding: 5px;
@@ -1538,13 +1544,6 @@
         }
       }
 
-      /* FIX FOR CHROME + FIREFOX SHRINKING ISSUES */
-      #game-board,
-      #legend,
-      #keyboard {
-        flex-shrink: 1;
-        min-height: 0;
-      }
     </style>
   </head>
   <body>
