@@ -1277,7 +1277,7 @@
       "
     >
       <button class="intel-btn" id="intel-btn" onclick="confirmIntel()">
-        🔍 REVIEW INTEL
+        🔍 VIEW INTEL
         <span
           style="
             display: block;
@@ -1308,7 +1308,25 @@
       >
         Code Sum: <span id="code-sum-value">0</span>
       </div>
-      <div style="font-size: 0.75rem; color: #94a3b8">
+      <div
+        style="
+          margin-top: 15px;
+          padding-top: 15px;
+          border-top: 1px solid var(--safe-border);
+        "
+      >
+        <div class="countdown-label" style="margin-bottom: 5px">
+          Your Current Sum
+        </div>
+        <div
+          style="font-size: 1.8rem; font-weight: 700; color: var(--color-close)"
+          id="current-sum-value"
+        >
+          0
+        </div>
+      </div>
+
+      <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 10px">
         A=1, B=2, C=3 ... Z=26
       </div>
     </div>
@@ -1746,6 +1764,10 @@
         // NEW: Show countdown to next puzzle
         showCountdownMessage(gameData);
 
+        const intelBtn = document.getElementById("intel-btn");
+        if (intelBtn) {
+          intelBtn.style.display = "none";
+        }
         // Auto-show the win modal after a delay
         setTimeout(() => {
           showWinModal(gameData.attempts, gameData.cashWon, 0);
@@ -2120,6 +2142,7 @@
         playSound("keypress");
 
         updateKeyboardVisuals();
+        updateCurrentSum();
       }
 
       function deleteLetter() {
@@ -2134,7 +2157,25 @@
           tile.removeAttribute("data-status");
 
           updateKeyboardVisuals();
+          updateCurrentSum();
         }
+      }
+
+      function updateCurrentSum() {
+        if (!intelUsed) return;
+
+        const currentSumEl = document.getElementById("current-sum-value");
+        if (!currentSumEl) return;
+
+        let sum = 0;
+        for (let i = 0; i < currentTile; i++) {
+          const letter = guesses[currentRow][i];
+          if (letter) {
+            sum += letter.charCodeAt(0) - ASCII_A + 1;
+          }
+        }
+
+        currentSumEl.textContent = sum;
       }
 
       function showMessage(msg) {
