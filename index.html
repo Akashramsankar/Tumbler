@@ -1,1692 +1,1785 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-<meta charset="UTF-8" />
-<meta
-name="viewport"
-content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
-/>
-<title>TUMBLER - The Lockpick Game</title>
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link
-href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700&family=Karnak+Pro:wght@700&display=swap"
-rel="stylesheet"
-/>
-
-<style>
-:root {
-/* THEME: Premium Dark Heist */
---bg-grad-start: #121212;
---bg-grad-end: #1e293b;
-
---safe-body: #1e293b;
---safe-inset: #0f172a;
---safe-border: #334155;
-
-/* UPDATED PALETTE */
---color-correct: #6aaa64; /* NYT Green */
---color-close: #c9b458; /* NYT Yellow */
---color-far: #ef4444; /* RED (Replaced Gray) */
-
---text-color: #f8fafc;
---key-bg: #334155;
---key-text: #e2e8f0;
---key-disabled: #0f172a; /* NEW: Darker shade for disabled keys */
-
-/* NEW: Cash Color */
---color-cash: #00ff6a;
-}
-
-* {
-box-sizing: border-box;
-}
-
-body {
-font-family: "Chivo Mono", monospace;
-background: linear-gradient(
-135deg,
-var(--bg-grad-start) 0%,
-var(--bg-grad-end) 100%
-);
-color: var(--text-color);
-display: flex;
-flex-direction: column;
-align-items: center;
-min-height: 100vh;
-height: auto;
-margin: 0;
-padding: 10px;
-user-select: none;
-overflow-x: hidden;
-overflow-y: auto;
-}
-
-/* --- HEADER --- */
-header {
-margin-top: 15px;
-text-align: center;
-margin-bottom: 15px;
-border-bottom: 1px solid #334155;
-padding-bottom: 15px;
-width: 100%;
-max-width: 500px;
-position: relative;
-}
-
-h1 {
-margin: 0;
-font-family: serif;
-font-size: 2.2rem;
-letter-spacing: 1px;
-color: #fff;
-text-transform: capitalize;
-font-weight: 700;
-}
-
-.sub-text {
-font-size: 0.8rem;
-color: #94a3b8;
-letter-spacing: 1px;
-margin-top: 5px;
-text-transform: uppercase;
-}
-
-.stats-btn {
-position: absolute;
-top: 15px;
-right: 10px;
-background: var(--key-bg);
-color: var(--text-color);
-border: none;
-padding: 8px 12px;
-border-radius: 6px;
-cursor: pointer;
-font-size: 0.9rem;
-font-weight: 700;
-}
-
-.stats-btn:hover {
-background: #475569;
-}
-
-.stats-modal {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.8);
-z-index: 1000; /* Keep this */
-justify-content: center;
-align-items: center;
-}
-
-.tutorial-modal {
-display: none;
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-background: rgba(0, 0, 0, 0.8);
-z-index: 1000;
-justify-content: center;
-align-items: center;
-}
-
-.stats-modal.active {
-pointer-events: auto; /* ADD THIS - enables clicks when visible */
-}
-
-.stats-content {
-background: var(--safe-body);
-padding: 30px;
-border-radius: 16px;
-max-width: 400px;
-width: 90%;
-box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
-text-align: center; /* Center content in modal */
-}
-
-/* NEW: Stash Display */
-.stash-display {
-background: var(--safe-inset);
-padding: 15px;
-border-radius: 10px;
-margin-bottom: 20px;
-border: 1px solid var(--safe-border);
-}
-
-.stash-label {
-font-size: 0.9rem;
-color: #94a3b8;
-text-transform: uppercase;
-margin-bottom: 5px;
-}
-
-.stash-value {
-font-size: 2.5rem;
-font-weight: 700;
-color: var(--color-cash);
-text-shadow: 0 0 10px rgba(0, 255, 106, 0.4);
-}
-
-.stats-btn {
-position: absolute;
-top: 15px;
-right: 10px;
-background: var(--key-bg);
-color: var(--text-color);
-border: none;
-padding: 8px 12px;
-border-radius: 6px;
-cursor: pointer;
-font-size: 0.9rem;
-font-weight: 700;
-z-index: 10;
-}
-
-.stats-grid {
-display: grid;
-grid-template-columns: repeat(3, 1fr);
-gap: 15px;
-margin: 20px 0;
-padding-top: 15px;
-border-top: 1px solid var(--safe-border);
-}
-
-.stat-item {
-text-align: center;
-}
-
-.stat-value {
-font-size: 2rem;
-font-weight: 700;
-color: var(--color-correct);
-}
-
-.stat-label {
-font-size: 0.75rem;
-color: #94a3b8;
-text-transform: uppercase;
-}
-
-.close-stats {
-background: var(--color-correct);
-color: #fff;
-border: none;
-padding: 10px 20px;
-border-radius: 6px;
-cursor: pointer;
-font-weight: 700;
-width: 100%;
-margin-top: 20px;
-}
-
-.timer-display {
-display: flex;
-align-items: center;
-gap: 6px;
-margin-top: 8px;
-font-size: 0.85rem;
-color: #94a3b8;
-font-family: "Chivo Mono", monospace;
-letter-spacing: 0.5px;
-padding: 4px 12px;
-background: rgba(15, 23, 42, 0.6);
-border-radius: 20px;
-border: 1px solid rgba(255, 255, 255, 0.05);
-justify-content: center;
-transition: all 0.3s ease;
-}
-
-.timer-display.warning {
-color: var(--color-close);
-border-color: var(--color-close);
-animation: pulse 2s ease-in-out infinite;
-}
-
-.timer-display.danger {
-color: var(--color-far);
-border-color: var(--color-far);
-animation: pulse 1s ease-in-out infinite;
-}
-
-@keyframes pulse {
-0%,
-100% {
-opacity: 1;
-transform: scale(1);
-}
-50% {
-opacity: 0.8;
-transform: scale(1.02);
-}
-}
-
-.timer-icon {
-width: 14px;
-height: 14px;
-color: inherit;
-}
-
-#timer {
-font-weight: 700;
-color: inherit;
-min-width: 45px;
-text-align: center;
-}
-
-/* HOW TO PLAY MODAL (No changes here) */
-/* --- PREMIUM MISSION MODAL --- */
-.tutorial-content {
-/* Glass/Metal Heist Look */
-background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
-border: 1px solid rgba(255, 255, 255, 0.1);
-box-shadow: 0 0 0 1px #0f172a, 0 20px 50px rgba(0, 0, 0, 0.9);
-padding: 24px;
-max-width: 420px;
-width: 90%;
-border-radius: 16px;
-max-height: 90vh;
-display: flex;
-flex-direction: column;
-position: relative;
-overflow: hidden;
-}
-
-/* Add a subtle top highlight */
-.tutorial-content::before {
-content: "";
-position: absolute;
-top: 0;
-left: 0;
-right: 0;
-height: 1px;
-background: linear-gradient(
-90deg,
-transparent,
-rgba(255, 255, 255, 0.3),
-transparent
-);
-}
-
-.mission-header {
-text-align: center;
-margin-bottom: 20px;
-position: relative;
-}
-
-.mission-title {
-color: #fff;
-font-family: serif;
-font-size: 1.8rem;
-letter-spacing: 1px;
-margin: 0;
-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
-}
-
-.mission-subtitle {
-color: var(--color-correct); /* Green */
-font-size: 0.7rem;
-text-transform: uppercase;
-letter-spacing: 3px;
-font-weight: 700;
-opacity: 0.9;
-margin-top: 5px;
-}
-
-/* Recessed panel for examples */
-.example-set {
-display: flex;
-justify-content: center;
-gap: 15px;
-margin-bottom: 20px;
-padding: 15px 10px;
-background: rgba(0, 0, 0, 0.3); /* Darker recess */
-border-radius: 12px;
-border: 1px solid rgba(255, 255, 255, 0.05);
-box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
-}
-
-.example-item {
-display: flex;
-flex-direction: column;
-align-items: center;
-gap: 10px;
-text-align: center;
-flex: 1;
-}
-
-.example-caption {
-font-size: 0.7rem;
-color: #94a3b8;
-line-height: 1.3;
-font-family: "Chivo Mono", monospace;
-}
-
-/* Information Grid */
-.rule-grid {
-display: flex;
-flex-direction: column;
-gap: 12px;
-margin-bottom: 25px;
-padding: 0 5px;
-}
-
-.rule-line {
-display: flex;
-align-items: flex-start; /* Align top */
-gap: 12px;
-font-size: 0.9rem;
-color: #cbd5e1;
-line-height: 1.4;
-}
-
-.icon-box {
-color: var(--key-text);
-min-width: 20px;
-font-size: 1rem;
-text-align: center;
-margin-top: 1px; /* Optical alignment */
-}
-
-/* --- THE NEW BUTTON (Green Tile Style) --- */
-.tutorial-btn {
-background-color: var(--color-correct); /* #6aaa64 */
-color: white;
-border: none;
-border-radius: 4px;
-padding: 16px;
-font-size: 1.1rem;
-font-weight: 800;
-letter-spacing: 1px;
-text-transform: uppercase;
-cursor: pointer;
-/* 3D Key Effect */
-box-shadow: 0 4px 0 #538d4e, 0 5px 10px rgba(0, 0, 0, 0.3);
-transition: all 0.1s ease;
-width: 100%;
-margin-top: auto;
-font-family: "Chivo Mono", monospace;
-}
-
-/* Better Hover: Brightens slightly, no color swap */
-.tutorial-btn:hover {
-filter: brightness(1.1);
-transform: translateY(-1px);
-}
-
-/* Active: Pressed down effect */
-.tutorial-btn:active {
-transform: translateY(4px);
-box-shadow: 0 0 0 #538d4e; /* Shadow disappears */
-}
-
-.help-icon {
-position: absolute;
-top: 15px;
-left: 10px;
-background: var(--key-bg);
-color: var(--text-color);
-border: none;
-width: 32px;
-height: 32px;
-border-radius: 50%;
-cursor: pointer;
-font-size: 1rem;
-display: flex;
-align-items: center;
-justify-content: center;
-}
-
-.help-icon:hover {
-background: #475569;
-}
-
-.countdown-display {
-background: var(--safe-inset);
-padding: 20px;
-border-radius: 12px;
-margin-bottom: 15px;
-border: 1px solid var(--safe-border);
-text-align: center;
-width: 100%;
-max-width: 350px;
-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-}
-
-.countdown-label {
-font-size: 0.8rem;
-color: #94a3b8;
-text-transform: uppercase;
-margin-bottom: 8px;
-letter-spacing: 1px;
-}
-
-.countdown-timer {
-font-size: 1.8rem;
-font-weight: 700;
-color: var(--color-cash);
-font-family: "Chivo Mono", monospace;
-text-shadow: 0 0 10px rgba(0, 255, 106, 0.3);
-}
-
-.streak-badge {
-display: inline-flex;
-align-items: center;
-gap: 5px;
-background: rgba(239, 68, 68, 0.2);
-padding: 5px 12px;
-border-radius: 20px;
-font-size: 0.85rem;
-font-weight: 700;
-color: #fbbf24;
-margin-top: 10px;
-border: 1px solid rgba(251, 191, 36, 0.3);
-}
-
-/* --- GAME BOARD --- */
-#game-board {
-position: relative;
-padding: 20px;
-background: var(--safe-body);
-border-radius: 16px;
-box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
-0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--safe-border);
-display: flex;
-flex-direction: column;
-gap: 10px;
-margin-bottom: 20px;
-width: 100%;
-max-width: 350px;
-}
-
-/* Safe Bolts */
-#game-board::before,
-#game-board::after {
-content: "";
-position: absolute;
-width: 8px;
-height: 8px;
-background: #0f172a;
-border-radius: 50%;
-box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
-}
-#game-board::before {
-top: 10px;
-left: 10px;
-}
-#game-board::after {
-bottom: 10px;
-right: 10px;
-}
-
-.row {
-display: grid;
-grid-template-columns: repeat(4, 1fr);
-gap: 16px;
-background: var(--safe-inset);
-padding: 8px;
-border-radius: 30px;
-border: 1px solid rgba(255, 255, 255, 0.03);
-transition: all 0.3s ease;
-}
-
-.row.active {
-box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
-background: #182234;
-}
-
-/* --- TUMBLERS (Dials) --- */
-.tile {
-width: 58px;
-height: 58px;
-border-radius: 50%;
-background: repeating-conic-gradient(
-from 0deg,
-#334155 0deg 3.46deg,
-transparent 3.46deg 6.92deg
-),
-radial-gradient(circle at 30% 30%, #475569, #1e293b);
-border: 2px solid #334155;
-display: flex;
-flex-direction: column;
-justify-content: center;
-align-items: center;
-font-size: 1.8rem;
-font-weight: 700;
-position: relative;
-color: #cbd5e1;
-box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
-transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.tile::before {
-content: "";
-position: absolute;
-top: 4px;
-width: 4px;
-height: 6px;
-background: rgba(0, 0, 0, 0.5);
-border-radius: 2px;
-}
-
-.tile::after {
-content: "";
-position: absolute;
-width: 100%;
-height: 100%;
-border-radius: 50%;
-background: radial-gradient(
-circle at center,
-transparent 60%,
-rgba(0, 0, 0, 0.3) 60%,
-rgba(0, 0, 0, 0.3) 65%,
-transparent 65%
-);
-pointer-events: none;
-}
-
-.tile[data-status="filled"] {
-border-color: #94a3b8;
-color: #fff;
-transform: scale(1.05);
-}
-
-.letter {
-z-index: 2;
-margin-top: 2px;
-}
-
-/* --- INDICATORS --- */
-.indicator {
-font-size: 0.8rem;
-position: absolute;
-width: 100%;
-text-align: center;
-opacity: 0;
-font-weight: 700;
-transition: opacity 0.3s;
-text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
-}
-
-.distribution-bars {
-display: flex;
-flex-direction: column;
-gap: 8px;
-}
-
-.distribution-row {
-display: flex;
-align-items: center;
-gap: 8px;
-}
-
-.distribution-label {
-font-size: 0.9rem;
-font-weight: 700;
-width: 15px;
-text-align: right;
-}
-
-.distribution-bar {
-background: var(--safe-inset);
-height: 24px;
-min-width: 24px;
-border-radius: 4px;
-display: flex;
-align-items: center;
-justify-content: center;
-font-size: 0.8rem;
-font-weight: 700;
-transition: width 0.3s ease;
-}
-
-.distribution-bar.current {
-background: var(--color-correct);
-color: #fff;
-}
-
-/* --- FEEDBACK STATES --- */
-.tile.evaluated {
-transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-background 0.3s, border-color 0.3s;
-}
-
-/* CORRECT (Green) */
-.tile.correct {
-border-color: var(--color-correct);
-color: var(--color-correct);
-box-shadow: 0 0 15px rgba(106, 170, 100, 0.2);
-transform: rotate(360deg);
-z-index: 1;
-}
-
-/* CLOSE (Yellow) */
-.tile.close {
-border-color: var(--color-close);
-color: var(--color-close);
-z-index: 2;
-}
-.tile.close.up {
-transform: rotate(15deg);
-}
-.tile.close.down {
-transform: rotate(-15deg);
-}
-.tile.close .indicator {
-color: var(--color-close);
-bottom: -20px;
-}
-
-/* FAR (RED - Updated) */
-.tile.far {
-border-color: var(--color-far);
-color: var(--color-far);
-opacity: 0.9;
-z-index: 3;
-}
-.tile.far.up {
-transform: rotate(30deg);
-}
-.tile.far.down {
-transform: rotate(-30deg);
-}
-.tile.far .indicator {
-color: var(--color-far);
-bottom: -20px;
-}
-
-.tile.evaluated .indicator {
-opacity: 1;
-}
-
-/* --- KEYBOARD (A-Z Layout) --- */
-#keyboard {
-width: 100%;
-max-width: 600px;
-padding: 0 5px;
-margin-bottom: 10px;
-}
-
-.key-row {
-display: flex;
-width: 100%;
-margin: 0 auto 6px;
-gap: 4px;
-justify-content: center;
-}
-
-.key {
-font-family: "Chivo Mono", monospace;
-flex: 1;
-display: flex;
-justify-content: center;
-align-items: center;
-height: 50px;
-background-color: var(--key-bg);
-color: var(--key-text);
-font-weight: 700;
-border-radius: 6px;
-border: none;
-cursor: pointer;
-box-shadow: 0 3px 0 #0f172a;
-position: relative;
-font-size: 1rem;
-transition: opacity 0.1s, transform 0.1s, background-color 0.3s;
-}
-
-.key:active {
-transform: translateY(3px);
-box-shadow: none;
-}
-
-/* NEW: Disabled/Impossible Keys */
-.key[data-disabled="true"] {
-background-color: var(--key-disabled) !important;
-opacity: 0.3 !important;
-cursor: default;
-pointer-events: none !important;
-}
-
-.key::after {
-content: attr(data-value);
-position: absolute;
-top: 3px;
-right: 5px;
-font-size: 0.7rem;
-color: #64748b;
-font-weight: 700;
-}
-
-/* MODIFIED: Increased flex to make Backspace/Enter larger */
-.key.wide {
-flex: 2.2;
-font-size: 1.2rem;
-}
-.key.wide::after {
-content: "";
-}
-
-/* Key States */
-.key.correct {
-background-color: var(--color-correct);
-color: #fff;
-border: 1px solid rgba(255, 255, 255, 0.2);
-opacity: 1 !important;
-pointer-events: auto !important;
-}
-
-/* --- LEGEND --- */
-.legend {
-display: flex;
-gap: 15px;
-font-size: 0.75rem;
-margin-bottom: 15px;
-background: rgba(15, 23, 42, 0.8);
-padding: 8px 16px;
-border-radius: 20px;
-border: 1px solid rgba(255, 255, 255, 0.05);
-}
-.legend-item {
-display: flex;
-align-items: center;
-gap: 6px;
-color: #cbd5e1;
-}
-.dot {
-width: 8px;
-height: 8px;
-border-radius: 50%;
-}
-
-#message-container {
-min-height: 30px;
-display: flex;
-justify-content: center;
-align-items: center;
-margin-bottom: 5px;
-width: 100%;
-max-width: 500px;
-}
-.toast {
-background: #f8fafc;
-color: #0f172a;
-padding: 8px 16px;
-border-radius: 4px;
-font-weight: 700;
-font-size: 0.9rem;
-box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
-}
-
-@media (max-width: 600px) {
-body {
-padding: 5px;
-}
-.tile {
-width: 54px;
-height: 54px;
-font-size: 1.6rem;
-}
-.row {
-gap: 12px;
-padding: 6px;
-}
-h1 {
-font-size: 2rem;
-}
-#game-board {
-padding: 16px;
-max-width: 320px;
-}
-header {
-margin-top: 10px;
-margin-bottom: 10px;
-padding-bottom: 10px;
-}
-}
-
-@media (max-width: 480px) {
-body {
-padding: 5px;
-}
-.tile {
-width: 48px;
-height: 48px;
-font-size: 1.4rem;
-}
-.row {
-gap: 10px;
-padding: 6px;
-}
-#game-board {
-padding: 14px;
-max-width: 280px;
-}
-.key {
-height: 45px;
-font-size: 0.9rem;
-}
-.key-row {
-gap: 3px;
-margin-bottom: 5px;
-}
-h1 {
-font-size: 1.8rem;
-}
-.legend {
-font-size: 0.7rem;
-gap: 10px;
-padding: 6px 12px;
-margin-bottom: 10px;
-}
-header {
-margin-top: 8px;
-margin-bottom: 8px;
-}
-}
-
-@media (max-width: 380px) {
-body {
-padding: 3px;
-}
-.tile {
-width: 42px;
-height: 42px;
-font-size: 1.2rem;
-}
-.row {
-gap: 8px;
-padding: 5px;
-}
-#game-board {
-padding: 12px;
-max-width: 250px;
-}
-.key {
-height: 42px;
-font-size: 0.85rem;
-}
-.key::after {
-font-size: 0.6rem;
-}
-.key-row {
-gap: 2px;
-margin-bottom: 4px;
-}
-h1 {
-font-size: 1.6rem;
-}
-.legend {
-font-size: 0.65rem;
-gap: 8px;
-padding: 5px 10px;
-}
-}
-
-@media (max-width: 340px) {
-body {
-padding: 2px;
-}
-.tile {
-width: 38px;
-height: 38px;
-font-size: 1.1rem;
-}
-.row {
-gap: 6px;
-padding: 5px;
-}
-#game-board {
-padding: 10px;
-max-width: 220px;
-}
-.key {
-height: 40px;
-font-size: 0.8rem;
-}
-.key::after {
-font-size: 0.55rem;
-}
-h1 {
-font-size: 1.4rem;
-}
-.legend {
-font-size: 0.6rem;
-gap: 6px;
-padding: 4px 8px;
-}
-}
-/* ==================== WIN ANIMATIONS ==================== */
-@keyframes confetti-fall {
-0% {
-transform: translateY(-100vh) rotate(0deg);
-opacity: 1;
-}
-100% {
-transform: translateY(100vh) rotate(720deg);
-opacity: 0;
-}
-}
-
-@keyframes cash-float {
-0% {
-transform: translateY(-20px) rotate(0deg);
-opacity: 0;
-}
-10% {
-opacity: 1;
-}
-90% {
-opacity: 1;
-}
-100% {
-transform: translateY(100vh) rotate(180deg);
-opacity: 0;
-}
-}
-
-@keyframes safe-open {
-0% {
-transform: perspective(1000px) rotateY(0deg);
-}
-100% {
-transform: perspective(1000px) rotateY(-90deg);
-}
-}
-
-@keyframes glow-pulse {
-0%,
-100% {
-box-shadow: 0 0 20px rgba(106, 170, 100, 0.6),
-0 0 40px rgba(106, 170, 100, 0.4), 0 0 60px rgba(106, 170, 100, 0.2);
-}
-50% {
-box-shadow: 0 0 30px rgba(106, 170, 100, 0.8),
-0 0 60px rgba(106, 170, 100, 0.6), 0 0 90px rgba(106, 170, 100, 0.4);
-}
-}
-
-@keyframes screen-flash {
-0% {
-background: rgba(106, 170, 100, 0);
-}
-50% {
-background: rgba(106, 170, 100, 0.2);
-}
-100% {
-background: rgba(106, 170, 100, 0);
-}
-}
-
-.confetti-piece {
-position: fixed;
-width: 10px;
-height: 10px;
-top: -10px;
-z-index: 999;
-animation: confetti-fall 3s linear forwards;
-pointer-events: none;
-}
-
-.cash-bill {
-position: fixed;
-font-size: 2rem;
-top: -50px;
-z-index: 999;
-animation: cash-float 4s ease-in forwards;
-pointer-events: none;
-}
-
-.screen-flash {
-position: fixed;
-top: 0;
-left: 0;
-width: 100%;
-height: 100%;
-pointer-events: none;
-z-index: 998;
-animation: screen-flash 0.5s ease-out;
-}
-
-.win-glow {
-animation: glow-pulse 1.5s ease-in-out infinite;
-}
-</style>
-</head>
-<body>
-<header>
-<button class="help-icon" onclick="showTutorial()">?</button>
-<h1>Tumbler</h1>
-<div class="sub-text">Crack the code</div>
-<!-- ADD THIS TIMER -->
-<div class="timer-display">
-<svg
-class="timer-icon"
-width="14"
-height="14"
-viewBox="0 0 24 24"
-fill="none"
-stroke="currentColor"
-stroke-width="2"
->
-<circle cx="12" cy="12" r="10"></circle>
-<polyline points="12 6 12 12 16 14"></polyline>
-</svg>
-<span id="timer">00:00</span>
-</div>
-<button class="stats-btn" onclick="showStats()">📊 Stats</button>
-<button class="stats-btn" onclick="showStats()">📊 Stats</button>
-<button
-class="mute-btn stats-btn"
-onclick="toggleMute()"
-style="right: 90px"
->
-🔊
-</button>
-</header>
-
-<div id="tutorial-modal" class="tutorial-modal">
-<div class="tutorial-content">
-<div class="mission-header">
-<h2 class="mission-title">Mission Briefing</h2>
-<div class="mission-subtitle">Crack the 4-Letter Code</div>
-</div>
-
-<div class="example-set">
-<div class="example-item">
-<div class="example-tile correct">C</div>
-<div class="example-caption">
-<strong style="color: var(--color-correct)">LOCKED</strong
-><br />Correct Letter
-</div>
-</div>
-
-<div class="example-item">
-<div class="example-tile close">
-J
-<div class="example-arrow">▲</div>
-</div>
-<div class="example-caption">
-<strong style="color: var(--color-close)">CLOSE</strong
-><br />Within 9
-</div>
-</div>
-
-<div class="example-item">
-<div class="example-tile far">
-Z
-<div class="example-arrow">▼▼</div>
-</div>
-<div class="example-caption">
-<strong style="color: var(--color-far)">FAR</strong><br />10+ Away
-</div>
-</div>
-</div>
-
-<div class="rule-grid">
-<div class="rule-line">
-<div class="icon-box">🎯</div>
-<div>Guess the secret word in <strong>6 attempts</strong>.</div>
-</div>
-
-<div class="rule-line">
-<div class="icon-box">↕️</div>
-<div>
-<strong>Follow the Arrows:</strong> They point towards the
-answer.<br />
-<span style="font-size: 0.8rem; color: #94a3b8">
-(e.g. <strong>▲</strong> means the real letter is
-<em>Higher</em> in the alphabet)
-</span>
-</div>
-</div>
-
-<div class="rule-line">
-<div class="icon-box">⌨️</div>
-<div>
-<strong>Intel Assist:</strong> Impossible keys are automatically
-disabled to help you.
-</div>
-</div>
-</div>
-
-<button class="tutorial-btn" onclick="closeTutorial()">
-START CRACKING
-</button>
-</div>
-</div>
-
-<div id="stats-modal" class="stats-modal">
-<div class="stats-content">
-<h2 style="margin-top: 0; text-align: center">Your Stash & Stats</h2>
-
-<div class="stash-display">
-<div class="stash-label">Total Stash Value</div>
-<div class="stash-value" id="stat-total-cash">$0</div>
-</div>
-
-<div class="stats-grid">
-<div class="stat-item">
-<div class="stat-value" id="stat-played">0</div>
-<div class="stat-label">Played</div>
-</div>
-<div class="stat-item">
-<div class="stat-value" id="stat-winrate">0</div>
-<div class="stat-label">Win %</div>
-</div>
-<div class="stat-item">
-<div class="stat-value" id="stat-streak">0</div>
-<div class="stat-label">Streak 🔥</div>
-</div>
-</div>
-<button class="close-stats" onclick="closeStats()">Close</button>
-</div>
-</div>
-
-<div id="win-modal" class="tutorial-modal">
-<div class="tutorial-content">
-<h2>🎉 VAULT BREACHED!</h2>
-
-<div class="stash-display">
-<div class="stash-label">You Stole</div>
-<div class="stash-value" id="win-cash-earned">$0</div>
-</div>
-
-<div class="stats-grid">
-<div class="stat-item">
-<div class="stat-value" id="win-attempts">0</div>
-<div class="stat-label">Attempts</div>
-</div>
-<div class="stat-item">
-<div class="stat-value" id="win-time">0s</div>
-<div class="stat-label">Time</div>
-</div>
-<div class="stat-item">
-<div class="stat-value" id="win-total-cash">$0</div>
-<div class="stat-label">Total Stash</div>
-</div>
-</div>
-
-<div style="margin: 20px 0; text-align: center">
-<div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px">
-GUESS DISTRIBUTION
-</div>
-<div id="distribution-bars"></div>
-</div>
-
-<button class="tutorial-btn" onclick="shareResult()">
-📤 Share Result
-</button>
-<button class="close-stats" onclick="closeWinModal()">Close</button>
-</div>
-</div>
-
-<div id="message-container"></div>
-
-<div id="game-board"></div>
-
-<div class="legend">
-<div class="legend-item">
-<div class="dot" style="background: var(--color-far)"></div>
-Far (10+)
-</div>
-<div class="legend-item">
-<div class="dot" style="background: var(--color-close)"></div>
-Close (1-9)
-</div>
-<div class="legend-item">
-<div class="dot" style="background: var(--color-correct)"></div>
-Locked In
-</div>
-</div>
-
-<div id="keyboard"></div>
-
-<script>
-// --- CONFIGURATION ---
-const WORD_LENGTH = 4;
-const MAX_TRIES = 6;
-const ASCII_A = 65;
-const ASCII_Z = 90;
-const CLOSE_DISTANCE = 9;
-const FAR_DISTANCE = 10;
-const GAME_EPOCH = new Date("November 26, 2025 00:00:00");
-
-// CASH CALCULATION CONSTANTS
-const CASH_BASE_VALUE = 10000;
-const CASH_ATTEMPT_PENALTY = 1000;
-const CASH_SPEED_BONUS_CAP = 60; // seconds
-const CASH_PER_SECOND_BONUS = 20;
-const CASH_MINIMUM_PAYOUT = 500;
-
-// ==================== SOUND EFFECTS ====================
-const audioContext = new (window.AudioContext ||
-window.webkitAudioContext)();
-let isMuted = localStorage.getItem("tumblerMuted") === "true";
-
-function playSound(type) {
-if (isMuted) return;
-
-const now = audioContext.currentTime;
-const oscillator = audioContext.createOscillator();
-const gainNode = audioContext.createGain();
-
-oscillator.connect(gainNode);
-gainNode.connect(audioContext.destination);
-
-switch (type) {
-case "keypress":
-oscillator.frequency.setValueAtTime(400, now);
-gainNode.gain.setValueAtTime(0.1, now);
-gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
-oscillator.start(now);
-oscillator.stop(now + 0.1);
-break;
-
-case "correct":
-oscillator.frequency.setValueAtTime(523.25, now); // C5
-oscillator.frequency.setValueAtTime(659.25, now + 0.1); // E5
-oscillator.frequency.setValueAtTime(783.99, now + 0.2); // G5
-gainNode.gain.setValueAtTime(0.2, now);
-gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-oscillator.start(now);
-oscillator.stop(now + 0.3);
-break;
-
-case "close":
-oscillator.frequency.setValueAtTime(440, now);
-gainNode.gain.setValueAtTime(0.15, now);
-gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
-oscillator.start(now);
-oscillator.stop(now + 0.15);
-break;
-
-case "far":
-oscillator.frequency.setValueAtTime(200, now);
-gainNode.gain.setValueAtTime(0.15, now);
-gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
-oscillator.start(now);
-oscillator.stop(now + 0.2);
-break;
-
-case "error":
-oscillator.frequency.setValueAtTime(150, now);
-gainNode.gain.setValueAtTime(0.2, now);
-gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
-oscillator.start(now);
-oscillator.stop(now + 0.3);
-break;
-
-case "win":
-// Ascending victory fanfare
-const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
-notes.forEach((freq, i) => {
-const osc = audioContext.createOscillator();
-const gain = audioContext.createGain();
-osc.connect(gain);
-gain.connect(audioContext.destination);
-osc.frequency.setValueAtTime(freq, now + i * 0.15);
-gain.gain.setValueAtTime(0.3, now + i * 0.15);
-gain.gain.exponentialRampToValueAtTime(
-0.01,
-now + i * 0.15 + 0.4
-);
-osc.start(now + i * 0.15);
-osc.stop(now + i * 0.15 + 0.4);
-});
-break;
-}
-}
-
-function toggleMute() {
-isMuted = !isMuted;
-localStorage.setItem("tumblerMuted", isMuted);
-const btn = document.querySelector(".mute-btn");
-btn.textContent = isMuted ? "🔇" : "🔊";
-playSound("keypress"); // Test sound
-}
-
-// --- STATE VARIABLES ---
-let TARGET_WORD = "";
-let currentRow = 0;
-let currentTile = 0;
-let guesses = Array(6)
-.fill(null)
-.map(() => Array(4).fill(""));
-let isGameOver = false;
-let startTime = null;
-let timerInterval = null;
-
-let dictionary = new Set();
-let answerList = [];
-let slotConstraints = [];
-
-const board = document.getElementById("game-board");
-const keyboardContainer = document.getElementById("keyboard");
-const messageContainer = document.getElementById("message-container");
-
-// Load stats from localStorage, including NEW: totalCash
-let stats = JSON.parse(
-localStorage.getItem("tumblerStats") ||
-'{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
-);
-
-// Ensure totalCash exists (for users upgrading from old version)
-if (typeof stats.totalCash !== "number") {
-stats.totalCash = 0;
-}
-
-// ==================== WIN ANIMATIONS ====================
-function createConfetti() {
-const colors = ["#6aaa64", "#c9b458", "#00ff6a", "#f8fafc", "#fbbf24"];
-const confettiCount = 50;
-
-for (let i = 0; i < confettiCount; i++) {
-setTimeout(() => {
-const confetti = document.createElement("div");
-confetti.classList.add("confetti-piece");
-confetti.style.left = Math.random() * 100 + "%";
-confetti.style.backgroundColor =
-colors[Math.floor(Math.random() * colors.length)];
-confetti.style.animationDelay = Math.random() * 0.5 + "s";
-confetti.style.animationDuration = Math.random() * 2 + 2 + "s";
-document.body.appendChild(confetti);
-
-setTimeout(() => confetti.remove(), 5000);
-}, i * 30);
-}
-}
-
-function createCashRain() {
-const cashSymbols = ["💵", "💰", "💸", "💴", "💶"];
-const cashCount = 20;
-
-for (let i = 0; i < cashCount; i++) {
-setTimeout(() => {
-const cash = document.createElement("div");
-cash.classList.add("cash-bill");
-cash.textContent =
-cashSymbols[Math.floor(Math.random() * cashSymbols.length)];
-cash.style.left = Math.random() * 100 + "%";
-cash.style.animationDelay = Math.random() * 0.3 + "s";
-cash.style.animationDuration = Math.random() * 2 + 3 + "s";
-document.body.appendChild(cash);
-
-setTimeout(() => cash.remove(), 7000);
-}, i * 100);
-}
-}
-
-function createScreenFlash() {
-const flash = document.createElement("div");
-flash.classList.add("screen-flash");
-document.body.appendChild(flash);
-setTimeout(() => flash.remove(), 500);
-}
-
-function animateCountUp(elementId, targetValue, duration = 2000) {
-const element = document.getElementById(elementId);
-const startValue = 0;
-const startTime = Date.now();
-
-const formatter = new Intl.NumberFormat("en-US");
-
-function update() {
-const now = Date.now();
-const elapsed = now - startTime;
-const progress = Math.min(elapsed / duration, 1);
-
-// Easing function for smooth deceleration
-const easeOutQuart = 1 - Math.pow(1 - progress, 4);
-const currentValue = Math.floor(
-startValue + (targetValue - startValue) * easeOutQuart
-);
-
-element.textContent = `$${formatter.format(currentValue)}`;
-
-if (progress < 1) {
-requestAnimationFrame(update);
-} else {
-element.textContent = `$${formatter.format(targetValue)}`;
-}
-}
-
-update();
-}
-
-async function initGame() {
-try {
-await loadDictionaries();
-
-TARGET_WORD = getDailyWord();
-
-// ADD THIS CHECK
-if (hasPlayedToday()) {
-// Show the completed game state
-loadCompletedGame();
-return; // Exit early, don't allow new game
-}
-
-resetSlotConstraints();
-createBoard();
-createKeyboard();
-document.addEventListener("keydown", handleKeydown);
-updateActiveRow();
-updateKeyboardVisuals();
-
-// Check if first time user
-if (!localStorage.getItem("tumblerTutorialSeen")) {
-showTutorial();
-localStorage.setItem("tumblerTutorialSeen", "true");
-// Timer will start when they close tutorial
-} else {
-// Returning user - start timer immediately
-startTimer();
-}
-
-if (!localStorage.getItem("tumblerTutorialSeen")) {
-showTutorial();
-localStorage.setItem("tumblerTutorialSeen", "true");
-}
-} catch (error) {
-console.error("Game Initialization Error:", error);
-showMessage("Error loading word lists. Please refresh.");
-}
-}
-
-function startTimer() {
-const timerElement = document.getElementById("timer");
-const timerDisplay = document.querySelector(".timer-display");
-startTime = Date.now();
-
-timerInterval = setInterval(() => {
-if (isGameOver) {
-clearInterval(timerInterval);
-return;
-}
-
-const elapsed = Math.floor((Date.now() - startTime) / 1000);
-const minutes = Math.floor(elapsed / 60);
-const seconds = elapsed % 60;
-
-timerElement.textContent = `${String(minutes).padStart(
-           2,
-           "0"
-         )}:${String(seconds).padStart(2, "0")}`;
-
-// Visual feedback based on time
-timerDisplay.classList.remove("warning", "danger");
-if (elapsed >= 120) {
-// 2 minutes
-timerDisplay.classList.add("danger");
-} else if (elapsed >= 60) {
-// 1 minute
-timerDisplay.classList.add("warning");
-}
-}, 1000);
-}
-
-// ADD THIS FUNCTION
-function stopTimer() {
-if (timerInterval) {
-clearInterval(timerInterval);
-timerInterval = null;
-}
-}
-
-// Get current puzzle number (days since epoch)
-function getPuzzleNumber() {
-const now = new Date();
-const msPerDay = 24 * 60 * 60 * 1000;
-
-// Set your game's launch date here
-const LAUNCH_DATE = new Date("November 26, 2025 00:00:00"); // TODAY
-
-const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
-const launchMidnight = new Date(LAUNCH_DATE).setHours(0, 0, 0, 0);
-
-const daysPassed = Math.floor(
-(currentMidnight - launchMidnight) / msPerDay
-);
-return daysPassed + 1; // Today is #1
-}
-
-// Save today's game state
-function saveTodayGame(attempts, cashWon) {
-const puzzleNum = getPuzzleNumber();
-
-// Save the actual game grid for display
-const gridState = [];
-for (let r = 0; r < attempts; r++) {
-const rowState = [];
-for (let c = 0; c < WORD_LENGTH; c++) {
-const tile = document.getElementById(`row-${r}-tile-${c}`);
-if (tile) {
-const letterEl = tile.querySelector(".letter");
-rowState.push({
-letter: letterEl ? letterEl.textContent : "",
-status: tile.classList.contains("correct")
-? "correct"
-: tile.classList.contains("close")
-? "close"
-: tile.classList.contains("far")
-? "far"
-: "",
-});
-}
-}
-gridState.push(rowState);
-}
-
-const gameData = {
-puzzleNumber: puzzleNum,
-attempts: attempts,
-cashWon: cashWon || 0,
-grid: gridState,
-timestamp: Date.now(),
-};
-localStorage.setItem("tumblerTodayGame", JSON.stringify(gameData));
-}
-
-// Check if already played today
-function hasPlayedToday() {
-const saved = localStorage.getItem("tumblerTodayGame");
-if (!saved) return false;
-const data = JSON.parse(saved);
-return data.puzzleNumber === getPuzzleNumber();
-}
-
-function loadCompletedGame() {
-const saved = localStorage.getItem("tumblerTodayGame");
-if (!saved) return;
-
-const gameData = JSON.parse(saved);
-
-// Disable input
-isGameOver = true;
-currentRow = gameData.attempts;
-
-// Create board
-createBoard();
-
-// Recreate the completed game state
-if (gameData.grid && gameData.grid.length > 0) {
-gameData.grid.forEach((row, rowIndex) => {
-row.forEach((tileData, colIndex) => {
-const tile = document.getElementById(
-`row-${rowIndex}-tile-${colIndex}`
-);
-if (tile && tileData.letter) {
-tile.querySelector(".letter").textContent = tileData.letter;
-tile.setAttribute("data-status", "filled");
-tile.classList.add("evaluated");
-
-if (tileData.status) {
-tile.classList.add(tileData.status);
-
-// Add visual indicators
-if (tileData.status === "correct") {
-const key = document.getElementById(
-`key-${tileData.letter}`
-);
-if (key) key.classList.add("correct");
-}
-}
-}
-});
-});
-
-// Highlight the winning row
-const winRow = document.getElementById(
-`row-${gameData.attempts - 1}`
-);
-if (winRow) {
-winRow.style.borderColor = "#6aaa64";
-winRow.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
-}
-}
-
-// NEW: Show countdown to next puzzle
-showCountdownMessage(gameData);
-
-// Auto-show the win modal after a delay
-setTimeout(() => {
-showWinModal(gameData.attempts, gameData.cashWon, 0);
-}, 2500);
-}
-
-// NEW: Show countdown and streak when game already played
-// NEW: Show countdown and streak when game already played
-function showCountdownMessage(gameData) {
-const puzzleNum = getPuzzleNumber();
-const cashString = new Intl.NumberFormat("en-US").format(
-gameData.cashWon
-);
-
-// Calculate time until next puzzle
-const now = new Date();
-const tomorrow = new Date(now);
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(0, 0, 0, 0);
-const msUntilTomorrow = tomorrow - now;
-
-const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
-const minutes = Math.floor(
-(msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
-);
-const seconds = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
-
-// Create a container ABOVE the game board
-const countdownContainer = document.createElement("div");
-countdownContainer.id = "countdown-container";
-countdownContainer.style.cssText =
-"width: 100%; display: flex; justify-content: center; margin-bottom: 15px;";
-
-countdownContainer.innerHTML = `
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
+    <title>TUMBLER - The Lockpick Game</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700&family=Karnak+Pro:wght@700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        /* THEME: Premium Dark Heist */
+        --bg-grad-start: #121212;
+        --bg-grad-end: #1e293b;
+
+        --safe-body: #1e293b;
+        --safe-inset: #0f172a;
+        --safe-border: #334155;
+
+        /* UPDATED PALETTE */
+        --color-correct: #6aaa64; /* NYT Green */
+        --color-close: #c9b458; /* NYT Yellow */
+        --color-far: #ef4444; /* RED (Replaced Gray) */
+
+        --text-color: #f8fafc;
+        --key-bg: #334155;
+        --key-text: #e2e8f0;
+        --key-disabled: #0f172a; /* NEW: Darker shade for disabled keys */
+
+        /* NEW: Cash Color */
+        --color-cash: #00ff6a;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Chivo Mono", monospace;
+        background: linear-gradient(
+          135deg,
+          var(--bg-grad-start) 0%,
+          var(--bg-grad-end) 100%
+        );
+        color: var(--text-color);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        min-height: 100vh;
+        height: auto;
+        margin: 0;
+        padding: 10px;
+        user-select: none;
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      /* --- HEADER --- */
+      header {
+        margin-top: 15px;
+        text-align: center;
+        margin-bottom: 15px;
+        border-bottom: 1px solid #334155;
+        padding-bottom: 15px;
+        width: 100%;
+        max-width: 500px;
+        position: relative;
+      }
+
+      h1 {
+        margin: 0;
+        font-family: serif;
+        font-size: 2.2rem;
+        letter-spacing: 1px;
+        color: #fff;
+        text-transform: capitalize;
+        font-weight: 700;
+      }
+
+      .sub-text {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        letter-spacing: 1px;
+        margin-top: 5px;
+        text-transform: uppercase;
+      }
+
+      .stats-btn {
+        position: absolute;
+        top: 15px;
+        right: 10px;
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .stats-btn:hover {
+        background: #475569;
+      }
+
+      .stats-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000; /* Keep this */
+        justify-content: center;
+        align-items: center;
+      }
+
+      .tutorial-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.8);
+        z-index: 1000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .stats-modal.active {
+        pointer-events: auto; /* ADD THIS - enables clicks when visible */
+      }
+
+      .stats-content {
+        background: var(--safe-body);
+        padding: 30px;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+        text-align: center; /* Center content in modal */
+      }
+
+      /* NEW: Stash Display */
+      .stash-display {
+        background: var(--safe-inset);
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 20px;
+        border: 1px solid var(--safe-border);
+      }
+
+      .stash-label {
+        font-size: 0.9rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 5px;
+      }
+
+      .stash-value {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: var(--color-cash);
+        text-shadow: 0 0 10px rgba(0, 255, 106, 0.4);
+      }
+
+      .stats-btn {
+        position: absolute;
+        top: 15px;
+        right: 10px;
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        padding: 8px 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        font-weight: 700;
+        z-index: 10;
+      }
+
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 15px;
+        margin: 20px 0;
+        padding-top: 15px;
+        border-top: 1px solid var(--safe-border);
+      }
+
+      .stat-item {
+        text-align: center;
+      }
+
+      .stat-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--color-correct);
+      }
+
+      .stat-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+      }
+
+      .close-stats {
+        background: var(--color-correct);
+        color: #fff;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 700;
+        width: 100%;
+        margin-top: 20px;
+      }
+
+      .timer-display {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin-top: 8px;
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-family: "Chivo Mono", monospace;
+        letter-spacing: 0.5px;
+        padding: 4px 12px;
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        justify-content: center;
+        transition: all 0.3s ease;
+      }
+
+      .timer-display.warning {
+        color: var(--color-close);
+        border-color: var(--color-close);
+        animation: pulse 2s ease-in-out infinite;
+      }
+
+      .timer-display.danger {
+        color: var(--color-far);
+        border-color: var(--color-far);
+        animation: pulse 1s ease-in-out infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+          transform: scale(1);
+        }
+        50% {
+          opacity: 0.8;
+          transform: scale(1.02);
+        }
+      }
+
+      .timer-icon {
+        width: 14px;
+        height: 14px;
+        color: inherit;
+      }
+
+      #timer {
+        font-weight: 700;
+        color: inherit;
+        min-width: 45px;
+        text-align: center;
+      }
+
+      /* HOW TO PLAY MODAL (No changes here) */
+      /* --- PREMIUM MISSION MODAL --- */
+      .tutorial-content {
+        /* Glass/Metal Heist Look */
+        background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        box-shadow: 0 0 0 1px #0f172a, 0 20px 50px rgba(0, 0, 0, 0.9);
+        padding: 24px;
+        max-width: 420px;
+        width: 90%;
+        border-radius: 16px;
+        max-height: 90vh;
+        display: flex;
+        flex-direction: column;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Add a subtle top highlight */
+      .tutorial-content::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 1px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.3),
+          transparent
+        );
+      }
+
+      .mission-header {
+        text-align: center;
+        margin-bottom: 20px;
+        position: relative;
+      }
+
+      .mission-title {
+        color: #fff;
+        font-family: serif;
+        font-size: 1.8rem;
+        letter-spacing: 1px;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .mission-subtitle {
+        color: var(--color-correct); /* Green */
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 3px;
+        font-weight: 700;
+        opacity: 0.9;
+        margin-top: 5px;
+      }
+
+      /* Recessed panel for examples */
+      .example-set {
+        display: flex;
+        justify-content: center;
+        gap: 15px;
+        margin-bottom: 20px;
+        padding: 15px 10px;
+        background: rgba(0, 0, 0, 0.3); /* Darker recess */
+        border-radius: 12px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+      }
+
+      .example-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        text-align: center;
+        flex: 1;
+      }
+
+      .example-caption {
+        font-size: 0.7rem;
+        color: #94a3b8;
+        line-height: 1.3;
+        font-family: "Chivo Mono", monospace;
+      }
+
+      /* Information Grid */
+      .rule-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 25px;
+        padding: 0 5px;
+      }
+
+      .rule-line {
+        display: flex;
+        align-items: flex-start; /* Align top */
+        gap: 12px;
+        font-size: 0.9rem;
+        color: #cbd5e1;
+        line-height: 1.4;
+      }
+
+      .icon-box {
+        color: var(--key-text);
+        min-width: 20px;
+        font-size: 1rem;
+        text-align: center;
+        margin-top: 1px; /* Optical alignment */
+      }
+
+      /* --- THE NEW BUTTON (Green Tile Style) --- */
+      .tutorial-btn {
+        background-color: var(--color-correct); /* #6aaa64 */
+        color: white;
+        border: none;
+        border-radius: 4px;
+        padding: 16px;
+        font-size: 1.1rem;
+        font-weight: 800;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        cursor: pointer;
+        /* 3D Key Effect */
+        box-shadow: 0 4px 0 #538d4e, 0 5px 10px rgba(0, 0, 0, 0.3);
+        transition: all 0.1s ease;
+        width: 100%;
+        margin-top: auto;
+        font-family: "Chivo Mono", monospace;
+      }
+
+      /* Better Hover: Brightens slightly, no color swap */
+      .tutorial-btn:hover {
+        filter: brightness(1.1);
+        transform: translateY(-1px);
+      }
+
+      /* Active: Pressed down effect */
+      .tutorial-btn:active {
+        transform: translateY(4px);
+        box-shadow: 0 0 0 #538d4e; /* Shadow disappears */
+      }
+
+      .help-icon {
+        position: absolute;
+        top: 15px;
+        left: 10px;
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .help-icon:hover {
+        background: #475569;
+      }
+
+      .countdown-display {
+        background: var(--safe-inset);
+        padding: 20px;
+        border-radius: 12px;
+        margin-bottom: 15px;
+        border: 1px solid var(--safe-border);
+        text-align: center;
+        width: 100%;
+        max-width: 350px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+      }
+
+      .countdown-label {
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        margin-bottom: 8px;
+        letter-spacing: 1px;
+      }
+
+      .countdown-timer {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--color-cash);
+        font-family: "Chivo Mono", monospace;
+        text-shadow: 0 0 10px rgba(0, 255, 106, 0.3);
+      }
+
+      .streak-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        background: rgba(239, 68, 68, 0.2);
+        padding: 5px 12px;
+        border-radius: 20px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        color: #fbbf24;
+        margin-top: 10px;
+        border: 1px solid rgba(251, 191, 36, 0.3);
+      }
+
+      .intel-tool {
+        display: flex;
+        justify-content: center;
+      }
+
+      .intel-btn {
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: 2px solid var(--color-close);
+        padding: 12px 20px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        font-weight: 700;
+        font-family: "Chivo Mono", monospace;
+        transition: all 0.2s;
+        text-align: center;
+        min-width: 180px;
+      }
+
+      .intel-btn:hover:not(:disabled) {
+        background: #475569;
+        border-color: var(--color-correct);
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(201, 180, 88, 0.3);
+      }
+
+      .intel-btn:disabled {
+        cursor: default;
+        opacity: 0.6;
+        border-color: var(--safe-border);
+      }
+
+      /* --- GAME BOARD --- */
+      #game-board {
+        position: relative;
+        padding: 20px;
+        background: var(--safe-body);
+        border-radius: 16px;
+        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
+          0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--safe-border);
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        margin-bottom: 20px;
+        width: 100%;
+        max-width: 350px;
+      }
+
+      /* Safe Bolts */
+      #game-board::before,
+      #game-board::after {
+        content: "";
+        position: absolute;
+        width: 8px;
+        height: 8px;
+        background: #0f172a;
+        border-radius: 50%;
+        box-shadow: 0 1px 0 rgba(255, 255, 255, 0.1);
+      }
+      #game-board::before {
+        top: 10px;
+        left: 10px;
+      }
+      #game-board::after {
+        bottom: 10px;
+        right: 10px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 16px;
+        background: var(--safe-inset);
+        padding: 8px;
+        border-radius: 30px;
+        border: 1px solid rgba(255, 255, 255, 0.03);
+        transition: all 0.3s ease;
+      }
+
+      .row.active {
+        box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15);
+        background: #182234;
+      }
+
+      /* --- TUMBLERS (Dials) --- */
+      .tile {
+        width: 58px;
+        height: 58px;
+        border-radius: 50%;
+        background: repeating-conic-gradient(
+            from 0deg,
+            #334155 0deg 3.46deg,
+            transparent 3.46deg 6.92deg
+          ),
+          radial-gradient(circle at 30% 30%, #475569, #1e293b);
+        border: 2px solid #334155;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        font-size: 1.8rem;
+        font-weight: 700;
+        position: relative;
+        color: #cbd5e1;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
+        transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+      }
+
+      .tile::before {
+        content: "";
+        position: absolute;
+        top: 4px;
+        width: 4px;
+        height: 6px;
+        background: rgba(0, 0, 0, 0.5);
+        border-radius: 2px;
+      }
+
+      .tile::after {
+        content: "";
+        position: absolute;
+        width: 100%;
+        height: 100%;
+        border-radius: 50%;
+        background: radial-gradient(
+          circle at center,
+          transparent 60%,
+          rgba(0, 0, 0, 0.3) 60%,
+          rgba(0, 0, 0, 0.3) 65%,
+          transparent 65%
+        );
+        pointer-events: none;
+      }
+
+      .tile[data-status="filled"] {
+        border-color: #94a3b8;
+        color: #fff;
+        transform: scale(1.05);
+      }
+
+      .letter {
+        z-index: 2;
+        margin-top: 2px;
+      }
+
+      /* --- INDICATORS --- */
+      .indicator {
+        font-size: 0.8rem;
+        position: absolute;
+        width: 100%;
+        text-align: center;
+        opacity: 0;
+        font-weight: 700;
+        transition: opacity 0.3s;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+      }
+
+      .distribution-bars {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .distribution-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .distribution-label {
+        font-size: 0.9rem;
+        font-weight: 700;
+        width: 15px;
+        text-align: right;
+      }
+
+      .distribution-bar {
+        background: var(--safe-inset);
+        height: 24px;
+        min-width: 24px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        transition: width 0.3s ease;
+      }
+
+      .distribution-bar.current {
+        background: var(--color-correct);
+        color: #fff;
+      }
+
+      /* --- FEEDBACK STATES --- */
+      .tile.evaluated {
+        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+          background 0.3s, border-color 0.3s;
+      }
+
+      /* CORRECT (Green) */
+      .tile.correct {
+        border-color: var(--color-correct);
+        color: var(--color-correct);
+        box-shadow: 0 0 15px rgba(106, 170, 100, 0.2);
+        transform: rotate(360deg);
+        z-index: 1;
+      }
+
+      /* CLOSE (Yellow) */
+      .tile.close {
+        border-color: var(--color-close);
+        color: var(--color-close);
+        z-index: 2;
+      }
+      .tile.close.up {
+        transform: rotate(15deg);
+      }
+      .tile.close.down {
+        transform: rotate(-15deg);
+      }
+      .tile.close .indicator {
+        color: var(--color-close);
+        bottom: -20px;
+      }
+
+      /* FAR (RED - Updated) */
+      .tile.far {
+        border-color: var(--color-far);
+        color: var(--color-far);
+        opacity: 0.9;
+        z-index: 3;
+      }
+      .tile.far.up {
+        transform: rotate(30deg);
+      }
+      .tile.far.down {
+        transform: rotate(-30deg);
+      }
+      .tile.far .indicator {
+        color: var(--color-far);
+        bottom: -20px;
+      }
+
+      .tile.evaluated .indicator {
+        opacity: 1;
+      }
+
+      /* --- KEYBOARD (A-Z Layout) --- */
+      #keyboard {
+        width: 100%;
+        max-width: 600px;
+        padding: 0 5px;
+        margin-bottom: 10px;
+      }
+
+      .key-row {
+        display: flex;
+        width: 100%;
+        margin: 0 auto 6px;
+        gap: 4px;
+        justify-content: center;
+      }
+
+      .key {
+        font-family: "Chivo Mono", monospace;
+        flex: 1;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 50px;
+        background-color: var(--key-bg);
+        color: var(--key-text);
+        font-weight: 700;
+        border-radius: 6px;
+        border: none;
+        cursor: pointer;
+        box-shadow: 0 3px 0 #0f172a;
+        position: relative;
+        font-size: 1rem;
+        transition: opacity 0.1s, transform 0.1s, background-color 0.3s;
+      }
+
+      .key:active {
+        transform: translateY(3px);
+        box-shadow: none;
+      }
+
+      /* NEW: Disabled/Impossible Keys */
+      .key[data-disabled="true"] {
+        background-color: var(--key-disabled) !important;
+        opacity: 0.3 !important;
+        cursor: default;
+        pointer-events: none !important;
+      }
+
+      .key::after {
+        content: attr(data-value);
+        position: absolute;
+        top: 3px;
+        right: 5px;
+        font-size: 0.7rem;
+        color: #64748b;
+        font-weight: 700;
+      }
+
+      /* MODIFIED: Increased flex to make Backspace/Enter larger */
+      .key.wide {
+        flex: 2.2;
+        font-size: 1.2rem;
+      }
+      .key.wide::after {
+        content: "";
+      }
+
+      /* Key States */
+      .key.correct {
+        background-color: var(--color-correct);
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        opacity: 1 !important;
+        pointer-events: auto !important;
+      }
+
+      /* --- LEGEND --- */
+      .legend {
+        display: flex;
+        gap: 15px;
+        font-size: 0.75rem;
+        margin-bottom: 15px;
+        background: rgba(15, 23, 42, 0.8);
+        padding: 8px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        color: #cbd5e1;
+      }
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+      }
+
+      #message-container {
+        min-height: 30px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-bottom: 5px;
+        width: 100%;
+        max-width: 500px;
+      }
+      .toast {
+        background: #f8fafc;
+        color: #0f172a;
+        padding: 8px 16px;
+        border-radius: 4px;
+        font-weight: 700;
+        font-size: 0.9rem;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+      }
+
+      @media (max-width: 600px) {
+        body {
+          padding: 5px;
+        }
+        .tile {
+          width: 54px;
+          height: 54px;
+          font-size: 1.6rem;
+        }
+        .row {
+          gap: 12px;
+          padding: 6px;
+        }
+        h1 {
+          font-size: 2rem;
+        }
+        #game-board {
+          padding: 16px;
+          max-width: 320px;
+        }
+        header {
+          margin-top: 10px;
+          margin-bottom: 10px;
+          padding-bottom: 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        body {
+          padding: 5px;
+        }
+        .tile {
+          width: 48px;
+          height: 48px;
+          font-size: 1.4rem;
+        }
+        .row {
+          gap: 10px;
+          padding: 6px;
+        }
+        #game-board {
+          padding: 14px;
+          max-width: 280px;
+        }
+        .key {
+          height: 45px;
+          font-size: 0.9rem;
+        }
+        .key-row {
+          gap: 3px;
+          margin-bottom: 5px;
+        }
+        h1 {
+          font-size: 1.8rem;
+        }
+        .legend {
+          font-size: 0.7rem;
+          gap: 10px;
+          padding: 6px 12px;
+          margin-bottom: 10px;
+        }
+        header {
+          margin-top: 8px;
+          margin-bottom: 8px;
+        }
+      }
+
+      @media (max-width: 380px) {
+        body {
+          padding: 3px;
+        }
+        .tile {
+          width: 42px;
+          height: 42px;
+          font-size: 1.2rem;
+        }
+        .row {
+          gap: 8px;
+          padding: 5px;
+        }
+        #game-board {
+          padding: 12px;
+          max-width: 250px;
+        }
+        .key {
+          height: 42px;
+          font-size: 0.85rem;
+        }
+        .key::after {
+          font-size: 0.6rem;
+        }
+        .key-row {
+          gap: 2px;
+          margin-bottom: 4px;
+        }
+        h1 {
+          font-size: 1.6rem;
+        }
+        .legend {
+          font-size: 0.65rem;
+          gap: 8px;
+          padding: 5px 10px;
+        }
+      }
+
+      @media (max-width: 340px) {
+        body {
+          padding: 2px;
+        }
+        .tile {
+          width: 38px;
+          height: 38px;
+          font-size: 1.1rem;
+        }
+        .row {
+          gap: 6px;
+          padding: 5px;
+        }
+        #game-board {
+          padding: 10px;
+          max-width: 220px;
+        }
+        .key {
+          height: 40px;
+          font-size: 0.8rem;
+        }
+        .key::after {
+          font-size: 0.55rem;
+        }
+        h1 {
+          font-size: 1.4rem;
+        }
+        .legend {
+          font-size: 0.6rem;
+          gap: 6px;
+          padding: 4px 8px;
+        }
+      }
+      /* ==================== WIN ANIMATIONS ==================== */
+      @keyframes confetti-fall {
+        0% {
+          transform: translateY(-100vh) rotate(0deg);
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(720deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes cash-float {
+        0% {
+          transform: translateY(-20px) rotate(0deg);
+          opacity: 0;
+        }
+        10% {
+          opacity: 1;
+        }
+        90% {
+          opacity: 1;
+        }
+        100% {
+          transform: translateY(100vh) rotate(180deg);
+          opacity: 0;
+        }
+      }
+
+      @keyframes safe-open {
+        0% {
+          transform: perspective(1000px) rotateY(0deg);
+        }
+        100% {
+          transform: perspective(1000px) rotateY(-90deg);
+        }
+      }
+
+      @keyframes glow-pulse {
+        0%,
+        100% {
+          box-shadow: 0 0 20px rgba(106, 170, 100, 0.6),
+            0 0 40px rgba(106, 170, 100, 0.4), 0 0 60px rgba(106, 170, 100, 0.2);
+        }
+        50% {
+          box-shadow: 0 0 30px rgba(106, 170, 100, 0.8),
+            0 0 60px rgba(106, 170, 100, 0.6), 0 0 90px rgba(106, 170, 100, 0.4);
+        }
+      }
+
+      @keyframes screen-flash {
+        0% {
+          background: rgba(106, 170, 100, 0);
+        }
+        50% {
+          background: rgba(106, 170, 100, 0.2);
+        }
+        100% {
+          background: rgba(106, 170, 100, 0);
+        }
+      }
+
+      .confetti-piece {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        top: -10px;
+        z-index: 999;
+        animation: confetti-fall 3s linear forwards;
+        pointer-events: none;
+      }
+
+      .cash-bill {
+        position: fixed;
+        font-size: 2rem;
+        top: -50px;
+        z-index: 999;
+        animation: cash-float 4s ease-in forwards;
+        pointer-events: none;
+      }
+
+      .screen-flash {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 998;
+        animation: screen-flash 0.5s ease-out;
+      }
+
+      .win-glow {
+        animation: glow-pulse 1.5s ease-in-out infinite;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <button class="help-icon" onclick="showTutorial()">?</button>
+      <h1>Tumbler</h1>
+      <div class="sub-text">Crack the code</div>
+      <!-- ADD THIS TIMER -->
+      <div class="timer-display">
+        <svg
+          class="timer-icon"
+          width="14"
+          height="14"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+        >
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        <span id="timer">00:00</span>
+      </div>
+      <button class="stats-btn" onclick="showStats()">📊 Stats</button>
+      <button class="stats-btn" onclick="showStats()">📊 Stats</button>
+      <button
+        class="mute-btn stats-btn"
+        onclick="toggleMute()"
+        style="right: 90px"
+      >
+        🔊
+      </button>
+    </header>
+
+    <div id="tutorial-modal" class="tutorial-modal">
+      <div class="tutorial-content">
+        <div class="mission-header">
+          <h2 class="mission-title">Mission Briefing</h2>
+          <div class="mission-subtitle">Crack the 4-Letter Code</div>
+        </div>
+
+        <div class="example-set">
+          <div class="example-item">
+            <div class="example-tile correct">C</div>
+            <div class="example-caption">
+              <strong style="color: var(--color-correct)">LOCKED</strong
+              ><br />Correct Letter
+            </div>
+          </div>
+
+          <div class="example-item">
+            <div class="example-tile close">
+              J
+              <div class="example-arrow">▲</div>
+            </div>
+            <div class="example-caption">
+              <strong style="color: var(--color-close)">CLOSE</strong
+              ><br />Within 9
+            </div>
+          </div>
+
+          <div class="example-item">
+            <div class="example-tile far">
+              Z
+              <div class="example-arrow">▼▼</div>
+            </div>
+            <div class="example-caption">
+              <strong style="color: var(--color-far)">FAR</strong><br />10+ Away
+            </div>
+          </div>
+        </div>
+
+        <div class="rule-grid">
+          <div class="rule-line">
+            <div class="icon-box">🎯</div>
+            <div>Guess the secret word in <strong>6 attempts</strong>.</div>
+          </div>
+
+          <div class="rule-line">
+            <div class="icon-box">↕️</div>
+            <div>
+              <strong>Follow the Arrows:</strong> They point towards the
+              answer.<br />
+              <span style="font-size: 0.8rem; color: #94a3b8">
+                (e.g. <strong>▲</strong> means the real letter is
+                <em>Higher</em> in the alphabet)
+              </span>
+            </div>
+          </div>
+
+          <div class="rule-line">
+            <div class="icon-box">⌨️</div>
+            <div>
+              <strong>Intel Assist:</strong> Impossible keys are automatically
+              disabled to help you.
+            </div>
+          </div>
+
+          <div class="rule-line">
+            <div class="icon-box">🔍</div>
+            <div>
+              <strong>Intel Boost:</strong> Stuck? Purchase vault intel to see
+              the code sum for <strong>$1,500</strong>.
+            </div>
+          </div>
+        </div>
+
+        <button class="tutorial-btn" onclick="closeTutorial()">
+          START CRACKING
+        </button>
+      </div>
+    </div>
+
+    <div id="stats-modal" class="stats-modal">
+      <div class="stats-content">
+        <h2 style="margin-top: 0; text-align: center">Your Stash & Stats</h2>
+
+        <div class="stash-display">
+          <div class="stash-label">Total Stash Value</div>
+          <div class="stash-value" id="stat-total-cash">$0</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="stat-played">0</div>
+            <div class="stat-label">Played</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-winrate">0</div>
+            <div class="stat-label">Win %</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="stat-streak">0</div>
+            <div class="stat-label">Streak 🔥</div>
+          </div>
+        </div>
+        <button class="close-stats" onclick="closeStats()">Close</button>
+      </div>
+    </div>
+
+    <div id="win-modal" class="tutorial-modal">
+      <div class="tutorial-content">
+        <h2>🎉 VAULT BREACHED!</h2>
+
+        <div class="stash-display">
+          <div class="stash-label">You Stole</div>
+          <div class="stash-value" id="win-cash-earned">$0</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value" id="win-attempts">0</div>
+            <div class="stat-label">Attempts</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="win-time">0s</div>
+            <div class="stat-label">Time</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value" id="win-total-cash">$0</div>
+            <div class="stat-label">Total Stash</div>
+          </div>
+        </div>
+
+        <div style="margin: 20px 0; text-align: center">
+          <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px">
+            GUESS DISTRIBUTION
+          </div>
+          <div id="distribution-bars"></div>
+        </div>
+
+        <button class="tutorial-btn" onclick="shareResult()">
+          📤 Share Result
+        </button>
+        <button class="close-stats" onclick="closeWinModal()">Close</button>
+      </div>
+    </div>
+
+    <div
+      class="intel-tool"
+      style="
+        width: 100%;
+        max-width: 350px;
+        margin-bottom: 15px;
+        display: flex;
+        justify-content: center;
+      "
+    >
+      <button class="intel-btn" id="intel-btn" onclick="confirmIntel()">
+        🔍 REVIEW INTEL
+        <span
+          style="
+            display: block;
+            font-size: 0.75rem;
+            opacity: 0.8;
+            margin-top: 3px;
+          "
+        >
+          Costs $1,500
+        </span>
+      </button>
+    </div>
+
+    <!-- Intel Panel (hidden by default) -->
+    <div
+      id="intel-panel"
+      class="countdown-display"
+      style="display: none; margin-bottom: 15px"
+    >
+      <div class="countdown-label">🎯 VAULT INTEL</div>
+      <div
+        style="
+          font-size: 1.5rem;
+          font-weight: 700;
+          color: var(--color-correct);
+          margin: 10px 0;
+        "
+      >
+        Code Sum: <span id="code-sum-value">0</span>
+      </div>
+      <div style="font-size: 0.75rem; color: #94a3b8">
+        A=1, B=2, C=3 ... Z=26
+      </div>
+    </div>
+
+    <div id="message-container"></div>
+
+    <div id="game-board"></div>
+
+    <div class="legend">
+      <div class="legend-item">
+        <div class="dot" style="background: var(--color-far)"></div>
+        Far (10+)
+      </div>
+      <div class="legend-item">
+        <div class="dot" style="background: var(--color-close)"></div>
+        Close (1-9)
+      </div>
+      <div class="legend-item">
+        <div class="dot" style="background: var(--color-correct)"></div>
+        Locked In
+      </div>
+    </div>
+
+    <div id="keyboard"></div>
+
+    <script>
+      // --- CONFIGURATION ---
+      const WORD_LENGTH = 4;
+      const MAX_TRIES = 6;
+      const ASCII_A = 65;
+      const ASCII_Z = 90;
+      const CLOSE_DISTANCE = 9;
+      const FAR_DISTANCE = 10;
+      const GAME_EPOCH = new Date("November 26, 2025 00:00:00");
+
+      // CASH CALCULATION CONSTANTS
+      const CASH_BASE_VALUE = 10000;
+      const CASH_ATTEMPT_PENALTY = 1000;
+      const CASH_SPEED_BONUS_CAP = 60; // seconds
+      const CASH_PER_SECOND_BONUS = 20;
+      const CASH_MINIMUM_PAYOUT = 500;
+      const INTEL_COST = 1500;
+
+      // ==================== SOUND EFFECTS ====================
+      const audioContext = new (window.AudioContext ||
+        window.webkitAudioContext)();
+      let isMuted = localStorage.getItem("tumblerMuted") === "true";
+
+      function playSound(type) {
+        if (isMuted) return;
+
+        const now = audioContext.currentTime;
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+
+        switch (type) {
+          case "keypress":
+            oscillator.frequency.setValueAtTime(400, now);
+            gainNode.gain.setValueAtTime(0.1, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+            oscillator.start(now);
+            oscillator.stop(now + 0.1);
+            break;
+
+          case "correct":
+            oscillator.frequency.setValueAtTime(523.25, now); // C5
+            oscillator.frequency.setValueAtTime(659.25, now + 0.1); // E5
+            oscillator.frequency.setValueAtTime(783.99, now + 0.2); // G5
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+            break;
+
+          case "close":
+            oscillator.frequency.setValueAtTime(440, now);
+            gainNode.gain.setValueAtTime(0.15, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.15);
+            oscillator.start(now);
+            oscillator.stop(now + 0.15);
+            break;
+
+          case "far":
+            oscillator.frequency.setValueAtTime(200, now);
+            gainNode.gain.setValueAtTime(0.15, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+            oscillator.start(now);
+            oscillator.stop(now + 0.2);
+            break;
+
+          case "error":
+            oscillator.frequency.setValueAtTime(150, now);
+            gainNode.gain.setValueAtTime(0.2, now);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+            oscillator.start(now);
+            oscillator.stop(now + 0.3);
+            break;
+
+          case "win":
+            // Ascending victory fanfare
+            const notes = [523.25, 659.25, 783.99, 1046.5]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+              const osc = audioContext.createOscillator();
+              const gain = audioContext.createGain();
+              osc.connect(gain);
+              gain.connect(audioContext.destination);
+              osc.frequency.setValueAtTime(freq, now + i * 0.15);
+              gain.gain.setValueAtTime(0.3, now + i * 0.15);
+              gain.gain.exponentialRampToValueAtTime(
+                0.01,
+                now + i * 0.15 + 0.4
+              );
+              osc.start(now + i * 0.15);
+              osc.stop(now + i * 0.15 + 0.4);
+            });
+            break;
+        }
+      }
+
+      function toggleMute() {
+        isMuted = !isMuted;
+        localStorage.setItem("tumblerMuted", isMuted);
+        const btn = document.querySelector(".mute-btn");
+        btn.textContent = isMuted ? "🔇" : "🔊";
+        playSound("keypress"); // Test sound
+      }
+
+      // --- STATE VARIABLES ---
+      let TARGET_WORD = "";
+      let currentRow = 0;
+      let currentTile = 0;
+      let guesses = Array(6)
+        .fill(null)
+        .map(() => Array(4).fill(""));
+      let isGameOver = false;
+      let startTime = null;
+      let timerInterval = null;
+      let intelUsed = false;
+
+      let dictionary = new Set();
+      let answerList = [];
+      let slotConstraints = [];
+
+      const board = document.getElementById("game-board");
+      const keyboardContainer = document.getElementById("keyboard");
+      const messageContainer = document.getElementById("message-container");
+
+      // Load stats from localStorage, including NEW: totalCash
+      let stats = JSON.parse(
+        localStorage.getItem("tumblerStats") ||
+          '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
+      );
+
+      // Ensure totalCash exists (for users upgrading from old version)
+      if (typeof stats.totalCash !== "number") {
+        stats.totalCash = 0;
+      }
+
+      // ==================== WIN ANIMATIONS ====================
+      function createConfetti() {
+        const colors = ["#6aaa64", "#c9b458", "#00ff6a", "#f8fafc", "#fbbf24"];
+        const confettiCount = 50;
+
+        for (let i = 0; i < confettiCount; i++) {
+          setTimeout(() => {
+            const confetti = document.createElement("div");
+            confetti.classList.add("confetti-piece");
+            confetti.style.left = Math.random() * 100 + "%";
+            confetti.style.backgroundColor =
+              colors[Math.floor(Math.random() * colors.length)];
+            confetti.style.animationDelay = Math.random() * 0.5 + "s";
+            confetti.style.animationDuration = Math.random() * 2 + 2 + "s";
+            document.body.appendChild(confetti);
+
+            setTimeout(() => confetti.remove(), 5000);
+          }, i * 30);
+        }
+      }
+
+      function createCashRain() {
+        const cashSymbols = ["💵", "💰", "💸", "💴", "💶"];
+        const cashCount = 20;
+
+        for (let i = 0; i < cashCount; i++) {
+          setTimeout(() => {
+            const cash = document.createElement("div");
+            cash.classList.add("cash-bill");
+            cash.textContent =
+              cashSymbols[Math.floor(Math.random() * cashSymbols.length)];
+            cash.style.left = Math.random() * 100 + "%";
+            cash.style.animationDelay = Math.random() * 0.3 + "s";
+            cash.style.animationDuration = Math.random() * 2 + 3 + "s";
+            document.body.appendChild(cash);
+
+            setTimeout(() => cash.remove(), 7000);
+          }, i * 100);
+        }
+      }
+
+      function createScreenFlash() {
+        const flash = document.createElement("div");
+        flash.classList.add("screen-flash");
+        document.body.appendChild(flash);
+        setTimeout(() => flash.remove(), 500);
+      }
+
+      function animateCountUp(elementId, targetValue, duration = 2000) {
+        const element = document.getElementById(elementId);
+        const startValue = 0;
+        const startTime = Date.now();
+
+        const formatter = new Intl.NumberFormat("en-US");
+
+        function update() {
+          const now = Date.now();
+          const elapsed = now - startTime;
+          const progress = Math.min(elapsed / duration, 1);
+
+          // Easing function for smooth deceleration
+          const easeOutQuart = 1 - Math.pow(1 - progress, 4);
+          const currentValue = Math.floor(
+            startValue + (targetValue - startValue) * easeOutQuart
+          );
+
+          element.textContent = `$${formatter.format(currentValue)}`;
+
+          if (progress < 1) {
+            requestAnimationFrame(update);
+          } else {
+            element.textContent = `$${formatter.format(targetValue)}`;
+          }
+        }
+
+        update();
+      }
+
+      async function initGame() {
+        try {
+          await loadDictionaries();
+
+          TARGET_WORD = getDailyWord();
+
+          // ADD THIS CHECK
+          if (hasPlayedToday()) {
+            // Show the completed game state
+            loadCompletedGame();
+            return; // Exit early, don't allow new game
+          }
+
+          resetSlotConstraints();
+          intelUsed = false;
+          createBoard();
+          createKeyboard();
+          document.addEventListener("keydown", handleKeydown);
+          updateActiveRow();
+          updateKeyboardVisuals();
+
+          // Check if first time user
+          if (!localStorage.getItem("tumblerTutorialSeen")) {
+            showTutorial();
+            localStorage.setItem("tumblerTutorialSeen", "true");
+            // Timer will start when they close tutorial
+          } else {
+            // Returning user - start timer immediately
+            startTimer();
+          }
+
+          if (!localStorage.getItem("tumblerTutorialSeen")) {
+            showTutorial();
+            localStorage.setItem("tumblerTutorialSeen", "true");
+          }
+        } catch (error) {
+          console.error("Game Initialization Error:", error);
+          showMessage("Error loading word lists. Please refresh.");
+        }
+      }
+
+      function startTimer() {
+        const timerElement = document.getElementById("timer");
+        const timerDisplay = document.querySelector(".timer-display");
+        startTime = Date.now();
+
+        timerInterval = setInterval(() => {
+          if (isGameOver) {
+            clearInterval(timerInterval);
+            return;
+          }
+
+          const elapsed = Math.floor((Date.now() - startTime) / 1000);
+          const minutes = Math.floor(elapsed / 60);
+          const seconds = elapsed % 60;
+
+          timerElement.textContent = `${String(minutes).padStart(
+            2,
+            "0"
+          )}:${String(seconds).padStart(2, "0")}`;
+
+          // Visual feedback based on time
+          timerDisplay.classList.remove("warning", "danger");
+          if (elapsed >= 120) {
+            // 2 minutes
+            timerDisplay.classList.add("danger");
+          } else if (elapsed >= 60) {
+            // 1 minute
+            timerDisplay.classList.add("warning");
+          }
+        }, 1000);
+      }
+
+      // ADD THIS FUNCTION
+      function stopTimer() {
+        if (timerInterval) {
+          clearInterval(timerInterval);
+          timerInterval = null;
+        }
+      }
+
+      // Get current puzzle number (days since epoch)
+      function getPuzzleNumber() {
+        const now = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
+
+        // Set your game's launch date here
+        const LAUNCH_DATE = new Date("November 26, 2025 00:00:00"); // TODAY
+
+        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
+        const launchMidnight = new Date(LAUNCH_DATE).setHours(0, 0, 0, 0);
+
+        const daysPassed = Math.floor(
+          (currentMidnight - launchMidnight) / msPerDay
+        );
+        return daysPassed + 1; // Today is #1
+      }
+
+      // Save today's game state
+      function saveTodayGame(attempts, cashWon) {
+        const puzzleNum = getPuzzleNumber();
+
+        // Save the actual game grid for display
+        const gridState = [];
+        for (let r = 0; r < attempts; r++) {
+          const rowState = [];
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tile = document.getElementById(`row-${r}-tile-${c}`);
+            if (tile) {
+              const letterEl = tile.querySelector(".letter");
+              rowState.push({
+                letter: letterEl ? letterEl.textContent : "",
+                status: tile.classList.contains("correct")
+                  ? "correct"
+                  : tile.classList.contains("close")
+                  ? "close"
+                  : tile.classList.contains("far")
+                  ? "far"
+                  : "",
+              });
+            }
+          }
+          gridState.push(rowState);
+        }
+
+        const gameData = {
+          puzzleNumber: puzzleNum,
+          attempts: attempts,
+          cashWon: cashWon || 0,
+          grid: gridState,
+          timestamp: Date.now(),
+          intelUsed: intelUsed,
+        };
+        localStorage.setItem("tumblerTodayGame", JSON.stringify(gameData));
+      }
+
+      // Check if already played today
+      function hasPlayedToday() {
+        const saved = localStorage.getItem("tumblerTodayGame");
+        if (!saved) return false;
+        const data = JSON.parse(saved);
+        return data.puzzleNumber === getPuzzleNumber();
+      }
+
+      function loadCompletedGame() {
+        const saved = localStorage.getItem("tumblerTodayGame");
+        if (!saved) return;
+
+        const gameData = JSON.parse(saved);
+
+        // Disable input
+        isGameOver = true;
+        currentRow = gameData.attempts;
+        intelUsed = gameData.intelUsed || false;
+
+        // Create board
+        createBoard();
+
+        // Recreate the completed game state
+        if (gameData.grid && gameData.grid.length > 0) {
+          gameData.grid.forEach((row, rowIndex) => {
+            row.forEach((tileData, colIndex) => {
+              const tile = document.getElementById(
+                `row-${rowIndex}-tile-${colIndex}`
+              );
+              if (tile && tileData.letter) {
+                tile.querySelector(".letter").textContent = tileData.letter;
+                tile.setAttribute("data-status", "filled");
+                tile.classList.add("evaluated");
+
+                if (tileData.status) {
+                  tile.classList.add(tileData.status);
+
+                  // Add visual indicators
+                  if (tileData.status === "correct") {
+                    const key = document.getElementById(
+                      `key-${tileData.letter}`
+                    );
+                    if (key) key.classList.add("correct");
+                  }
+                }
+              }
+            });
+          });
+
+          // Highlight the winning row
+          const winRow = document.getElementById(
+            `row-${gameData.attempts - 1}`
+          );
+          if (winRow) {
+            winRow.style.borderColor = "#6aaa64";
+            winRow.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
+          }
+        }
+
+        // NEW: Show countdown to next puzzle
+        showCountdownMessage(gameData);
+
+        // Auto-show the win modal after a delay
+        setTimeout(() => {
+          showWinModal(gameData.attempts, gameData.cashWon, 0);
+        }, 2500);
+      }
+
+      // NEW: Show countdown and streak when game already played
+      // NEW: Show countdown and streak when game already played
+      function showCountdownMessage(gameData) {
+        const puzzleNum = getPuzzleNumber();
+        const cashString = new Intl.NumberFormat("en-US").format(
+          gameData.cashWon
+        );
+
+        // Calculate time until next puzzle
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        const msUntilTomorrow = tomorrow - now;
+
+        const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
+        const minutes = Math.floor(
+          (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+        );
+        const seconds = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
+
+        // Create a container ABOVE the game board
+        const countdownContainer = document.createElement("div");
+        countdownContainer.id = "countdown-container";
+        countdownContainer.style.cssText =
+          "width: 100%; display: flex; justify-content: center; margin-bottom: 15px;";
+
+        countdownContainer.innerHTML = `
    <div class="countdown-display">
      <div class="countdown-label">✅ Tumbler #${puzzleNum} Cracked!</div>
      <div style="font-size: 1.2rem; color: var(--color-cash); margin: 10px 0;">
@@ -1695,9 +1788,9 @@ countdownContainer.innerHTML = `
      <div class="countdown-label" style="margin-top: 15px;">Next Heist Available In</div>
      <div class="countdown-timer" id="live-countdown">
        ${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-         2,
-         "0"
-       )}:${String(seconds).padStart(2, "0")}
+          2,
+          "0"
+        )}:${String(seconds).padStart(2, "0")}
      </div>
      <div class="streak-badge">
        🔥 ${stats.currentStreak} Day Streak
@@ -1705,140 +1798,148 @@ countdownContainer.innerHTML = `
    </div>
  `;
 
-// Insert BEFORE the game board
-const gameBoard = document.getElementById("game-board");
-gameBoard.parentNode.insertBefore(countdownContainer, gameBoard);
+        // Insert BEFORE the game board
+        const gameBoard = document.getElementById("game-board");
+        gameBoard.parentNode.insertBefore(countdownContainer, gameBoard);
 
-// Update countdown every second
-setInterval(() => {
-const now = new Date();
-const tomorrow = new Date(now);
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(0, 0, 0, 0);
-const msUntilTomorrow = tomorrow - now;
+        // Update countdown every second
+        setInterval(() => {
+          const now = new Date();
+          const tomorrow = new Date(now);
+          tomorrow.setDate(tomorrow.getDate() + 1);
+          tomorrow.setHours(0, 0, 0, 0);
+          const msUntilTomorrow = tomorrow - now;
 
-const h = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
-const m = Math.floor(
-(msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
-);
-const s = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
+          const h = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
+          const m = Math.floor(
+            (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+          );
+          const s = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
 
-const countdownEl = document.getElementById("live-countdown");
-if (countdownEl) {
-countdownEl.textContent = `${String(h).padStart(2, "0")}:${String(
-             m
-           ).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
-}
-}, 1000);
-}
+          const countdownEl = document.getElementById("live-countdown");
+          if (countdownEl) {
+            countdownEl.textContent = `${String(h).padStart(2, "0")}:${String(
+              m
+            ).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
+          }
+        }, 1000);
+      }
 
-function generateShareText(attempts, cashWon) {
-const puzzleNum = getPuzzleNumber();
-const totalCash = stats.totalCash || 0;
-const safeCashWon = cashWon || 0;
+      function generateShareText(attempts, cashWon) {
+        const puzzleNum = getPuzzleNumber();
+        const totalCash = stats.totalCash || 0;
+        const safeCashWon = cashWon || 0;
 
-let shareText = `Tumbler #${puzzleNum} 🔓\n`;
-shareText += `💰 Stole: $${new Intl.NumberFormat("en-US").format(
-         safeCashWon
-       )}\n`;
-shareText += `🔥 Streak: ${stats.currentStreak} days\n`;
-shareText += `💼 Total Stash: $${new Intl.NumberFormat("en-US").format(
-         totalCash
-       )}\n\n`;
+        let shareText = `Tumbler #${puzzleNum} 🔓\n`;
+        shareText += `💰 Stole: $${new Intl.NumberFormat("en-US").format(
+          safeCashWon
+        )}\n`;
 
-// Generate grid with simple arrows and locks
-for (let r = 0; r < attempts; r++) {
-for (let c = 0; c < WORD_LENGTH; c++) {
-const tile = document.getElementById(`row-${r}-tile-${c}`);
-if (!tile) continue;
-if (tile.classList.contains("correct")) {
-shareText += "🔒"; // Lock for correct
-} else if (
-tile.classList.contains("close") ||
-tile.classList.contains("far")
-) {
-const hasUp = tile.classList.contains("up");
-shareText += hasUp ? "⬆️" : "⬇️";
-}
-}
-shareText += "\n";
-}
+        // ADD THESE LINES
+        if (intelUsed) {
+          shareText += `🔍 Intel Used (-$1,500)\n`;
+        } else {
+          shareText += `💎 No Intel Used\n`;
+        }
 
-shareText += `\nPlay: https://akashramsankar.github.io/Tumbler/`;
+        shareText += `🔥 Streak: ${stats.currentStreak} days\n`;
+        shareText += `💼 Total Stash: $${new Intl.NumberFormat("en-US").format(
+          totalCash
+        )}\n\n`;
 
-return shareText;
-}
+        // Generate grid with simple arrows and locks
+        for (let r = 0; r < attempts; r++) {
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tile = document.getElementById(`row-${r}-tile-${c}`);
+            if (!tile) continue;
+            if (tile.classList.contains("correct")) {
+              shareText += "🔒"; // Lock for correct
+            } else if (
+              tile.classList.contains("close") ||
+              tile.classList.contains("far")
+            ) {
+              const hasUp = tile.classList.contains("up");
+              shareText += hasUp ? "⬆️" : "⬇️";
+            }
+          }
+          shareText += "\n";
+        }
 
-async function shareResult() {
-const saved = localStorage.getItem("tumblerTodayGame");
-if (!saved) {
-showMessage("No game data to share!");
-return;
-}
+        shareText += `\nPlay: https://akashramsankar.github.io/Tumbler/`;
 
-const gameData = JSON.parse(saved);
+        return shareText;
+      }
 
-// Validate game data
-if (!gameData.attempts || gameData.cashWon === undefined) {
-showMessage("Invalid game data!");
-return;
-}
-const shareText = generateShareText(
-gameData.attempts,
-gameData.cashWon
-);
+      async function shareResult() {
+        const saved = localStorage.getItem("tumblerTodayGame");
+        if (!saved) {
+          showMessage("No game data to share!");
+          return;
+        }
 
-if (navigator.share) {
-try {
-await navigator.share({ text: shareText });
-} catch (err) {
-if (err.name !== "AbortError") {
-copyToClipboard(shareText);
-}
-}
-} else {
-copyToClipboard(shareText);
-}
-}
+        const gameData = JSON.parse(saved);
 
-function copyToClipboard(text) {
-navigator.clipboard
-.writeText(text)
-.then(() => {
-showMessage("📋 Copied to clipboard!");
-})
-.catch(() => {
-showMessage("❌ Failed to copy");
-});
-}
+        // Validate game data
+        if (!gameData.attempts || gameData.cashWon === undefined) {
+          showMessage("Invalid game data!");
+          return;
+        }
+        const shareText = generateShareText(
+          gameData.attempts,
+          gameData.cashWon
+        );
 
-async function loadDictionaries() {
-const dictResponse = await fetch("4-letter-words.json");
-const dictData = await dictResponse.json();
-dictionary = new Set(dictData.map((w) => w.toUpperCase()));
+        if (navigator.share) {
+          try {
+            await navigator.share({ text: shareText });
+          } catch (err) {
+            if (err.name !== "AbortError") {
+              copyToClipboard(shareText);
+            }
+          }
+        } else {
+          copyToClipboard(shareText);
+        }
+      }
 
-const answersResponse = await fetch("Common-used.json");
-const answersData = await answersResponse.json();
-answerList = answersData.map((w) => w.toUpperCase());
-}
+      function copyToClipboard(text) {
+        navigator.clipboard
+          .writeText(text)
+          .then(() => {
+            showMessage("📋 Copied to clipboard!");
+          })
+          .catch(() => {
+            showMessage("❌ Failed to copy");
+          });
+      }
 
-function getDailyWord() {
-const now = new Date();
-const msPerDay = 24 * 60 * 60 * 1000;
+      async function loadDictionaries() {
+        const dictResponse = await fetch("4-letter-words.json");
+        const dictData = await dictResponse.json();
+        dictionary = new Set(dictData.map((w) => w.toUpperCase()));
 
-const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
-const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
+        const answersResponse = await fetch("Common-used.json");
+        const answersData = await answersResponse.json();
+        answerList = answersData.map((w) => w.toUpperCase());
+      }
 
-const timeDiff = currentMidnight - epochMidnight;
-const daysPassed = Math.floor(timeDiff / msPerDay);
+      function getDailyWord() {
+        const now = new Date();
+        const msPerDay = 24 * 60 * 60 * 1000;
 
-// MANUAL WORD LIST - Add your daily words here
-const manualWords = [
-"ROCK", // Day 2 (Nov 27, 2025)
-"SOUL", // Day 3 (Nov 28, 2025)
-"FIRE", // Day 4 (Nov 29, 2025)
-"THIS", // Day 5 (Nov 30, 2025)
-"OPEN", // Day 6 (Dec 1, 2025)
+        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
+        const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
+
+        const timeDiff = currentMidnight - epochMidnight;
+        const daysPassed = Math.floor(timeDiff / msPerDay);
+
+        // MANUAL WORD LIST - Add your daily words here
+        const manualWords = [
+          "ROCK", // Day 2 (Nov 27, 2025)
+          "SOUL", // Day 3 (Nov 28, 2025)
+          "FIRE", // Day 4 (Nov 29, 2025)
+          "THIS", // Day 5 (Nov 30, 2025)
+          "OPEN", // Day 6 (Dec 1, 2025)
           "MINT",
           "GOLD",
           "SAFE",
@@ -1850,438 +1951,443 @@ const manualWords = [
           "DATA",
           "BYTE",
           "NODE",
-// Add more words for each day...
-];
-
-const index = daysPassed % manualWords.length;
-const safeIndex = index < 0 ? index + manualWords.length : index;
-
-return manualWords[safeIndex];
-}
-
-// NEW: Function to calculate cash prize
-function calculateCash(attempts, timeInSeconds) {
-// Base value less penalty for attempts
-let cash = CASH_BASE_VALUE - attempts * CASH_ATTEMPT_PENALTY;
-
-// Add speed bonus (capped at 60 seconds)
-const timeFactor = Math.max(0, CASH_SPEED_BONUS_CAP - timeInSeconds);
-cash += timeFactor * CASH_PER_SECOND_BONUS;
-
-// Ensure minimum payout
-return Math.max(CASH_MINIMUM_PAYOUT, cash);
-}
-
-function resetSlotConstraints() {
-slotConstraints = Array.from({ length: WORD_LENGTH }, () => ({
-min: ASCII_A,
-max: ASCII_Z,
-}));
-}
-
-function createBoard() {
-for (let r = 0; r < MAX_TRIES; r++) {
-const rowDiv = document.createElement("div");
-rowDiv.classList.add("row");
-rowDiv.setAttribute("id", `row-${r}`);
-
-for (let c = 0; c < WORD_LENGTH; c++) {
-const tileDiv = document.createElement("div");
-tileDiv.classList.add("tile");
-tileDiv.setAttribute("id", `row-${r}-tile-${c}`);
-
-const letterSpan = document.createElement("span");
-letterSpan.classList.add("letter");
-tileDiv.appendChild(letterSpan);
-
-const indicatorSpan = document.createElement("span");
-indicatorSpan.classList.add("indicator");
-tileDiv.appendChild(indicatorSpan);
-
-rowDiv.appendChild(tileDiv);
-}
-board.appendChild(rowDiv);
-}
-}
-
-function updateActiveRow() {
-document
-.querySelectorAll(".row")
-.forEach((row) => row.classList.remove("active"));
-if (!isGameOver && currentRow < MAX_TRIES) {
-const row = document.getElementById(`row-${currentRow}`);
-if (row) row.classList.add("active");
-}
-}
-
-function createKey(content, className) {
-const button = document.createElement("button");
-button.textContent = content;
-button.classList.add("key");
-if (className) button.classList.add(className);
-if (!className && content.length === 1) {
-button.setAttribute(
-"data-value",
-content.charCodeAt(0) - ASCII_A + 1
-);
-}
-return button;
-}
-
-function createKeyboard() {
-const rows = ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ"];
-rows.forEach((rowString, index) => {
-const rowDiv = document.createElement("div");
-rowDiv.classList.add("key-row");
-
-if (index === 2) {
-const enterKey = createKey("ENTER", "wide");
-enterKey.onclick = submitGuess;
-rowDiv.appendChild(enterKey);
-}
-
-for (let char of rowString) {
-const key = createKey(char, "");
-key.id = `key-${char}`;
-key.onclick = () => {
-if (!isGameOver && currentTile < WORD_LENGTH) {
-addLetter(char);
-}
-};
-rowDiv.appendChild(key);
-}
-
-if (index === 2) {
-const backKey = createKey("⌫", "wide");
-backKey.onclick = deleteLetter;
-rowDiv.appendChild(backKey);
-}
-keyboardContainer.appendChild(rowDiv);
-});
-}
-
-function updateKeyboardVisuals() {
-if (isGameOver || currentRow >= MAX_TRIES) return;
-
-if (currentTile >= WORD_LENGTH) {
-document.querySelectorAll(".key").forEach((k) => {
-k.removeAttribute("data-disabled");
-});
-return;
-}
-
-const range = slotConstraints[currentTile];
-if (!range) return;
-
-document.querySelectorAll(".key").forEach((key) => {
-if (key.classList.contains("wide")) return;
-
-const keyVal = key.textContent.charCodeAt(0);
-const isOutOfRange = keyVal < range.min || keyVal > range.max;
-
-// NEW: Even correct (green) keys get disabled if out of range for current position
-if (isOutOfRange) {
-key.setAttribute("data-disabled", "true");
-} else {
-key.removeAttribute("data-disabled");
-}
-});
-}
-
-function addLetter(letter) {
-if (isGameOver) return;
-if (currentTile >= WORD_LENGTH) return;
-
-const keyEl = document.getElementById(`key-${letter}`);
-if (keyEl && keyEl.hasAttribute("data-disabled")) {
-showMessage("Invalid letter for this position!");
-shakeRow();
-playSound("error");
-return;
-}
-
-guesses[currentRow][currentTile] = letter;
-const tile = document.getElementById(
-`row-${currentRow}-tile-${currentTile}`
-);
-
-if (!tile) return;
-
-tile.querySelector(".letter").textContent = letter;
-tile.setAttribute("data-status", "filled");
-currentTile++;
-
-playSound("keypress");
-
-updateKeyboardVisuals();
-}
-
-function deleteLetter() {
-if (isGameOver) return;
-if (currentTile > 0) {
-currentTile--;
-guesses[currentRow][currentTile] = "";
-const tile = document.getElementById(
-`row-${currentRow}-tile-${currentTile}`
-);
-tile.querySelector(".letter").textContent = "";
-tile.removeAttribute("data-status");
-
-updateKeyboardVisuals();
-}
-}
-
-function showMessage(msg) {
-messageContainer.innerHTML = `<div class="toast">${msg}</div>`;
-setTimeout(() => (messageContainer.innerHTML = ""), 2000);
-}
-
-function shakeRow() {
-const row = document.getElementById(`row-${currentRow}`);
-row.style.transform = "translateX(5px)";
-setTimeout(() => (row.style.transform = "translateX(-5px)"), 100);
-setTimeout(() => (row.style.transform = "translateX(5px)"), 200);
-setTimeout(() => (row.style.transform = "translateX(0)"), 300);
-}
-
-function submitGuess() {
-if (isGameOver) return;
-
-if (currentTile < WORD_LENGTH) {
-showMessage("Need full combination!");
-shakeRow();
-playSound("error");
-return;
-}
-
-const currentWord = guesses[currentRow].join("");
-if (!dictionary.has(currentWord)) {
-showMessage("Not in word list!");
-shakeRow();
-playSound("error");
-return;
-}
-
-evaluateGuess(guesses[currentRow]);
-}
-
-function evaluateGuess(guessArr) {
-const targetArr = TARGET_WORD.split("");
-let correctCount = 0;
-
-for (let i = 0; i < WORD_LENGTH; i++) {
-const tile = document.getElementById(`row-${currentRow}-tile-${i}`);
-const indicator = tile.querySelector(".indicator");
-const letter = guessArr[i];
-
-const guessVal = letter.charCodeAt(0);
-const targetVal = targetArr[i].charCodeAt(0);
-const diff = targetVal - guessVal;
-
-const key = document.getElementById(`key-${letter}`);
-
-applyFeedbackConstraint(i, guessVal, diff);
-
-setTimeout(() => {
-tile.classList.add("evaluated");
-
-if (diff === 0) {
-tile.classList.add("correct");
-correctCount++;
-if (key) key.classList.add("correct");
-playSound("correct");
-} else {
-let symbol = "";
-let distClass = "";
-let rotateClass = diff > 0 ? "up" : "down";
-
-if (Math.abs(diff) > 9) {
-distClass = "far";
-symbol = diff > 0 ? "▲▲" : "▼▼";
-playSound("far");
-} else {
-distClass = "close";
-symbol = diff > 0 ? "▲" : "▼";
-playSound("close");
-}
-
-tile.classList.add(distClass);
-tile.classList.add(rotateClass);
-indicator.innerHTML = symbol;
-}
-}, i * 200);
-}
-
-setTimeout(() => {
-if (correctCount === WORD_LENGTH) {
-playSound("win");
-stopTimer();
-const solveTime = Math.floor((Date.now() - startTime) / 1000);
-const cashWon = calculateCash(currentRow + 1, solveTime);
-
-// Update Stats
-stats.played++;
-stats.won++;
-stats.currentStreak++;
-stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
-stats.guessDistribution[currentRow]++;
-stats.totalCash += cashWon;
-localStorage.setItem("tumblerStats", JSON.stringify(stats));
-
-// Save today's game
-saveTodayGame(currentRow + 1, cashWon);
-
-// ===== ENHANCED WIN ANIMATION =====
-const currentRowEl = document.getElementById(`row-${currentRow}`);
-
-// Screen flash
-createScreenFlash();
-
-// Pulsing glow on winning row
-currentRowEl.classList.add("win-glow");
-currentRowEl.style.borderColor = "#6aaa64";
-currentRowEl.style.transition = "all 0.3s ease";
-// Animate each tile with stagger
-for (let i = 0; i < WORD_LENGTH; i++) {
-const tile = document.getElementById(
-`row-${currentRow}-tile-${i}`
-);
-setTimeout(() => {
-tile.style.transform = "rotate(720deg) scale(1.2)";
-tile.style.boxShadow = "0 0 20px rgba(106, 170, 100, 0.8)";
-}, i * 100);
-}
-
-// Start confetti and cash rain
-setTimeout(() => {
-createConfetti();
-createCashRain();
-}, 400);
-
-// Show win modal with animated counter
-setTimeout(() => {
-showWinModal(currentRow + 1, cashWon, solveTime);
-}, WORD_LENGTH * 200 + 800);
-
-isGameOver = true;
-} else {
-if (currentRow < MAX_TRIES - 1) {
-currentRow++;
-currentTile = 0;
-updateActiveRow();
-updateKeyboardVisuals();
-} else {
-stats.played++;
-stats.currentStreak = 0;
-stopTimer();
-localStorage.setItem("tumblerStats", JSON.stringify(stats));
-showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
-isGameOver = true;
-}
-}
-}, WORD_LENGTH * 200 + 300);
-}
-
-function handleKeydown(e) {
-const key = e.key.toUpperCase();
-if (key === "ENTER") submitGuess();
-else if (key === "BACKSPACE") deleteLetter();
-else if (/^[A-Z]$/.test(key)) addLetter(key);
-}
-
-function applyFeedbackConstraint(slotIndex, guessVal, diff) {
-const constraint = slotConstraints[slotIndex];
-if (!constraint) return;
-
-if (diff === 0) {
-constraint.min = guessVal;
-constraint.max = guessVal;
-return;
-}
-
-const absDiff = Math.abs(diff);
-if (diff > 0) {
-const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
-const newMin = Math.min(guessVal + step, ASCII_Z);
-constraint.min = Math.max(constraint.min, newMin);
-
-if (absDiff <= CLOSE_DISTANCE) {
-const newMax = Math.min(guessVal + CLOSE_DISTANCE, ASCII_Z);
-constraint.max = Math.min(constraint.max, newMax);
-}
-} else {
-const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
-const newMax = Math.max(guessVal - step, ASCII_A);
-constraint.max = Math.min(constraint.max, newMax);
-
-if (absDiff <= CLOSE_DISTANCE) {
-const newMin = Math.max(guessVal - CLOSE_DISTANCE, ASCII_A);
-constraint.min = Math.max(constraint.min, newMin);
-}
-}
-
-constraint.min = Math.min(Math.max(constraint.min, ASCII_A), ASCII_Z);
-constraint.max = Math.max(Math.min(constraint.max, ASCII_Z), ASCII_A);
-
-if (constraint.min > constraint.max) {
-constraint.min = constraint.max;
-}
-}
-
-function showStats() {
-const modal = document.getElementById("stats-modal");
-modal.style.display = "flex";
-
-// Format cash for display
-const safeTotalCash = stats.totalCash || 0;
-const totalCashString = new Intl.NumberFormat("en-US").format(
-safeTotalCash
-);
-
-document.getElementById(
-"stat-total-cash"
-).textContent = `$${totalCashString}`;
-document.getElementById("stat-played").textContent = stats.played;
-document.getElementById("stat-winrate").textContent =
-stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
-document.getElementById("stat-streak").textContent =
-stats.currentStreak;
-}
-
-// MODIFIED: Show Stats now displays total cash
-function showWinModal(attempts, cashWon, solveTime) {
-const modal = document.getElementById("win-modal");
-modal.style.display = "flex";
-
-// Ensure cashWon is a valid number
-const safeCashWon = cashWon || 0;
-const safeTotalCash = stats.totalCash || 0;
-
-// Animate the cash counter
-animateCountUp("win-cash-earned", cashWon, 2000);
-
-document.getElementById(
-"win-cash-earned"
-).textContent = `$${new Intl.NumberFormat("en-US").format(cashWon)}`;
-document.getElementById("win-attempts").textContent = attempts;
-document.getElementById("win-time").textContent = `${solveTime}s`;
-
-// Animate total cash too
-animateCountUp("win-total-cash", safeTotalCash, 2000);
-document.getElementById(
-"win-total-cash"
-).textContent = `$${new Intl.NumberFormat("en-US").format(
-         stats.totalCash
-       )}`;
-
-// Build distribution bars
-const maxGuesses = Math.max(...stats.guessDistribution, 1);
-const barsHTML = stats.guessDistribution
-.map((count, idx) => {
-const percentage = (count / maxGuesses) * 100;
-const width = Math.max(percentage, 10);
-const isCurrent = idx === attempts - 1;
-return `
+          // Add more words for each day...
+        ];
+
+        const index = daysPassed % manualWords.length;
+        const safeIndex = index < 0 ? index + manualWords.length : index;
+
+        return manualWords[safeIndex];
+      }
+
+      // NEW: Function to calculate cash prize
+      function calculateCash(attempts, timeInSeconds) {
+        // Base value less penalty for attempts
+        let cash = CASH_BASE_VALUE - attempts * CASH_ATTEMPT_PENALTY;
+
+        // Add speed bonus (capped at 60 seconds)
+        const timeFactor = Math.max(0, CASH_SPEED_BONUS_CAP - timeInSeconds);
+        cash += timeFactor * CASH_PER_SECOND_BONUS;
+
+        // Deduct intel cost if used (ADD THESE 3 LINES)
+        if (intelUsed) {
+          cash -= INTEL_COST;
+        }
+
+        // Ensure minimum payout
+        return Math.max(CASH_MINIMUM_PAYOUT, cash);
+      }
+
+      function resetSlotConstraints() {
+        slotConstraints = Array.from({ length: WORD_LENGTH }, () => ({
+          min: ASCII_A,
+          max: ASCII_Z,
+        }));
+      }
+
+      function createBoard() {
+        for (let r = 0; r < MAX_TRIES; r++) {
+          const rowDiv = document.createElement("div");
+          rowDiv.classList.add("row");
+          rowDiv.setAttribute("id", `row-${r}`);
+
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tileDiv = document.createElement("div");
+            tileDiv.classList.add("tile");
+            tileDiv.setAttribute("id", `row-${r}-tile-${c}`);
+
+            const letterSpan = document.createElement("span");
+            letterSpan.classList.add("letter");
+            tileDiv.appendChild(letterSpan);
+
+            const indicatorSpan = document.createElement("span");
+            indicatorSpan.classList.add("indicator");
+            tileDiv.appendChild(indicatorSpan);
+
+            rowDiv.appendChild(tileDiv);
+          }
+          board.appendChild(rowDiv);
+        }
+      }
+
+      function updateActiveRow() {
+        document
+          .querySelectorAll(".row")
+          .forEach((row) => row.classList.remove("active"));
+        if (!isGameOver && currentRow < MAX_TRIES) {
+          const row = document.getElementById(`row-${currentRow}`);
+          if (row) row.classList.add("active");
+        }
+      }
+
+      function createKey(content, className) {
+        const button = document.createElement("button");
+        button.textContent = content;
+        button.classList.add("key");
+        if (className) button.classList.add(className);
+        if (!className && content.length === 1) {
+          button.setAttribute(
+            "data-value",
+            content.charCodeAt(0) - ASCII_A + 1
+          );
+        }
+        return button;
+      }
+
+      function createKeyboard() {
+        const rows = ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ"];
+        rows.forEach((rowString, index) => {
+          const rowDiv = document.createElement("div");
+          rowDiv.classList.add("key-row");
+
+          if (index === 2) {
+            const enterKey = createKey("ENTER", "wide");
+            enterKey.onclick = submitGuess;
+            rowDiv.appendChild(enterKey);
+          }
+
+          for (let char of rowString) {
+            const key = createKey(char, "");
+            key.id = `key-${char}`;
+            key.onclick = () => {
+              if (!isGameOver && currentTile < WORD_LENGTH) {
+                addLetter(char);
+              }
+            };
+            rowDiv.appendChild(key);
+          }
+
+          if (index === 2) {
+            const backKey = createKey("⌫", "wide");
+            backKey.onclick = deleteLetter;
+            rowDiv.appendChild(backKey);
+          }
+          keyboardContainer.appendChild(rowDiv);
+        });
+      }
+
+      function updateKeyboardVisuals() {
+        if (isGameOver || currentRow >= MAX_TRIES) return;
+
+        if (currentTile >= WORD_LENGTH) {
+          document.querySelectorAll(".key").forEach((k) => {
+            k.removeAttribute("data-disabled");
+          });
+          return;
+        }
+
+        const range = slotConstraints[currentTile];
+        if (!range) return;
+
+        document.querySelectorAll(".key").forEach((key) => {
+          if (key.classList.contains("wide")) return;
+
+          const keyVal = key.textContent.charCodeAt(0);
+          const isOutOfRange = keyVal < range.min || keyVal > range.max;
+
+          // NEW: Even correct (green) keys get disabled if out of range for current position
+          if (isOutOfRange) {
+            key.setAttribute("data-disabled", "true");
+          } else {
+            key.removeAttribute("data-disabled");
+          }
+        });
+      }
+
+      function addLetter(letter) {
+        if (isGameOver) return;
+        if (currentTile >= WORD_LENGTH) return;
+
+        const keyEl = document.getElementById(`key-${letter}`);
+        if (keyEl && keyEl.hasAttribute("data-disabled")) {
+          showMessage("Invalid letter for this position!");
+          shakeRow();
+          playSound("error");
+          return;
+        }
+
+        guesses[currentRow][currentTile] = letter;
+        const tile = document.getElementById(
+          `row-${currentRow}-tile-${currentTile}`
+        );
+
+        if (!tile) return;
+
+        tile.querySelector(".letter").textContent = letter;
+        tile.setAttribute("data-status", "filled");
+        currentTile++;
+
+        playSound("keypress");
+
+        updateKeyboardVisuals();
+      }
+
+      function deleteLetter() {
+        if (isGameOver) return;
+        if (currentTile > 0) {
+          currentTile--;
+          guesses[currentRow][currentTile] = "";
+          const tile = document.getElementById(
+            `row-${currentRow}-tile-${currentTile}`
+          );
+          tile.querySelector(".letter").textContent = "";
+          tile.removeAttribute("data-status");
+
+          updateKeyboardVisuals();
+        }
+      }
+
+      function showMessage(msg) {
+        messageContainer.innerHTML = `<div class="toast">${msg}</div>`;
+        setTimeout(() => (messageContainer.innerHTML = ""), 2000);
+      }
+
+      function shakeRow() {
+        const row = document.getElementById(`row-${currentRow}`);
+        row.style.transform = "translateX(5px)";
+        setTimeout(() => (row.style.transform = "translateX(-5px)"), 100);
+        setTimeout(() => (row.style.transform = "translateX(5px)"), 200);
+        setTimeout(() => (row.style.transform = "translateX(0)"), 300);
+      }
+
+      function submitGuess() {
+        if (isGameOver) return;
+
+        if (currentTile < WORD_LENGTH) {
+          showMessage("Need full combination!");
+          shakeRow();
+          playSound("error");
+          return;
+        }
+
+        const currentWord = guesses[currentRow].join("");
+        if (!dictionary.has(currentWord)) {
+          showMessage("Not in word list!");
+          shakeRow();
+          playSound("error");
+          return;
+        }
+
+        evaluateGuess(guesses[currentRow]);
+      }
+
+      function evaluateGuess(guessArr) {
+        const targetArr = TARGET_WORD.split("");
+        let correctCount = 0;
+
+        for (let i = 0; i < WORD_LENGTH; i++) {
+          const tile = document.getElementById(`row-${currentRow}-tile-${i}`);
+          const indicator = tile.querySelector(".indicator");
+          const letter = guessArr[i];
+
+          const guessVal = letter.charCodeAt(0);
+          const targetVal = targetArr[i].charCodeAt(0);
+          const diff = targetVal - guessVal;
+
+          const key = document.getElementById(`key-${letter}`);
+
+          applyFeedbackConstraint(i, guessVal, diff);
+
+          setTimeout(() => {
+            tile.classList.add("evaluated");
+
+            if (diff === 0) {
+              tile.classList.add("correct");
+              correctCount++;
+              if (key) key.classList.add("correct");
+              playSound("correct");
+            } else {
+              let symbol = "";
+              let distClass = "";
+              let rotateClass = diff > 0 ? "up" : "down";
+
+              if (Math.abs(diff) > 9) {
+                distClass = "far";
+                symbol = diff > 0 ? "▲▲" : "▼▼";
+                playSound("far");
+              } else {
+                distClass = "close";
+                symbol = diff > 0 ? "▲" : "▼";
+                playSound("close");
+              }
+
+              tile.classList.add(distClass);
+              tile.classList.add(rotateClass);
+              indicator.innerHTML = symbol;
+            }
+          }, i * 200);
+        }
+
+        setTimeout(() => {
+          if (correctCount === WORD_LENGTH) {
+            playSound("win");
+            stopTimer();
+            const solveTime = Math.floor((Date.now() - startTime) / 1000);
+            const cashWon = calculateCash(currentRow + 1, solveTime);
+
+            // Update Stats
+            stats.played++;
+            stats.won++;
+            stats.currentStreak++;
+            stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+            stats.guessDistribution[currentRow]++;
+            stats.totalCash += cashWon;
+            localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+            // Save today's game
+            saveTodayGame(currentRow + 1, cashWon);
+
+            // ===== ENHANCED WIN ANIMATION =====
+            const currentRowEl = document.getElementById(`row-${currentRow}`);
+
+            // Screen flash
+            createScreenFlash();
+
+            // Pulsing glow on winning row
+            currentRowEl.classList.add("win-glow");
+            currentRowEl.style.borderColor = "#6aaa64";
+            currentRowEl.style.transition = "all 0.3s ease";
+            // Animate each tile with stagger
+            for (let i = 0; i < WORD_LENGTH; i++) {
+              const tile = document.getElementById(
+                `row-${currentRow}-tile-${i}`
+              );
+              setTimeout(() => {
+                tile.style.transform = "rotate(720deg) scale(1.2)";
+                tile.style.boxShadow = "0 0 20px rgba(106, 170, 100, 0.8)";
+              }, i * 100);
+            }
+
+            // Start confetti and cash rain
+            setTimeout(() => {
+              createConfetti();
+              createCashRain();
+            }, 400);
+
+            // Show win modal with animated counter
+            setTimeout(() => {
+              showWinModal(currentRow + 1, cashWon, solveTime);
+            }, WORD_LENGTH * 200 + 800);
+
+            isGameOver = true;
+          } else {
+            if (currentRow < MAX_TRIES - 1) {
+              currentRow++;
+              currentTile = 0;
+              updateActiveRow();
+              updateKeyboardVisuals();
+            } else {
+              stats.played++;
+              stats.currentStreak = 0;
+              stopTimer();
+              localStorage.setItem("tumblerStats", JSON.stringify(stats));
+              showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
+              isGameOver = true;
+            }
+          }
+        }, WORD_LENGTH * 200 + 300);
+      }
+
+      function handleKeydown(e) {
+        const key = e.key.toUpperCase();
+        if (key === "ENTER") submitGuess();
+        else if (key === "BACKSPACE") deleteLetter();
+        else if (/^[A-Z]$/.test(key)) addLetter(key);
+      }
+
+      function applyFeedbackConstraint(slotIndex, guessVal, diff) {
+        const constraint = slotConstraints[slotIndex];
+        if (!constraint) return;
+
+        if (diff === 0) {
+          constraint.min = guessVal;
+          constraint.max = guessVal;
+          return;
+        }
+
+        const absDiff = Math.abs(diff);
+        if (diff > 0) {
+          const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
+          const newMin = Math.min(guessVal + step, ASCII_Z);
+          constraint.min = Math.max(constraint.min, newMin);
+
+          if (absDiff <= CLOSE_DISTANCE) {
+            const newMax = Math.min(guessVal + CLOSE_DISTANCE, ASCII_Z);
+            constraint.max = Math.min(constraint.max, newMax);
+          }
+        } else {
+          const step = absDiff > CLOSE_DISTANCE ? FAR_DISTANCE : 1;
+          const newMax = Math.max(guessVal - step, ASCII_A);
+          constraint.max = Math.min(constraint.max, newMax);
+
+          if (absDiff <= CLOSE_DISTANCE) {
+            const newMin = Math.max(guessVal - CLOSE_DISTANCE, ASCII_A);
+            constraint.min = Math.max(constraint.min, newMin);
+          }
+        }
+
+        constraint.min = Math.min(Math.max(constraint.min, ASCII_A), ASCII_Z);
+        constraint.max = Math.max(Math.min(constraint.max, ASCII_Z), ASCII_A);
+
+        if (constraint.min > constraint.max) {
+          constraint.min = constraint.max;
+        }
+      }
+
+      function showStats() {
+        const modal = document.getElementById("stats-modal");
+        modal.style.display = "flex";
+
+        // Format cash for display
+        const safeTotalCash = stats.totalCash || 0;
+        const totalCashString = new Intl.NumberFormat("en-US").format(
+          safeTotalCash
+        );
+
+        document.getElementById(
+          "stat-total-cash"
+        ).textContent = `$${totalCashString}`;
+        document.getElementById("stat-played").textContent = stats.played;
+        document.getElementById("stat-winrate").textContent =
+          stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
+        document.getElementById("stat-streak").textContent =
+          stats.currentStreak;
+      }
+
+      // MODIFIED: Show Stats now displays total cash
+      function showWinModal(attempts, cashWon, solveTime) {
+        const modal = document.getElementById("win-modal");
+        modal.style.display = "flex";
+
+        // Ensure cashWon is a valid number
+        const safeCashWon = cashWon || 0;
+        const safeTotalCash = stats.totalCash || 0;
+
+        // Animate the cash counter
+        animateCountUp("win-cash-earned", cashWon, 2000);
+
+        document.getElementById(
+          "win-cash-earned"
+        ).textContent = `$${new Intl.NumberFormat("en-US").format(cashWon)}`;
+        document.getElementById("win-attempts").textContent = attempts;
+        document.getElementById("win-time").textContent = `${solveTime}s`;
+
+        // Animate total cash too
+        animateCountUp("win-total-cash", safeTotalCash, 2000);
+        document.getElementById(
+          "win-total-cash"
+        ).textContent = `$${new Intl.NumberFormat("en-US").format(
+          stats.totalCash
+        )}`;
+
+        // Build distribution bars
+        const maxGuesses = Math.max(...stats.guessDistribution, 1);
+        const barsHTML = stats.guessDistribution
+          .map((count, idx) => {
+            const percentage = (count / maxGuesses) * 100;
+            const width = Math.max(percentage, 10);
+            const isCurrent = idx === attempts - 1;
+            return `
        <div class="distribution-row">
          <div class="distribution-label">${idx + 1}</div>
          <div class="distribution-bar ${isCurrent ? "current" : ""}"
@@ -2290,28 +2396,28 @@ return `
          </div>
        </div>
      `;
-})
-.join("");
+          })
+          .join("");
 
-document.getElementById("distribution-bars").innerHTML = barsHTML;
-// ADD THIS - Show countdown in win modal too
-const now = new Date();
-const tomorrow = new Date(now);
-tomorrow.setDate(tomorrow.getDate() + 1);
-tomorrow.setHours(0, 0, 0, 0);
-const msUntilTomorrow = tomorrow - now;
-const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
-const minutes = Math.floor(
-(msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
-);
+        document.getElementById("distribution-bars").innerHTML = barsHTML;
+        // ADD THIS - Show countdown in win modal too
+        const now = new Date();
+        const tomorrow = new Date(now);
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        tomorrow.setHours(0, 0, 0, 0);
+        const msUntilTomorrow = tomorrow - now;
+        const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
+        const minutes = Math.floor(
+          (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+        );
 
-// Add next puzzle info to modal
-const distributionBars = document.getElementById("distribution-bars");
-if (distributionBars && distributionBars.parentElement) {
-const nextPuzzleInfo = document.createElement("div");
-nextPuzzleInfo.style.cssText =
-"margin-top: 20px; padding: 15px; background: rgba(15, 23, 42, 0.6); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05);";
-nextPuzzleInfo.innerHTML = `
+        // Add next puzzle info to modal
+        const distributionBars = document.getElementById("distribution-bars");
+        if (distributionBars && distributionBars.parentElement) {
+          const nextPuzzleInfo = document.createElement("div");
+          nextPuzzleInfo.style.cssText =
+            "margin-top: 20px; padding: 15px; background: rgba(15, 23, 42, 0.6); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05);";
+          nextPuzzleInfo.innerHTML = `
      <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Next Vault Opens In</div>
      <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
        ${hours}h ${minutes}m
@@ -2320,44 +2426,118 @@ nextPuzzleInfo.innerHTML = `
        🔥 Keep your ${stats.currentStreak}-day streak alive!
      </div>
    `;
-distributionBars.parentElement.appendChild(nextPuzzleInfo);
-}
-}
+          distributionBars.parentElement.appendChild(nextPuzzleInfo);
+        }
+      }
 
-function closeWinModal() {
-document.getElementById("win-modal").style.display = "none";
-}
+      function closeWinModal() {
+        document.getElementById("win-modal").style.display = "none";
+      }
+      // ADD ALL THREE FUNCTIONS
+      function confirmIntel() {
+        if (intelUsed || isGameOver) return;
 
-function closeStats() {
-document.getElementById("stats-modal").style.display = "none";
-}
+        const modal = document.createElement("div");
+        modal.id = "intel-confirm-modal";
+        modal.className = "tutorial-modal";
+        modal.style.display = "flex";
 
-function showTutorial() {
-document.getElementById("tutorial-modal").style.display = "flex";
-}
+        modal.innerHTML = `
+    <div class="tutorial-content" style="max-width: 360px;">
+      <h2 style="margin-top: 0; font-size: 1.5rem;">🔍 Purchase Intel?</h2>
+      
+      <div style="background: var(--safe-inset); padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid var(--safe-border);">
+        <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px;">
+          Reveals code sum to help crack the vault
+        </div>
+        <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-far);">
+          Cost: $1,500
+        </div>
+      </div>
+      
+      <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">
+        The intel will show you the sum of all letter values (A=1, B=2...Z=26). 
+        This will be deducted from your final heist reward.
+      </div>
+      
+      <div style="display: flex; gap: 10px;">
+        <button class="tutorial-btn" onclick="useIntel()" style="flex: 1;">
+          ✓ Use Intel
+        </button>
+        <button class="close-stats" onclick="closeIntelModal()" style="flex: 1; margin-top: 0;">
+          Cancel
+        </button>
+      </div>
+    </div>
+  `;
 
-function closeTutorial() {
-document.getElementById("tutorial-modal").style.display = "none";
-// Start timer when first-time user closes tutorial
-if (!timerInterval) {
-startTimer();
-}
-}
+        document.body.appendChild(modal);
+        modal.addEventListener("click", (e) => {
+          if (e.target.id === "intel-confirm-modal") closeIntelModal();
+        });
+      }
 
-document.getElementById("stats-modal").addEventListener("click", (e) => {
-if (e.target.id === "stats-modal") closeStats();
-});
+      function closeIntelModal() {
+        const modal = document.getElementById("intel-confirm-modal");
+        if (modal) modal.remove();
+      }
 
-document.getElementById("win-modal").addEventListener("click", (e) => {
-if (e.target.id === "win-modal") closeWinModal();
-});
+      function useIntel() {
+        intelUsed = true;
+        closeIntelModal();
 
-document
-.getElementById("tutorial-modal")
-.addEventListener("click", (e) => {
-if (e.target.id === "tutorial-modal") closeTutorial();
-});
+        // Calculate target sum (YES - AUTOMATIC!)
+        const targetSum = TARGET_WORD.split("").reduce((sum, char) => {
+          return sum + (char.charCodeAt(0) - ASCII_A + 1);
+        }, 0);
 
-initGame();
-</script>
-</body>
+        // Show the intel panel
+        const intelPanel = document.getElementById("intel-panel");
+        intelPanel.style.display = "block";
+        document.getElementById("code-sum-value").textContent = targetSum;
+
+        // Update button
+        const btn = document.getElementById("intel-btn");
+        btn.disabled = true;
+        btn.innerHTML = "✓ Intel Used (-$1,500)";
+        btn.style.opacity = "0.6";
+        btn.style.cursor = "default";
+
+        showMessage("🔍 Intel decrypted!");
+        playSound("keypress");
+      }
+
+      function closeStats() {
+        document.getElementById("stats-modal").style.display = "none";
+      }
+
+      function showTutorial() {
+        document.getElementById("tutorial-modal").style.display = "flex";
+      }
+
+      function closeTutorial() {
+        document.getElementById("tutorial-modal").style.display = "none";
+        // Start timer when first-time user closes tutorial
+        if (!timerInterval) {
+          startTimer();
+        }
+      }
+
+      document.getElementById("stats-modal").addEventListener("click", (e) => {
+        if (e.target.id === "stats-modal") closeStats();
+      });
+
+      document.getElementById("win-modal").addEventListener("click", (e) => {
+        if (e.target.id === "win-modal") closeWinModal();
+      });
+
+      document
+        .getElementById("tutorial-modal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "tutorial-modal") closeTutorial();
+        });
+
+      initGame();
+    </script>
+  </body>
+</html>
