@@ -521,6 +521,89 @@
         border-color: var(--safe-border);
       }
 
+      /* --- CALENDAR STYLES --- */
+
+      /* --- CALENDAR BUTTON STYLE --- */
+      .calendar-btn {
+        position: absolute;
+        top: 15px;
+        left: 55px; /* Spaced to the right of the help icon */
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        width: 32px;
+        height: 32px;
+        border-radius: 6px; /* Square with rounded corners looks better for calendar */
+        cursor: pointer;
+        font-size: 1rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 10;
+      }
+
+      .calendar-btn:hover {
+        background: #475569;
+      }
+      .calendar-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr); /* 5 days per row */
+        gap: 8px;
+        max-height: 400px;
+        overflow-y: auto;
+        padding: 5px;
+      }
+
+      .cal-day {
+        background: var(--key-bg);
+        aspect-ratio: 1;
+        border-radius: 6px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        border: 1px solid transparent;
+        position: relative;
+        font-size: 0.9rem;
+        font-weight: 700;
+      }
+
+      .cal-day:hover {
+        transform: scale(1.05);
+        background: #475569;
+      }
+      .cal-day.future {
+        opacity: 0.3;
+        pointer-events: none;
+      }
+      .cal-day.current {
+        border-color: #fff;
+        box-shadow: 0 0 10px rgba(255, 255, 255, 0.3);
+      }
+
+      /* Status Colors */
+      .cal-day.won {
+        background: var(--color-correct);
+        color: #fff;
+      }
+      .cal-day.lost {
+        background: var(--color-far);
+        color: #fff;
+      }
+      .cal-day.played {
+        background: var(--safe-border);
+      } /* Started but not finished */
+
+      .cal-number {
+        font-size: 1.1rem;
+      }
+      .cal-money {
+        font-size: 0.6rem;
+        margin-top: 2px;
+        opacity: 0.9;
+      }
+
       /* --- GAME BOARD --- */
       #game-board {
         position: relative;
@@ -1093,6 +1176,7 @@
   <body>
     <header>
       <button class="help-icon" onclick="showTutorial()">?</button>
+      <button class="calendar-btn" onclick="showCalendar()">📅</button>
       <h1>Tumbler</h1>
       <div class="sub-text">Crack the code</div>
       <!-- ADD THIS TIMER -->
@@ -1111,7 +1195,7 @@
         </svg>
         <span id="timer">00:00</span>
       </div>
-      <button class="stats-btn" onclick="showStats()">📊 Stats</button>
+
       <button class="stats-btn" onclick="showStats()">📊 Stats</button>
       <button
         class="mute-btn stats-btn"
@@ -1259,7 +1343,11 @@
           <div id="distribution-bars"></div>
         </div>
 
-        <button class="tutorial-btn" onclick="shareResult()">
+        <button
+          class="tutorial-btn"
+          id="share-result-btn"
+          onclick="shareResult()"
+        >
           📤 Share Result
         </button>
         <button class="close-stats" onclick="closeWinModal()">Close</button>
@@ -1331,6 +1419,18 @@
       </div>
     </div>
 
+    <div id="calendar-modal" class="stats-modal">
+      <div class="stats-content" style="max-width: 500px">
+        <h2 style="margin-top: 0">Heist Archive</h2>
+        <div style="margin-bottom: 15px; font-size: 0.9rem; color: #94a3b8">
+          Replay past jobs.
+          <span style="color: var(--color-far)">Past jobs pay 10% value.</span>
+        </div>
+        <div id="calendar-grid" class="calendar-grid"></div>
+        <button class="close-stats" onclick="closeCalendar()">Close</button>
+      </div>
+    </div>
+
     <div id="message-container"></div>
 
     <div id="game-board"></div>
@@ -1354,6 +1454,7 @@
 
     <script>
       // --- CONFIGURATION ---
+      let currentPlayDate = new Date();
       const WORD_LENGTH = 4;
       const MAX_TRIES = 6;
       const ASCII_A = 65;
@@ -1648,25 +1749,43 @@
       }
 
       // Get current puzzle number (days since epoch)
-      function getPuzzleNumber() {
-        const now = new Date();
+      function getPuzzleNumber(dateObj = new Date()) {
         const msPerDay = 24 * 60 * 60 * 1000;
-
-        // Set your game's launch date here
-        const LAUNCH_DATE = new Date("November 26, 2025 00:00:00"); // TODAY
-
-        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
-        const launchMidnight = new Date(LAUNCH_DATE).setHours(0, 0, 0, 0);
-
+        const currentMidnight = new Date(dateObj).setHours(0, 0, 0, 0);
+        const launchMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
         const daysPassed = Math.floor(
           (currentMidnight - launchMidnight) / msPerDay
         );
-        return daysPassed + 1; // Today is #1
+        return daysPassed + 1;
+      }
+
+      function getStorageKey(dateObj) {
+        return `tumblerGame_${dateObj.toISOString().split("T")[0]}`;
+      }
+
+      function resetIntelUI() {
+        // 1. Hide the panel
+        document.getElementById("intel-panel").style.display = "none";
+        document.getElementById("code-sum-value").textContent = "0";
+        document.getElementById("current-sum-value").textContent = "0";
+
+        // 2. Reset the button to "Fresh" state
+        const btn = document.getElementById("intel-btn");
+        btn.style.display = "block"; // Ensure it's visible
+        btn.disabled = false;
+        btn.innerHTML = `
+    🔍 VIEW INTEL 
+    <span style="display:block;font-size:0.75rem;opacity:0.8;margin-top:3px;">
+      Costs $1,500
+    </span>
+  `;
+        btn.style.opacity = "1";
+        btn.style.cursor = "pointer";
       }
 
       // Save today's game state
       function saveTodayGame(attempts, cashWon) {
-        const puzzleNum = getPuzzleNumber();
+        const puzzleNum = getPuzzleNumber(currentPlayDate);
 
         // Save the actual game grid for display
         const gridState = [];
@@ -1699,29 +1818,31 @@
           timestamp: Date.now(),
           intelUsed: intelUsed,
         };
-        localStorage.setItem("tumblerTodayGame", JSON.stringify(gameData));
+        localStorage.setItem(
+          getStorageKey(currentPlayDate),
+          JSON.stringify(gameData)
+        );
       }
 
       // Check if already played today
       function hasPlayedToday() {
-        const saved = localStorage.getItem("tumblerTodayGame");
+        const saved = localStorage.getItem(getStorageKey(currentPlayDate));
         if (!saved) return false;
-        const data = JSON.parse(saved);
-        return data.puzzleNumber === getPuzzleNumber();
+        // We don't need to check puzzleNumber anymore since the Key is the date
+        return true;
       }
 
       function loadCompletedGame() {
-        const saved = localStorage.getItem("tumblerTodayGame");
+        const key = getStorageKey(currentPlayDate); // Ensure we use dynamic key
+        const saved = localStorage.getItem(key);
         if (!saved) return;
 
         const gameData = JSON.parse(saved);
 
-        // Disable input
         isGameOver = true;
         currentRow = gameData.attempts;
-        intelUsed = gameData.intelUsed || false;
+        intelUsed = gameData.intelUsed || false; // Load the state
 
-        // Create board
         createBoard();
 
         // Recreate the completed game state
@@ -1750,6 +1871,48 @@
               }
             });
           });
+
+          function loadCompletedGame() {
+            const key = getStorageKey(currentPlayDate); // Ensure we use dynamic key
+            const saved = localStorage.getItem(key);
+            if (!saved) return;
+
+            const gameData = JSON.parse(saved);
+
+            isGameOver = true;
+            currentRow = gameData.attempts;
+            intelUsed = gameData.intelUsed || false; // Load the state
+
+            createBoard();
+
+            // ... (Your existing grid reconstruction code) ...
+
+            // INTEL LOGIC FOR COMPLETED GAMES
+            const intelBtn = document.getElementById("intel-btn");
+            const intelPanel = document.getElementById("intel-panel");
+
+            if (intelUsed) {
+              // If used, show the panel with the info
+              intelPanel.style.display = "block";
+
+              // Calculate sums for display
+              const targetSum = TARGET_WORD.split("").reduce(
+                (sum, char) => sum + (char.charCodeAt(0) - 64),
+                0
+              );
+              document.getElementById("code-sum-value").textContent = targetSum;
+
+              // Hide the button since they already bought it
+              intelBtn.style.display = "none";
+            } else {
+              // If not used and game is over, hide both
+              intelPanel.style.display = "none";
+              intelBtn.style.display = "none";
+            }
+
+            showCountdownMessage(gameData);
+            // ... (Rest of function) ...
+          }
 
           // Highlight the winning row
           const winRow = document.getElementById(
@@ -1945,23 +2108,24 @@
         answerList = answersData.map((w) => w.toUpperCase());
       }
 
-      function getDailyWord() {
-        const now = new Date();
+      function getDailyWord(dateObj = new Date()) {
+        // Accepts date argument
         const msPerDay = 24 * 60 * 60 * 1000;
 
-        const currentMidnight = new Date(now).setHours(0, 0, 0, 0);
+        // Normalize dates to midnight
+        const targetMidnight = new Date(dateObj).setHours(0, 0, 0, 0);
         const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
 
-        const timeDiff = currentMidnight - epochMidnight;
+        const timeDiff = targetMidnight - epochMidnight;
         const daysPassed = Math.floor(timeDiff / msPerDay);
 
-        // MANUAL WORD LIST - Add your daily words here
+        // Reuse your existing manualWords array
         const manualWords = [
-          "ROCK", // Day 2 (Nov 27, 2025)
-          "SOUL", // Day 3 (Nov 28, 2025)
-          "FIRE", // Day 4 (Nov 29, 2025)
-          "THIS", // Day 5 (Nov 30, 2025)
-          "OPEN", // Day 6 (Dec 1, 2025)
+          "ROCK",
+          "SOUL",
+          "FIRE",
+          "THIS",
+          "OPEN",
           "MINT",
           "GOLD",
           "SAFE",
@@ -1973,7 +2137,6 @@
           "DATA",
           "BYTE",
           "NODE",
-          // Add more words for each day...
         ];
 
         const index = daysPassed % manualWords.length;
@@ -1984,19 +2147,22 @@
 
       // NEW: Function to calculate cash prize
       function calculateCash(attempts, timeInSeconds) {
-        // Base value less penalty for attempts
+        // Check if we are playing today's date
+        const isToday =
+          new Date().setHours(0, 0, 0, 0) ===
+          currentPlayDate.setHours(0, 0, 0, 0);
+
         let cash = CASH_BASE_VALUE - attempts * CASH_ATTEMPT_PENALTY;
+        cash +=
+          Math.max(0, CASH_SPEED_BONUS_CAP - timeInSeconds) *
+          CASH_PER_SECOND_BONUS;
+        if (intelUsed) cash -= INTEL_COST;
 
-        // Add speed bonus (capped at 60 seconds)
-        const timeFactor = Math.max(0, CASH_SPEED_BONUS_CAP - timeInSeconds);
-        cash += timeFactor * CASH_PER_SECOND_BONUS;
-
-        // Deduct intel cost if used (ADD THESE 3 LINES)
-        if (intelUsed) {
-          cash -= INTEL_COST;
+        // IF ARCHIVE GAME: 10% Payout
+        if (!isToday) {
+          return Math.floor(Math.max(CASH_MINIMUM_PAYOUT, cash) * 0.1);
         }
 
-        // Ensure minimum payout
         return Math.max(CASH_MINIMUM_PAYOUT, cash);
       }
 
@@ -2267,10 +2433,15 @@
             const cashWon = calculateCash(currentRow + 1, solveTime);
 
             // Update Stats
-            stats.played++;
-            stats.won++;
-            stats.currentStreak++;
-            stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+            const isToday =
+              new Date().setHours(0, 0, 0, 0) ===
+              currentPlayDate.setHours(0, 0, 0, 0);
+            if (isToday) {
+              stats.played++;
+              stats.won++;
+              stats.currentStreak++;
+              stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+            }
             stats.guessDistribution[currentRow]++;
             stats.totalCash += cashWon;
             localStorage.setItem("tumblerStats", JSON.stringify(stats));
@@ -2318,8 +2489,13 @@
               updateActiveRow();
               updateKeyboardVisuals();
             } else {
-              stats.played++;
-              stats.currentStreak = 0;
+              const isToday =
+                new Date().setHours(0, 0, 0, 0) ===
+                currentPlayDate.setHours(0, 0, 0, 0);
+              if (isToday) {
+                stats.played++;
+                stats.currentStreak = 0;
+              }
               stopTimer();
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
               showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
@@ -2400,6 +2576,15 @@
         const modal = document.getElementById("win-modal");
         modal.style.display = "flex";
 
+        const isToday =
+          new Date().setHours(0, 0, 0, 0) ===
+          currentPlayDate.setHours(0, 0, 0, 0);
+
+        const shareBtn = document.getElementById("share-result-btn");
+        if (shareBtn) {
+          shareBtn.style.display = isToday ? "block" : "none";
+        }
+
         // Ensure cashWon is a valid number
         const safeCashWon = cashWon || 0;
         const safeTotalCash = stats.totalCash || 0;
@@ -2441,34 +2626,6 @@
           .join("");
 
         document.getElementById("distribution-bars").innerHTML = barsHTML;
-        // ADD THIS - Show countdown in win modal too
-        const now = new Date();
-        const tomorrow = new Date(now);
-        tomorrow.setDate(tomorrow.getDate() + 1);
-        tomorrow.setHours(0, 0, 0, 0);
-        const msUntilTomorrow = tomorrow - now;
-        const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
-        const minutes = Math.floor(
-          (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
-        );
-
-        // Add next puzzle info to modal
-        const distributionBars = document.getElementById("distribution-bars");
-        if (distributionBars && distributionBars.parentElement) {
-          const nextPuzzleInfo = document.createElement("div");
-          nextPuzzleInfo.style.cssText =
-            "margin-top: 20px; padding: 15px; background: rgba(15, 23, 42, 0.6); border-radius: 10px; border: 1px solid rgba(255, 255, 255, 0.05);";
-          nextPuzzleInfo.innerHTML = `
-     <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; margin-bottom: 5px;">Next Vault Opens In</div>
-     <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
-       ${hours}h ${minutes}m
-     </div>
-     <div style="font-size: 0.8rem; color: #94a3b8; margin-top: 5px;">
-       🔥 Keep your ${stats.currentStreak}-day streak alive!
-     </div>
-   `;
-          distributionBars.parentElement.appendChild(nextPuzzleInfo);
-        }
       }
 
       function closeWinModal() {
@@ -2546,6 +2703,124 @@
 
         showMessage("🔍 Intel decrypted!");
         playSound("keypress");
+      }
+
+      function showCalendar() {
+        const grid = document.getElementById("calendar-grid");
+        grid.innerHTML = "";
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        // Start from Epoch
+        const startDate = new Date(GAME_EPOCH);
+
+        // Loop from Epoch until Today
+        for (
+          let d = new Date(startDate);
+          d <= today;
+          d.setDate(d.getDate() + 1)
+        ) {
+          const tempDate = new Date(d);
+          const key = getStorageKey(tempDate);
+          const savedData = JSON.parse(localStorage.getItem(key));
+          const puzzleNum =
+            Math.floor((tempDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+
+          const dayBtn = document.createElement("div");
+          dayBtn.classList.add("cal-day");
+
+          // Check Status
+          if (savedData) {
+            if (
+              savedData.attempts <= 6 &&
+              savedData.grid.length === savedData.attempts
+            ) {
+              // If the last row matches the word length, assume win (simplified check)
+              // Better: store "result": "win/loss" in your saveTodayGame function
+              dayBtn.classList.add("won");
+              dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div><div class="cal-money">$${savedData.cashWon}</div>`;
+            } else {
+              dayBtn.classList.add("lost");
+              dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div><div class="cal-money">FAIL</div>`;
+            }
+          } else {
+            dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div>`;
+          }
+
+          // Highlight currently selected date
+          if (tempDate.getTime() === currentPlayDate.getTime()) {
+            dayBtn.classList.add("current");
+          }
+
+          // Click Event
+          dayBtn.onclick = () => loadDate(tempDate);
+          grid.appendChild(dayBtn);
+        }
+
+        // Fill future slots for visual balance (optional, maybe next 5 days)
+        for (let i = 0; i < 3; i++) {
+          const d = document.createElement("div");
+          d.classList.add("cal-day", "future");
+          d.innerHTML = `🔒`;
+          grid.appendChild(d);
+        }
+
+        document.getElementById("calendar-modal").style.display = "flex";
+      }
+
+      function closeCalendar() {
+        document.getElementById("calendar-modal").style.display = "none";
+      }
+
+      async function loadDate(dateObj) {
+        closeCalendar();
+
+        // 1. Update Current Date
+        currentPlayDate = new Date(dateObj);
+        currentPlayDate.setHours(0, 0, 0, 0);
+
+        // 2. Reset Board UI
+        document.getElementById("game-board").innerHTML = "";
+        document.getElementById("keyboard").innerHTML = "";
+
+        // --- NEW: FORCE RESET INTEL UI HERE ---
+        resetIntelUI();
+        // --------------------------------------
+
+        guesses = Array(6)
+          .fill(null)
+          .map(() => Array(4).fill(""));
+        currentRow = 0;
+        currentTile = 0;
+        isGameOver = false;
+        intelUsed = false;
+
+        // Remove any existing countdown containers from previous views
+        const existingCountdown = document.getElementById(
+          "countdown-container"
+        );
+        if (existingCountdown) existingCountdown.remove();
+
+        // 3. Re-Init Game
+        TARGET_WORD = getDailyWord(currentPlayDate);
+        createBoard();
+        createKeyboard();
+
+        if (hasPlayedToday()) {
+          loadCompletedGame();
+        } else {
+          resetSlotConstraints();
+          startTimer(); // Ensure timer starts for new games
+
+          // Update header text
+          const isToday =
+            new Date().setHours(0, 0, 0, 0) ===
+            currentPlayDate.setHours(0, 0, 0, 0);
+          document.querySelector(".sub-text").textContent = isToday
+            ? "Crack the code"
+            : `ARCHIVE: ${dateObj.toLocaleDateString()}`;
+        }
       }
 
       function closeStats() {
