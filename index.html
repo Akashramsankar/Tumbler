@@ -1760,7 +1760,11 @@
       }
 
       function getStorageKey(dateObj) {
-        return `tumblerGame_${dateObj.toISOString().split("T")[0]}`;
+        // Use local time components to ensure stability across page reloads
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const day = String(dateObj.getDate()).padStart(2, "0");
+        return `tumblerGame_${year}-${month}-${day}`;
       }
 
       function resetIntelUI() {
@@ -1774,11 +1778,11 @@
         btn.style.display = "block"; // Ensure it's visible
         btn.disabled = false;
         btn.innerHTML = `
-    🔍 VIEW INTEL 
-    <span style="display:block;font-size:0.75rem;opacity:0.8;margin-top:3px;">
-      Costs $1,500
-    </span>
-  `;
+                     🔍 VIEW INTEL
+                     <span style="display:block;font-size:0.75rem;opacity:0.8;margin-top:3px;">
+                       Costs $1,500
+                     </span>
+                   `;
         btn.style.opacity = "1";
         btn.style.cursor = "pointer";
       }
@@ -1833,108 +1837,125 @@
       }
 
       function loadCompletedGame() {
-        const key = getStorageKey(currentPlayDate); // Ensure we use dynamic key
+        const key = getStorageKey(currentPlayDate);
         const saved = localStorage.getItem(key);
         if (!saved) return;
 
         const gameData = JSON.parse(saved);
 
+        // 1. Set Global Game State
         isGameOver = true;
         currentRow = gameData.attempts;
-        intelUsed = gameData.intelUsed || false; // Load the state
+        intelUsed = gameData.intelUsed || false;
 
+        // 2. Stop Interactions
+        document.removeEventListener("keydown", handleKeydown);
+        stopTimer(); // Ensure the timer stops visually
+
+        // 3. Rebuild the Grid
+        document.getElementById("game-board").innerHTML = ""; // Clear current board
         createBoard();
 
-        // Recreate the completed game state
+        // 4. Populate Grid with Saved Data
         if (gameData.grid && gameData.grid.length > 0) {
+          const targetArr = TARGET_WORD.split(""); // Needed to re-calculate arrows
+
           gameData.grid.forEach((row, rowIndex) => {
             row.forEach((tileData, colIndex) => {
               const tile = document.getElementById(
                 `row-${rowIndex}-tile-${colIndex}`
               );
+
               if (tile && tileData.letter) {
+                // Set Letter
                 tile.querySelector(".letter").textContent = tileData.letter;
                 tile.setAttribute("data-status", "filled");
                 tile.classList.add("evaluated");
 
+                // Set Keyboard Color
+                const key = document.getElementById(`key-${tileData.letter}`);
+
+                // Re-apply Visual Classes & Indicators
                 if (tileData.status) {
                   tile.classList.add(tileData.status);
 
-                  // Add visual indicators
                   if (tileData.status === "correct") {
-                    const key = document.getElementById(
-                      `key-${tileData.letter}`
-                    );
                     if (key) key.classList.add("correct");
+                  }
+                  // Re-calculate arrows for Close/Far (since save data might miss up/down)
+                  else if (
+                    tileData.status === "close" ||
+                    tileData.status === "far"
+                  ) {
+                    const guessVal = tileData.letter.charCodeAt(0);
+                    const targetVal = targetArr[colIndex].charCodeAt(0);
+                    const diff = targetVal - guessVal;
+
+                    // Add Up/Down rotation
+                    const rotateClass = diff > 0 ? "up" : "down";
+                    tile.classList.add(rotateClass);
+
+                    // Add Arrow Indicator
+                    const indicator = tile.querySelector(".indicator");
+                    let symbol = "";
+                    if (Math.abs(diff) > 9) {
+                      // Far
+                      symbol = diff > 0 ? "▲▲" : "▼▼";
+                    } else {
+                      // Close
+                      symbol = diff > 0 ? "▲" : "▼";
+                    }
+                    indicator.innerHTML = symbol;
                   }
                 }
               }
             });
           });
 
-          function loadCompletedGame() {
-            const key = getStorageKey(currentPlayDate); // Ensure we use dynamic key
-            const saved = localStorage.getItem(key);
-            if (!saved) return;
-
-            const gameData = JSON.parse(saved);
-
-            isGameOver = true;
-            currentRow = gameData.attempts;
-            intelUsed = gameData.intelUsed || false; // Load the state
-
-            createBoard();
-
-            // ... (Your existing grid reconstruction code) ...
-
-            // INTEL LOGIC FOR COMPLETED GAMES
-            const intelBtn = document.getElementById("intel-btn");
-            const intelPanel = document.getElementById("intel-panel");
-
-            if (intelUsed) {
-              // If used, show the panel with the info
-              intelPanel.style.display = "block";
-
-              // Calculate sums for display
-              const targetSum = TARGET_WORD.split("").reduce(
-                (sum, char) => sum + (char.charCodeAt(0) - 64),
-                0
-              );
-              document.getElementById("code-sum-value").textContent = targetSum;
-
-              // Hide the button since they already bought it
-              intelBtn.style.display = "none";
-            } else {
-              // If not used and game is over, hide both
-              intelPanel.style.display = "none";
-              intelBtn.style.display = "none";
+          // 5. Highlight the winning row (if it was a win)
+          // We assume it's a win if the last played row matches the target
+          const lastRowIndex = gameData.attempts - 1;
+          if (lastRowIndex >= 0 && lastRowIndex < MAX_TRIES) {
+            // Simple check: If the user won, usually the last row is all green.
+            // Or we can just check if cashWon > 0
+            if (gameData.cashWon > 0) {
+              const winRow = document.getElementById(`row-${lastRowIndex}`);
+              if (winRow) {
+                winRow.style.borderColor = "#6aaa64";
+                winRow.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
+              }
             }
-
-            showCountdownMessage(gameData);
-            // ... (Rest of function) ...
-          }
-
-          // Highlight the winning row
-          const winRow = document.getElementById(
-            `row-${gameData.attempts - 1}`
-          );
-          if (winRow) {
-            winRow.style.borderColor = "#6aaa64";
-            winRow.style.boxShadow = "0 0 30px rgba(106, 170, 100, 0.6)";
           }
         }
 
-        // NEW: Show countdown to next puzzle
-        showCountdownMessage(gameData);
-
+        // 6. Handle Intel UI State
         const intelBtn = document.getElementById("intel-btn");
-        if (intelBtn) {
+        const intelPanel = document.getElementById("intel-panel");
+
+        if (intelUsed) {
+          // Show panel with data
+          intelPanel.style.display = "block";
+          const targetSum = TARGET_WORD.split("").reduce(
+            (sum, char) => sum + (char.charCodeAt(0) - 64),
+            0
+          );
+          document.getElementById("code-sum-value").textContent = targetSum;
+
+          // Hide buy button
+          intelBtn.style.display = "none";
+        } else {
+          // Hide both if game over and no intel used
+          intelPanel.style.display = "none";
           intelBtn.style.display = "none";
         }
-        // Auto-show the win modal after a delay
+
+        // 7. Show Countdown & Modal
+        showCountdownMessage(gameData);
+
+        // Auto-open win modal after short delay
         setTimeout(() => {
           showWinModal(gameData.attempts, gameData.cashWon, 0);
-        }, 2500);
+        }, 1500);
       }
 
       // NEW: Show countdown and streak when game already played
@@ -1965,23 +1986,22 @@
           "width: 100%; display: flex; justify-content: center; margin-bottom: 15px;";
 
         countdownContainer.innerHTML = `
-   <div class="countdown-display">
-     <div class="countdown-label">✅ Tumbler #${puzzleNum} Cracked!</div>
-     <div style="font-size: 1.2rem; color: var(--color-cash); margin: 10px 0;">
-       💰 $${cashString} Stolen
-     </div>
-     <div class="countdown-label" style="margin-top: 15px;">Next Heist Available In</div>
-     <div class="countdown-timer" id="live-countdown">
-       ${String(hours).padStart(2, "0")}:${String(minutes).padStart(
-          2,
-          "0"
-        )}:${String(seconds).padStart(2, "0")}
-     </div>
-     <div class="streak-badge">
-       🔥 ${stats.currentStreak} Day Streak
-     </div>
-   </div>
- `;
+                    <div class="countdown-display">
+                      <div class="countdown-label">✅ Tumbler #${puzzleNum} Cracked!</div>
+                      <div style="font-size: 1.2rem; color: var(--color-cash); margin: 10px 0;">
+                        💰 $${cashString} Stolen
+                      </div>
+                      <div class="countdown-label" style="margin-top: 15px;">Next Heist Available In</div>
+                      <div class="countdown-timer" id="live-countdown">
+                        ${String(hours).padStart(2, "0")}:${String(
+          minutes
+        ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}
+                      </div>
+                      <div class="streak-badge">
+                        🔥 ${stats.currentStreak} Day Streak
+                      </div>
+                    </div>
+                  `;
 
         // Insert BEFORE the game board
         const gameBoard = document.getElementById("game-board");
@@ -2498,6 +2518,10 @@
               }
               stopTimer();
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+              // ADD THIS LINE BELOW:
+              saveTodayGame(MAX_TRIES, 0);
+
               showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
               isGameOver = true;
             }
@@ -2614,14 +2638,16 @@
             const width = Math.max(percentage, 10);
             const isCurrent = idx === attempts - 1;
             return `
-       <div class="distribution-row">
-         <div class="distribution-label">${idx + 1}</div>
-         <div class="distribution-bar ${isCurrent ? "current" : ""}"
-              style="width: ${width}%">
-           ${count}
-         </div>
-       </div>
-     `;
+                        <div class="distribution-row">
+                          <div class="distribution-label">${idx + 1}</div>
+                          <div class="distribution-bar ${
+                            isCurrent ? "current" : ""
+                          }"
+                               style="width: ${width}%">
+                            ${count}
+                          </div>
+                        </div>
+                      `;
           })
           .join("");
 
@@ -2641,33 +2667,33 @@
         modal.style.display = "flex";
 
         modal.innerHTML = `
-    <div class="tutorial-content" style="max-width: 360px;">
-      <h2 style="margin-top: 0; font-size: 1.5rem;">🔍 Purchase Intel?</h2>
-      
-      <div style="background: var(--safe-inset); padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid var(--safe-border);">
-        <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px;">
-          Reveals code sum to help crack the vault
-        </div>
-        <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-far);">
-          Cost: $1,500
-        </div>
-      </div>
-      
-      <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">
-        The intel will show you the sum of all letter values (A=1, B=2...Z=26). 
-        This will be deducted from your final heist reward.
-      </div>
-      
-      <div style="display: flex; gap: 10px;">
-        <button class="tutorial-btn" onclick="useIntel()" style="flex: 1;">
-          ✓ Use Intel
-        </button>
-        <button class="close-stats" onclick="closeIntelModal()" style="flex: 1; margin-top: 0;">
-          Cancel
-        </button>
-      </div>
-    </div>
-  `;
+                     <div class="tutorial-content" style="max-width: 360px;">
+                       <h2 style="margin-top: 0; font-size: 1.5rem;">🔍 Purchase Intel?</h2>
+
+                       <div style="background: var(--safe-inset); padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid var(--safe-border);">
+                         <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px;">
+                           Reveals code sum to help crack the vault
+                         </div>
+                         <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-far);">
+                           Cost: $1,500
+                         </div>
+                       </div>
+
+                       <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">
+                         The intel will show you the sum of all letter values (A=1, B=2...Z=26).
+                         This will be deducted from your final heist reward.
+                       </div>
+
+                       <div style="display: flex; gap: 10px;">
+                         <button class="tutorial-btn" onclick="useIntel()" style="flex: 1;">
+                           ✓ Use Intel
+                         </button>
+                         <button class="close-stats" onclick="closeIntelModal()" style="flex: 1; margin-top: 0;">
+                           Cancel
+                         </button>
+                       </div>
+                     </div>
+                   `;
 
         document.body.appendChild(modal);
         modal.addEventListener("click", (e) => {
@@ -2811,6 +2837,10 @@
           loadCompletedGame();
         } else {
           resetSlotConstraints();
+          updateActiveRow();
+          updateKeyboardVisuals();
+          // Enable keyboard for new games only
+          document.addEventListener("keydown", handleKeydown);
           startTimer(); // Ensure timer starts for new games
 
           // Update header text
