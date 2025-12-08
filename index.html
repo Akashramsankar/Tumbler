@@ -2757,21 +2757,23 @@
           dayBtn.classList.add("cal-day");
 
           // Check Status
+          // Format date as MM/DD
+          const dateStr = `${tempDate.getMonth() + 1}/${tempDate.getDate()}`;
+
+          // Check Status
           if (savedData) {
             if (
               savedData.attempts <= 6 &&
               savedData.grid.length === savedData.attempts
             ) {
-              // If the last row matches the word length, assume win (simplified check)
-              // Better: store "result": "win/loss" in your saveTodayGame function
               dayBtn.classList.add("won");
-              dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div><div class="cal-money">$${savedData.cashWon}</div>`;
+              dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div><div style="font-size: 0.65rem; margin-top: 2px; opacity: 0.8;">${dateStr}</div><div class="cal-money">$${savedData.cashWon}</div>`;
             } else {
               dayBtn.classList.add("lost");
-              dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div><div class="cal-money">FAIL</div>`;
+              dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div><div style="font-size: 0.65rem; margin-top: 2px; opacity: 0.8;">${dateStr}</div><div class="cal-money">FAIL</div>`;
             }
           } else {
-            dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div>`;
+            dayBtn.innerHTML = `<div class="cal-number">#${puzzleNum}</div><div style="font-size: 0.65rem; margin-top: 2px; opacity: 0.8;">${dateStr}</div>`;
           }
 
           // Highlight currently selected date
