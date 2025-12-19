@@ -2076,7 +2076,7 @@
       }
 
       async function shareResult() {
-        const saved = localStorage.getItem("tumblerTodayGame");
+        const saved = localStorage.getItem(getStorageKey(currentPlayDate));
         if (!saved) {
           showMessage("No game data to share!");
           return;
@@ -2089,33 +2089,75 @@
           showMessage("Invalid game data!");
           return;
         }
+
         const shareText = generateShareText(
           gameData.attempts,
           gameData.cashWon
         );
 
-        if (navigator.share) {
+        // Check if Web Share API is available AND if sharing text is supported
+        if (
+          navigator.share &&
+          navigator.canShare &&
+          navigator.canShare({ text: shareText })
+        ) {
           try {
             await navigator.share({ text: shareText });
+            showMessage("✅ Shared successfully!");
           } catch (err) {
+            // Only fall back to clipboard if user didn't cancel
             if (err.name !== "AbortError") {
               copyToClipboard(shareText);
             }
           }
         } else {
+          // Fallback to clipboard for devices without share support
           copyToClipboard(shareText);
         }
       }
 
       function copyToClipboard(text) {
-        navigator.clipboard
-          .writeText(text)
-          .then(() => {
+        // Try modern clipboard API first
+        if (navigator.clipboard && window.isSecureContext) {
+          navigator.clipboard
+            .writeText(text)
+            .then(() => {
+              showMessage("📋 Copied to clipboard!");
+            })
+            .catch(() => {
+              // Fallback to older method
+              fallbackCopyToClipboard(text);
+            });
+        } else {
+          // Use fallback for older browsers or non-secure contexts
+          fallbackCopyToClipboard(text);
+        }
+      }
+
+      // Add this NEW function right after copyToClipboard
+      function fallbackCopyToClipboard(text) {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        textArea.style.top = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+
+        try {
+          const successful = document.execCommand("copy");
+          if (successful) {
             showMessage("📋 Copied to clipboard!");
-          })
-          .catch(() => {
+          } else {
             showMessage("❌ Failed to copy");
-          });
+          }
+        } catch (err) {
+          console.error("Fallback copy failed:", err);
+          showMessage("❌ Failed to copy");
+        }
+
+        document.body.removeChild(textArea);
       }
 
       async function loadDictionaries() {
