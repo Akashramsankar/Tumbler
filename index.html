@@ -2033,7 +2033,7 @@
       }
 
       // Save today's game state
-      function saveTodayGame(attempts, cashWon) {
+      function saveTodayGame(attempts, cashWon, solveTime) {
         const puzzleNum = getPuzzleNumber(currentPlayDate);
 
         // Save the actual game grid for display
@@ -2066,6 +2066,7 @@
           grid: gridState,
           timestamp: Date.now(),
           intelUsed: intelUsed,
+          solveTime: solveTime || 0,
         };
         localStorage.setItem(
           getStorageKey(currentPlayDate),
@@ -2764,6 +2765,7 @@
             }
             stats.guessDistribution[currentRow]++;
             stats.totalCash += cashWon;
+            saveTodayGame(currentRow + 1, cashWon, solveTime);
             localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
             if (window.submitScoreToFirebase) {
@@ -2775,8 +2777,7 @@
               );
             }
 
-            // Save today's game
-            saveTodayGame(currentRow + 1, cashWon);
+            
 
             // ===== ENHANCED WIN ANIMATION =====
             const currentRowEl = document.getElementById(`row-${currentRow}`);
@@ -2829,7 +2830,7 @@
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
               // ADD THIS LINE BELOW:
-              saveTodayGame(MAX_TRIES, 0);
+              saveTodayGame(MAX_TRIES, 0, 0);
 
               showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
               isGameOver = true;
@@ -3528,7 +3529,7 @@
             submitScoreToFirebase(
               data.attempts,
               data.cashWon,
-              0,
+              data.solveTime || 0,
               data.intelUsed
             );
           }
