@@ -6,6 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+
     <title>TUMBLER - The Lockpick Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -13,6 +14,8 @@
       href="https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700&family=Karnak+Pro:wght@700&display=swap"
       rel="stylesheet"
     />
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
 
     <style>
       :root {
@@ -82,6 +85,7 @@
         color: #fff;
         text-transform: capitalize;
         font-weight: 700;
+        padding-top: 10px; /* ADD THIS LINE */
       }
 
       .sub-text {
@@ -90,24 +94,7 @@
         letter-spacing: 1px;
         margin-top: 5px;
         text-transform: uppercase;
-      }
-
-      .stats-btn {
-        position: absolute;
-        top: 15px;
-        right: 10px;
-        background: var(--key-bg);
-        color: var(--text-color);
-        border: none;
-        padding: 8px 12px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        font-weight: 700;
-      }
-
-      .stats-btn:hover {
-        background: #475569;
+        margin-bottom: 10px; /* ADD THIS LINE */
       }
 
       .stats-modal {
@@ -185,7 +172,10 @@
         cursor: pointer;
         font-size: 0.9rem;
         font-weight: 700;
-        z-index: 10;
+      }
+
+      .stats-btn:hover {
+        background: #475569;
       }
 
       .stats-grid {
@@ -279,8 +269,6 @@
         text-align: center;
       }
 
-      /* HOW TO PLAY MODAL (No changes here) */
-      /* --- PREMIUM MISSION MODAL --- */
       .tutorial-content {
         /* Glass/Metal Heist Look */
         background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
@@ -440,12 +428,31 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        z-index: 10;
       }
 
       .help-icon:hover {
         background: #475569;
       }
 
+      /* Timer display positioning */
+      .timer-display {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        margin: 8px auto 0; /* CHANGE THIS LINE - added auto margins */
+        font-size: 0.85rem;
+        color: #94a3b8;
+        font-family: "Chivo Mono", monospace;
+        letter-spacing: 0.5px;
+        padding: 4px 12px;
+        background: rgba(15, 23, 42, 0.6);
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        justify-content: center;
+        width: fit-content; /* ADD THIS */
+        transition: all 0.3s ease;
+      }
       .countdown-display {
         background: var(--safe-inset);
         padding: 20px;
@@ -938,6 +945,127 @@
         box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
       }
 
+      /* --- LEADERBOARD STYLES --- */
+      .group-modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 2000;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .group-content {
+        background: var(--safe-body);
+        border: 1px solid var(--safe-border);
+        padding: 25px;
+        border-radius: 16px;
+        max-width: 450px;
+        width: 95%;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+        max-height: 90vh;
+        overflow-y: auto;
+      }
+
+      .tab-container {
+        display: flex;
+        margin-bottom: 20px;
+        background: var(--safe-inset);
+        padding: 4px;
+        border-radius: 8px;
+      }
+
+      .tab-btn {
+        flex: 1;
+        background: transparent;
+        border: none;
+        color: #94a3b8;
+        padding: 10px;
+        font-family: "Chivo Mono", monospace;
+        font-weight: 700;
+        cursor: pointer;
+        border-radius: 6px;
+        transition: all 0.2s;
+      }
+
+      .tab-btn.active {
+        background: var(--key-bg);
+        color: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+      }
+
+      .group-input {
+        width: 100%;
+        padding: 12px;
+        background: var(--safe-inset);
+        border: 1px solid var(--safe-border);
+        color: #fff;
+        border-radius: 6px;
+        margin-bottom: 15px;
+        font-family: "Chivo Mono", monospace;
+        font-size: 1rem;
+      }
+
+      .lb-row {
+        display: flex;
+        align-items: center;
+        padding: 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .lb-rank {
+        font-size: 1.2rem;
+        font-weight: 700;
+        width: 30px;
+        color: #94a3b8;
+      }
+      .lb-rank.top-1 {
+        color: #fbbf24;
+      }
+      .lb-rank.top-2 {
+        color: #e2e8f0;
+      }
+      .lb-rank.top-3 {
+        color: #b45309;
+      }
+
+      .lb-user {
+        flex: 1;
+        font-weight: 700;
+      }
+
+      .lb-score {
+        text-align: right;
+        font-weight: 700;
+      }
+      .lb-score-main {
+        color: var(--color-cash);
+      }
+      .lb-score-sub {
+        font-size: 0.75rem;
+        color: #94a3b8;
+      }
+
+      .group-action-btn {
+        background: var(--color-correct);
+        color: white;
+        width: 100%;
+        padding: 12px;
+        border: none;
+        border-radius: 6px;
+        font-weight: 700;
+        cursor: pointer;
+        margin-top: 10px;
+      }
+      .group-action-btn.secondary {
+        background: var(--key-bg);
+        margin-top: 10px;
+      }
+
       @media (max-width: 600px) {
         body {
           padding: 5px;
@@ -1179,7 +1307,7 @@
       <button class="calendar-btn" onclick="showCalendar()">📅</button>
       <h1>Tumbler</h1>
       <div class="sub-text">Crack the code</div>
-      <!-- ADD THIS TIMER -->
+      <!-- Timer moved to be part of the header flow -->
       <div class="timer-display">
         <svg
           class="timer-icon"
@@ -1205,6 +1333,14 @@
         🔊
       </button>
     </header>
+
+    <button
+      class="stats-btn"
+      onclick="openGroupModal()"
+      style="position: static; margin-bottom: 15px; margin-top: 10px"
+    >
+      👥 Crew
+    </button>
 
     <div id="tutorial-modal" class="tutorial-modal">
       <div class="tutorial-content">
@@ -1451,6 +1587,85 @@
     </div>
 
     <div id="keyboard"></div>
+
+    <div id="group-modal" class="group-modal">
+      <div class="group-content">
+        <div
+          style="
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+          "
+        >
+          <h2 style="margin: 0">Heist Crew</h2>
+          <button
+            class="help-icon"
+            onclick="closeGroupModal()"
+            style="position: static"
+          >
+            ✕
+          </button>
+        </div>
+
+        <div id="view-setup">
+          <p style="color: #94a3b8; font-size: 0.9rem">
+            Enter a codename and a Crew ID to compete.
+          </p>
+          <input
+            type="text"
+            id="player-nick"
+            class="group-input"
+            placeholder="Your Codename (e.g., Fox)"
+            maxlength="10"
+          />
+          <input
+            type="text"
+            id="group-id"
+            class="group-input"
+            placeholder="Crew ID (e.g., OfficeHeist)"
+            maxlength="15"
+          />
+          <button class="group-action-btn" onclick="joinGroup()">
+            Join / Create Crew
+          </button>
+        </div>
+
+        <div id="view-leaderboard" style="display: none">
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              margin-bottom: 10px;
+              color: #94a3b8;
+              font-size: 0.8rem;
+            "
+          >
+            <span id="display-group-name">Crew: --</span>
+            <span
+              style="cursor: pointer; text-decoration: underline"
+              onclick="logoutGroup()"
+              >Leave</span
+            >
+          </div>
+
+          <div class="tab-container">
+            <button class="tab-btn active" onclick="switchTab('daily')">
+              Today's Take
+            </button>
+            <button class="tab-btn" onclick="switchTab('overall')">
+              Career Stash
+            </button>
+          </div>
+
+          <div id="lb-list" style="min-height: 200px">
+            <div style="text-align: center; padding: 20px; color: #64748b">
+              Loading data...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
 
     <script>
       // --- CONFIGURATION ---
@@ -1835,6 +2050,7 @@
         // We don't need to check puzzleNumber anymore since the Key is the date
         return true;
       }
+      window.hasPlayedToday = hasPlayedToday;
 
       function loadCompletedGame() {
         const key = getStorageKey(currentPlayDate);
@@ -2520,6 +2736,15 @@
             stats.totalCash += cashWon;
             localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
+            if (window.submitScoreToFirebase) {
+              window.submitScoreToFirebase(
+                currentRow + 1,
+                cashWon,
+                solveTime,
+                intelUsed
+              );
+            }
+
             // Save today's game
             saveTodayGame(currentRow + 1, cashWon);
 
@@ -2940,6 +3165,274 @@
         });
 
       initGame();
+
+      // --- 1. CONFIGURATION ---
+      const firebaseConfig = {
+        apiKey: "AIzaSyD5C8uPGGb_jMuA0ceP5VlWChMV-Ggfles",
+        authDomain: "tumbler-51e42.firebaseapp.com",
+        databaseURL:
+          "https://tumbler-51e42-default-rtdb.asia-southeast1.firebasedatabase.app/",
+        projectId: "tumbler-51e42",
+        storageBucket: "tumbler-51e42.firebasestorage.app",
+        messagingSenderId: "907072959576",
+        appId: "1:907072959576:web:641facf27c204c7bb8862d",
+        measurementId: "G-J6SL0G5SKR",
+      };
+
+      // Initialize Firebase (Standard Mode)
+      let db = null;
+      try {
+        if (typeof firebase !== "undefined") {
+          firebase.initializeApp(firebaseConfig);
+          db = firebase.database();
+          console.log("Firebase initialized successfully.");
+        } else {
+          console.error("Firebase library not loaded.");
+        }
+      } catch (e) {
+        console.error("Firebase Error:", e);
+      }
+
+      // --- 2. STATE ---
+      let userNick = localStorage.getItem("tumblerNick") || "";
+      let userGroup = localStorage.getItem("tumblerGroup") || "";
+      let currentTab = "daily";
+
+      // --- 3. FUNCTIONS ---
+
+      function openGroupModal() {
+        document.getElementById("group-modal").style.display = "flex";
+        if (userNick && userGroup) {
+          showLeaderboardView();
+        } else {
+          document.getElementById("view-setup").style.display = "block";
+          document.getElementById("view-leaderboard").style.display = "none";
+        }
+      }
+
+      function closeGroupModal() {
+        document.getElementById("group-modal").style.display = "none";
+      }
+
+      async function joinGroup() {
+        const nick = document
+          .getElementById("player-nick")
+          .value.trim()
+          .toUpperCase();
+        const group = document
+          .getElementById("group-id")
+          .value.trim()
+          .toUpperCase();
+
+        if (nick.length < 2 || group.length < 3) {
+          alert("Name must be 2+ chars, Crew ID 3+ chars.");
+          return;
+        }
+
+        // 1. Save Locally
+        userNick = nick;
+        userGroup = group;
+        localStorage.setItem("tumblerNick", nick);
+        localStorage.setItem("tumblerGroup", group);
+
+        // 2. Try Update Firebase (Don't wait for it)
+        if (db) {
+          db.ref(`groups/${userGroup}/members/${nick}`)
+            .update({
+              joined: Date.now(),
+              lastActive: Date.now(),
+            })
+            .catch((e) => console.log("Offline mode: Saved locally only"));
+
+          // Sync score if played today
+          if (hasPlayedTodayCheck()) {
+            syncTodaysScore();
+          }
+        }
+
+        // 3. IMMEDIATELY Show View (Fixes the "Nothing Happens" bug)
+        showLeaderboardView();
+      }
+
+      function logoutGroup() {
+        if (confirm("Leave this crew?")) {
+          localStorage.removeItem("tumblerGroup");
+          userGroup = "";
+          document.getElementById("view-setup").style.display = "block";
+          document.getElementById("view-leaderboard").style.display = "none";
+        }
+      }
+
+      function switchTab(tab) {
+        currentTab = tab;
+        document
+          .querySelectorAll(".tab-btn")
+          .forEach((b) => b.classList.remove("active"));
+        event.target.classList.add("active");
+        loadLeaderboardData();
+      }
+
+      function showLeaderboardView() {
+        document.getElementById("view-setup").style.display = "none";
+        document.getElementById("view-leaderboard").style.display = "block";
+        document.getElementById(
+          "display-group-name"
+        ).textContent = `Crew: ${userGroup}`;
+        document.getElementById("player-nick").value = userNick;
+        document.getElementById("group-id").value = userGroup;
+        loadLeaderboardData();
+      }
+
+      function loadLeaderboardData() {
+        const list = document.getElementById("lb-list");
+        list.innerHTML =
+          '<div style="text-align:center; padding:20px; color:#64748b;">Establishing connection...</div>';
+
+        if (!db) {
+          list.innerHTML =
+            '<div style="text-align:center; padding:20px; color:red;">Error: Database not initialized.</div>';
+          return;
+        }
+
+        // Safety Timeout: If Firebase doesn't respond in 5 seconds, stop waiting.
+        const timeout = setTimeout(() => {
+          list.innerHTML =
+            '<div style="text-align:center; padding:20px; color:orange;">Connection Timeout.<br>Check your Firebase Rules or Internet.</div>';
+        }, 5000);
+
+        let path =
+          currentTab === "daily"
+            ? `scores/${userGroup}/${new Date().getFullYear()}-${
+                new Date().getMonth() + 1
+              }-${new Date().getDate()}`
+            : `career/${userGroup}`;
+
+        db.ref(path).once(
+          "value",
+          (snapshot) => {
+            clearTimeout(timeout); // Data arrived, cancel the timeout!
+            const data = snapshot.val();
+
+            if (!data) {
+              list.innerHTML =
+                '<div style="text-align:center; padding:20px; color:#64748b;">No data found yet.<br>Be the first to score!</div>';
+              return;
+            }
+
+            const sorted = Object.entries(data).sort(([, a], [, b]) => {
+              if (currentTab === "daily") return b.cash - a.cash;
+              return (b.totalCash || 0) - (a.totalCash || 0);
+            });
+
+            renderList(sorted, currentTab);
+          },
+          (error) => {
+            clearTimeout(timeout);
+            console.error("Firebase Read Error:", error);
+            list.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Permission Denied.<br>Check Firebase Rules.</div>`;
+          }
+        );
+      }
+
+      function renderList(data, type) {
+        const list = document.getElementById("lb-list");
+        list.innerHTML = "";
+
+        data.forEach(([nick, stats], index) => {
+          const isMe = nick === userNick;
+          const rankClass = index < 3 ? `top-${index + 1}` : "";
+
+          let scoreMain, scoreSub;
+
+          if (type === "daily") {
+            scoreMain = `$${stats.cash.toLocaleString()}`;
+            scoreSub = `${stats.attempts}/6 in ${stats.time}s ${
+              stats.intel ? "🔍" : ""
+            }`;
+          } else {
+            scoreMain = `$${(stats.totalCash || 0).toLocaleString()}`;
+            scoreSub = `${stats.wins || 0} Wins`;
+          }
+
+          const html = `
+        <div class="lb-row" style="${
+          isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
+        }">
+            <div class="lb-rank ${rankClass}">${index + 1}</div>
+            <div class="lb-user">${nick} ${isMe ? "(You)" : ""}</div>
+            <div class="lb-score">
+                <div class="lb-score-main">${scoreMain}</div>
+                <div class="lb-score-sub">${scoreSub}</div>
+            </div>
+        </div>
+      `;
+          list.insertAdjacentHTML("beforeend", html);
+        });
+      }
+
+      // --- SUBMISSION HELPERS ---
+
+      function submitScoreToFirebase(attempts, cash, time, intelUsed) {
+        if (!db || !userGroup || !userNick) return;
+
+        const today = new Date();
+        const dateKey = `${today.getFullYear()}-${
+          today.getMonth() + 1
+        }-${today.getDate()}`;
+
+        // Update Daily
+        db.ref(`scores/${userGroup}/${dateKey}/${userNick}`).set({
+          attempts: attempts,
+          cash: cash,
+          time: time,
+          intel: intelUsed,
+          timestamp: Date.now(),
+        });
+
+        // Update Career
+        const currentStats =
+          JSON.parse(localStorage.getItem("tumblerStats")) || {};
+        db.ref(`career/${userGroup}/${userNick}`).update({
+          totalCash: currentStats.totalCash || 0,
+          wins: currentStats.won || 0,
+          lastPlayed: Date.now(),
+        });
+      }
+
+      function hasPlayedTodayCheck() {
+        return window.hasPlayedToday();
+      }
+
+      function syncTodaysScore() {
+        const today = new Date();
+        const year = today.getFullYear();
+        const month = String(today.getMonth() + 1).padStart(2, "0");
+        const day = String(today.getDate()).padStart(2, "0");
+        const key = `tumblerGame_${year}-${month}-${day}`;
+
+        const saved = localStorage.getItem(key);
+        if (saved) {
+          const data = JSON.parse(saved);
+          if (data.cashWon > 0) {
+            submitScoreToFirebase(
+              data.attempts,
+              data.cashWon,
+              0,
+              data.intelUsed
+            );
+          }
+        }
+      }
+
+      // Expose to window (Safety)
+      window.openGroupModal = openGroupModal;
+      window.closeGroupModal = closeGroupModal;
+      window.joinGroup = joinGroup;
+      window.logoutGroup = logoutGroup;
+      window.switchTab = switchTab;
+      window.submitScoreToFirebase = submitScoreToFirebase;
+      window.hasPlayedTodayCheck = hasPlayedTodayCheck;
+      window.syncTodaysScore = syncTodaysScore;
     </script>
   </body>
 </html>
