@@ -3480,27 +3480,33 @@
         if (!db || userGroups.length === 0 || !userNick) return;
 
         const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const playDate = new Date(currentPlayDate);
+        playDate.setHours(0, 0, 0, 0);
+        const isToday = today.getTime() === playDate.getTime();
         const dateKey = `${today.getFullYear()}-${
           today.getMonth() + 1
         }-${today.getDate()}`;
 
         // Update Daily
         userGroups.forEach((group) => {
-          db.ref(`scores/${group}/${dateKey}/${userNick}`).set({
-            attempts: attempts,
-            cash: cash,
-            time: time,
-            intel: intelUsed,
-            timestamp: Date.now(),
-          });
+          if (isToday) {
+            db.ref(`scores/${group}/${dateKey}/${userNick}`).set({
+              attempts: attempts,
+              cash: cash,
+              time: time,
+              intel: intelUsed,
+              timestamp: Date.now(),
+            });
 
-          const currentStats =
-            JSON.parse(localStorage.getItem("tumblerStats")) || {};
-          db.ref(`career/${group}/${userNick}`).update({
-            totalCash: currentStats.totalCash || 0,
-            wins: currentStats.won || 0,
-            lastPlayed: Date.now(),
-          });
+            const currentStats =
+              JSON.parse(localStorage.getItem("tumblerStats")) || {};
+            db.ref(`career/${group}/${userNick}`).update({
+              totalCash: currentStats.totalCash || 0,
+              wins: currentStats.won || 0,
+              lastPlayed: Date.now(),
+            });
+          }
         });
       }
 
