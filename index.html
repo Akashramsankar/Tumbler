@@ -1608,6 +1608,27 @@
           </button>
         </div>
 
+        <!-- Crew Selector (only shown when multiple crews) -->
+        <div id="crew-selector" style="display: none; margin-bottom: 15px">
+          <div
+            style="
+              font-size: 0.8rem;
+              color: #94a3b8;
+              margin-bottom: 8px;
+              text-transform: uppercase;
+              letter-spacing: 1px;
+            "
+          >
+            Select Crew to View
+          </div>
+          <select
+            id="crew-dropdown"
+            class="group-input"
+            onchange="switchCrew()"
+            style="margin-bottom: 0; cursor: pointer; font-weight: 700"
+          ></select>
+        </div>
+
         <div id="view-setup">
           <p style="color: #94a3b8; font-size: 0.9rem">
             Enter a codename and a Crew ID to compete.
@@ -1648,6 +1669,15 @@
               >Leave</span
             >
           </div>
+
+          <!-- Add Join New Crew Button -->
+          <button
+            class="group-action-btn secondary"
+            onclick="showJoinNewCrew()"
+            style="margin-bottom: 15px"
+          >
+            + Join Another Crew
+          </button>
 
           <div class="tab-container">
             <button class="tab-btn active" onclick="switchTab('daily')">
@@ -2854,6 +2884,21 @@
         }
       }
 
+      function showJoinNewCrew() {
+        // Show the setup form for joining a new crew
+        document.getElementById("view-setup").style.display = "block";
+        document.getElementById("group-id").value = ""; // Clear crew ID field
+        document.getElementById("group-id").focus();
+
+        // Change button text
+        const joinBtn = document.querySelector("#view-setup .group-action-btn");
+        joinBtn.textContent = "Join New Crew";
+      }
+
+      function hideJoinNewCrew() {
+        document.getElementById("view-setup").style.display = "none";
+      }
+
       function showStats() {
         const modal = document.getElementById("stats-modal");
         modal.style.display = "flex";
@@ -3080,6 +3125,18 @@
         document.getElementById("calendar-modal").style.display = "none";
       }
 
+      function switchCrew() {
+        const dropdown = document.getElementById("crew-dropdown");
+        activeGroup = dropdown.value;
+        localStorage.setItem("tumblerActiveGroup", activeGroup);
+        document.getElementById(
+          "display-group-name"
+        ).textContent = `Crew: ${activeGroup}`;
+
+        // Reload the leaderboard with new crew data
+        loadLeaderboardData();
+      }
+
       async function loadDate(dateObj) {
         closeCalendar();
 
@@ -3195,16 +3252,24 @@
 
       // --- 2. STATE ---
       let userNick = localStorage.getItem("tumblerNick") || "";
-      let userGroup = localStorage.getItem("tumblerGroup") || "";
+      let userGroups = JSON.parse(
+        localStorage.getItem("tumblerGroups") || "[]"
+      ); // Array of crew IDs
+      let activeGroup = localStorage.getItem("tumblerActiveGroup") || ""; // Currently viewing crew
       let currentTab = "daily";
 
       // --- 3. FUNCTIONS ---
 
       function openGroupModal() {
         document.getElementById("group-modal").style.display = "flex";
-        if (userNick && userGroup) {
+
+        if (userNick && userGroups.length > 0) {
+          // Existing user - show leaderboard, hide setup form
+          if (!activeGroup) activeGroup = userGroups[0];
+          document.getElementById("view-setup").style.display = "none";
           showLeaderboardView();
         } else {
+          // First time user - show setup form only
           document.getElementById("view-setup").style.display = "block";
           document.getElementById("view-leaderboard").style.display = "none";
         }
@@ -3231,13 +3296,17 @@
 
         // 1. Save Locally
         userNick = nick;
-        userGroup = group;
+        if (!userGroups.includes(group)) {
+          userGroups.push(group);
+          localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+        }
+        activeGroup = group;
         localStorage.setItem("tumblerNick", nick);
-        localStorage.setItem("tumblerGroup", group);
+        localStorage.setItem("tumblerActiveGroup", group);
 
         // 2. Try Update Firebase (Don't wait for it)
         if (db) {
-          db.ref(`groups/${userGroup}/members/${nick}`)
+          db.ref(`groups/${group}/members/${nick}`)
             .update({
               joined: Date.now(),
               lastActive: Date.now(),
@@ -3252,14 +3321,26 @@
 
         // 3. IMMEDIATELY Show View (Fixes the "Nothing Happens" bug)
         showLeaderboardView();
+
+        // Hide the join form after successful join
+        hideJoinNewCrew();
       }
 
       function logoutGroup() {
         if (confirm("Leave this crew?")) {
-          localStorage.removeItem("tumblerGroup");
-          userGroup = "";
-          document.getElementById("view-setup").style.display = "block";
-          document.getElementById("view-leaderboard").style.display = "none";
+          userGroups = userGroups.filter((g) => g !== activeGroup);
+          localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+
+          if (userGroups.length > 0) {
+            activeGroup = userGroups[0];
+            localStorage.setItem("tumblerActiveGroup", activeGroup);
+            showLeaderboardView();
+          } else {
+            activeGroup = "";
+            localStorage.removeItem("tumblerActiveGroup");
+            document.getElementById("view-setup").style.display = "block";
+            document.getElementById("view-leaderboard").style.display = "none";
+          }
         }
       }
 
@@ -3277,9 +3358,32 @@
         document.getElementById("view-leaderboard").style.display = "block";
         document.getElementById(
           "display-group-name"
-        ).textContent = `Crew: ${userGroup}`;
+        ).textContent = `Crew: ${activeGroup}`;
         document.getElementById("player-nick").value = userNick;
-        document.getElementById("group-id").value = userGroup;
+        document.getElementById("group-id").value = activeGroup;
+        loadLeaderboardData();
+        // Show crew selector if multiple crews
+        const selector = document.getElementById("crew-selector");
+        const dropdown = document.getElementById("crew-dropdown");
+
+        console.log("User groups:", userGroups); // Debug line
+        console.log("Active group:", activeGroup); // Debug line
+
+        if (userGroups && userGroups.length > 1) {
+          selector.style.display = "block";
+          dropdown.innerHTML = userGroups
+            .map(
+              (g) =>
+                `<option value="${g}" ${
+                  g === activeGroup ? "selected" : ""
+                }>${g}</option>`
+            )
+            .join("");
+        } else {
+          selector.style.display = "none";
+        }
+
+        // Force reload leaderboard data
         loadLeaderboardData();
       }
 
@@ -3302,10 +3406,10 @@
 
         let path =
           currentTab === "daily"
-            ? `scores/${userGroup}/${new Date().getFullYear()}-${
+            ? `scores/${activeGroup}/${new Date().getFullYear()}-${
                 new Date().getMonth() + 1
               }-${new Date().getDate()}`
-            : `career/${userGroup}`;
+            : `career/${activeGroup}`;
 
         db.ref(path).once(
           "value",
@@ -3373,7 +3477,7 @@
       // --- SUBMISSION HELPERS ---
 
       function submitScoreToFirebase(attempts, cash, time, intelUsed) {
-        if (!db || !userGroup || !userNick) return;
+        if (!db || userGroups.length === 0 || !userNick) return;
 
         const today = new Date();
         const dateKey = `${today.getFullYear()}-${
@@ -3381,21 +3485,22 @@
         }-${today.getDate()}`;
 
         // Update Daily
-        db.ref(`scores/${userGroup}/${dateKey}/${userNick}`).set({
-          attempts: attempts,
-          cash: cash,
-          time: time,
-          intel: intelUsed,
-          timestamp: Date.now(),
-        });
+        userGroups.forEach((group) => {
+          db.ref(`scores/${group}/${dateKey}/${userNick}`).set({
+            attempts: attempts,
+            cash: cash,
+            time: time,
+            intel: intelUsed,
+            timestamp: Date.now(),
+          });
 
-        // Update Career
-        const currentStats =
-          JSON.parse(localStorage.getItem("tumblerStats")) || {};
-        db.ref(`career/${userGroup}/${userNick}`).update({
-          totalCash: currentStats.totalCash || 0,
-          wins: currentStats.won || 0,
-          lastPlayed: Date.now(),
+          const currentStats =
+            JSON.parse(localStorage.getItem("tumblerStats")) || {};
+          db.ref(`career/${group}/${userNick}`).update({
+            totalCash: currentStats.totalCash || 0,
+            wins: currentStats.won || 0,
+            lastPlayed: Date.now(),
+          });
         });
       }
 
@@ -3433,6 +3538,9 @@
       window.submitScoreToFirebase = submitScoreToFirebase;
       window.hasPlayedTodayCheck = hasPlayedTodayCheck;
       window.syncTodaysScore = syncTodaysScore;
+      window.switchCrew = switchCrew;
+      window.showJoinNewCrew = showJoinNewCrew;
+      window.hideJoinNewCrew = hideJoinNewCrew;
     </script>
   </body>
 </html>
