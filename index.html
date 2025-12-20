@@ -3738,7 +3738,12 @@
             }
 
             const sorted = Object.entries(data).sort(([, a], [, b]) => {
-              if (currentTab === "daily") return b.cash - a.cash;
+              if (currentTab === "daily") {
+                // First sort by cash (higher is better)
+                if (b.cash !== a.cash) return b.cash - a.cash;
+                // If cash is equal, sort by time (lower is better)
+                return (a.time || 999999) - (b.time || 999999);
+              }
               return (b.totalCash || 0) - (a.totalCash || 0);
             });
 
