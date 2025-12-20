@@ -401,6 +401,12 @@
         font-family: "Chivo Mono", monospace;
       }
 
+      .tutorial-content .tutorial-btn {
+        font-size: 0.95rem;
+        padding: 12px;
+        margin-top: 20px;
+      }
+
       /* Better Hover: Brightens slightly, no color swap */
       .tutorial-btn:hover {
         filter: brightness(1.1);
@@ -1415,7 +1421,96 @@
           </div>
         </div>
 
+        <div class="rule-line">
+          <div class="icon-box">👥</div>
+          <div>
+            <strong>Join a Crew:</strong> Compete with friends on daily and
+            career leaderboards.<br />
+            <span style="font-size: 0.8rem; color: #94a3b8">
+              (Click <strong>👥 Crew</strong> button to create or join a group)
+            </span>
+          </div>
+        </div>
+
         <button class="tutorial-btn" onclick="closeTutorial()">
+          START CRACKING
+        </button>
+      </div>
+    </div>
+
+    <div id="ready-modal" class="tutorial-modal">
+      <div class="tutorial-content" style="max-width: 380px">
+        <div class="mission-header">
+          <h2 class="mission-title" id="ready-puzzle-title">
+            Ready for Today's Heist?
+          </h2>
+          <div class="mission-subtitle" id="ready-puzzle-number">
+            TUMBLER #1
+          </div>
+        </div>
+
+        <div
+          style="
+            background: var(--safe-inset);
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px solid var(--safe-border);
+            text-align: center;
+          "
+        >
+          <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px">
+            🎯 YOUR STATS
+          </div>
+          <div
+            style="
+              display: flex;
+              justify-content: space-around;
+              margin-top: 15px;
+            "
+          >
+            <div>
+              <div
+                style="
+                  font-size: 1.5rem;
+                  font-weight: 700;
+                  color: var(--color-correct);
+                "
+                id="ready-streak"
+              >
+                0
+              </div>
+              <div style="font-size: 0.7rem; color: #94a3b8">Streak 🔥</div>
+            </div>
+            <div>
+              <div
+                style="
+                  font-size: 1.5rem;
+                  font-weight: 700;
+                  color: var(--color-cash);
+                "
+                id="ready-cash"
+              >
+                $0
+              </div>
+              <div style="font-size: 0.7rem; color: #94a3b8">Total Stash</div>
+            </div>
+          </div>
+        </div>
+
+        <div
+          style="
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            text-align: center;
+          "
+        >
+          Timer starts when you begin. Good luck! 🍀
+        </div>
+
+        <button class="tutorial-btn" onclick="startCracking()">
           START CRACKING
         </button>
       </div>
@@ -1915,16 +2010,15 @@
       async function initGame() {
         try {
           await loadDictionaries();
-
           TARGET_WORD = getDailyWord();
 
-          // ADD THIS CHECK
+          // Check if already played today
           if (hasPlayedToday()) {
-            // Show the completed game state
             loadCompletedGame();
-            return; // Exit early, don't allow new game
+            return;
           }
 
+          // Setup game but don't start timer
           resetSlotConstraints();
           intelUsed = false;
           createBoard();
@@ -1933,19 +2027,12 @@
           updateActiveRow();
           updateKeyboardVisuals();
 
-          // Check if first time user
+          // Show appropriate modal
           if (!localStorage.getItem("tumblerTutorialSeen")) {
-            showTutorial();
+            showTutorial(); // First-time: tutorial → timer starts when closed
             localStorage.setItem("tumblerTutorialSeen", "true");
-            // Timer will start when they close tutorial
           } else {
-            // Returning user - start timer immediately
-            startTimer();
-          }
-
-          if (!localStorage.getItem("tumblerTutorialSeen")) {
-            showTutorial();
-            localStorage.setItem("tumblerTutorialSeen", "true");
+            showReadyModal(); // Returning users: ready modal → timer starts when clicked
           }
         } catch (error) {
           console.error("Game Initialization Error:", error);
@@ -2781,8 +2868,6 @@
               );
             }
 
-            
-
             // ===== ENHANCED WIN ANIMATION =====
             const currentRowEl = document.getElementById(`row-${currentRow}`);
 
@@ -3206,10 +3291,31 @@
 
       function closeTutorial() {
         document.getElementById("tutorial-modal").style.display = "none";
-        // Start timer when first-time user closes tutorial
-        if (!timerInterval) {
-          startTimer();
-        }
+        // Start timer immediately for first-time users (they just read tutorial)
+        startTimer();
+      }
+
+      function showReadyModal() {
+        const modal = document.getElementById("ready-modal");
+        const puzzleNum = getPuzzleNumber(currentPlayDate);
+
+        document.getElementById(
+          "ready-puzzle-number"
+        ).textContent = `TUMBLER #${puzzleNum}`;
+        document.getElementById("ready-streak").textContent =
+          stats.currentStreak;
+        document.getElementById(
+          "ready-cash"
+        ).textContent = `$${new Intl.NumberFormat("en-US").format(
+          stats.totalCash || 0
+        )}`;
+
+        modal.style.display = "flex";
+      }
+
+      function startCracking() {
+        document.getElementById("ready-modal").style.display = "none";
+        startTimer();
       }
 
       document.getElementById("stats-modal").addEventListener("click", (e) => {
@@ -3225,6 +3331,10 @@
         .addEventListener("click", (e) => {
           if (e.target.id === "tutorial-modal") closeTutorial();
         });
+
+      document.getElementById("ready-modal").addEventListener("click", (e) => {
+        if (e.target.id === "ready-modal") startCracking();
+      });
 
       initGame();
 
@@ -3552,6 +3662,7 @@
       window.switchCrew = switchCrew;
       window.showJoinNewCrew = showJoinNewCrew;
       window.hideJoinNewCrew = hideJoinNewCrew;
+      window.startCracking = startCracking;
     </script>
   </body>
 </html>
