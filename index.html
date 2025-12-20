@@ -1703,6 +1703,110 @@
           </button>
         </div>
 
+        <!-- ADD THIS NEW SECTION: User Info Card (only shown when logged in) -->
+        <div
+          id="user-info-card"
+          style="
+            display: none;
+            background: var(--safe-inset);
+            padding: 12px 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--safe-border);
+          "
+        >
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <div>
+              <div
+                style="
+                  font-size: 0.75rem;
+                  color: #94a3b8;
+                  text-transform: uppercase;
+                  letter-spacing: 1px;
+                  margin-bottom: 4px;
+                "
+              >
+                Your Codename
+              </div>
+              <div
+                style="
+                  font-size: 1.3rem;
+                  font-weight: 700;
+                  color: var(--color-correct);
+                "
+                id="user-name-display"
+              >
+                ---
+              </div>
+            </div>
+            <button
+              onclick="showNameEdit()"
+              style="
+                background: var(--key-bg);
+                color: var(--text-color);
+                border: none;
+                padding: 8px 12px;
+                border-radius: 6px;
+                cursor: pointer;
+                font-size: 0.85rem;
+                font-weight: 700;
+              "
+            >
+              ✏️ Edit
+            </button>
+          </div>
+        </div>
+
+        <!-- Name Edit Panel (hidden by default) -->
+        <div
+          id="name-edit-panel"
+          style="
+            display: none;
+            background: var(--safe-inset);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--color-close);
+          "
+        >
+          <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 10px">
+            Change Codename
+          </div>
+          <input
+            type="text"
+            id="name-edit-input"
+            class="group-input"
+            placeholder="Enter new name (2-10 chars)"
+            maxlength="10"
+            style="margin-bottom: 10px"
+          />
+          <div style="display: flex; gap: 8px">
+            <button
+              class="group-action-btn"
+              onclick="saveNewName()"
+              style="margin-top: 0; flex: 1"
+            >
+              ✓ Save
+            </button>
+            <button
+              class="group-action-btn secondary"
+              onclick="cancelNameEdit()"
+              style="margin-top: 0; flex: 1"
+            >
+              Cancel
+            </button>
+          </div>
+          <div style="font-size: 0.75rem; color: #94a3b8; margin-top: 8px">
+            Updates across all crews
+          </div>
+        </div>
+
         <!-- Crew Selector (only shown when multiple crews) -->
         <div id="crew-selector" style="display: none; margin-bottom: 15px">
           <div
@@ -2005,6 +2109,98 @@
         }
 
         update();
+      }
+
+      function showNameEdit() {
+        document.getElementById("user-info-card").style.display = "none";
+        document.getElementById("name-edit-panel").style.display = "block";
+        document.getElementById("name-edit-input").value = userNick;
+        document.getElementById("name-edit-input").focus();
+      }
+
+      function cancelNameEdit() {
+        document.getElementById("name-edit-panel").style.display = "none";
+        document.getElementById("user-info-card").style.display = "block";
+      }
+
+      async function saveNewName() {
+        const newName = document
+          .getElementById("name-edit-input")
+          .value.trim()
+          .toUpperCase();
+
+        if (newName.length < 2) {
+          showMessage("Name must be at least 2 characters!");
+          return;
+        }
+
+        if (newName === userNick) {
+          cancelNameEdit();
+          return;
+        }
+
+        const oldName = userNick;
+        userNick = newName;
+        localStorage.setItem("tumblerNick", newName);
+
+        // Update display immediately
+        document.getElementById("user-name-display").textContent = newName;
+
+        // Update Firebase for all crews
+        if (db && userGroups.length > 0) {
+          const today = new Date();
+          const dateKey = `${today.getFullYear()}-${
+            today.getMonth() + 1
+          }-${today.getDate()}`;
+
+          for (const group of userGroups) {
+            // 1. Copy today's score to new name (if exists)
+            if (oldName) {
+              try {
+                const oldScoreRef = db.ref(
+                  `scores/${group}/${dateKey}/${oldName}`
+                );
+                const snapshot = await oldScoreRef.once("value");
+                if (snapshot.exists()) {
+                  await db
+                    .ref(`scores/${group}/${dateKey}/${newName}`)
+                    .set(snapshot.val());
+                  await oldScoreRef.remove();
+                }
+
+                // 2. Copy career stats to new name
+                const oldCareerRef = db.ref(`career/${group}/${oldName}`);
+                const careerSnapshot = await oldCareerRef.once("value");
+                if (careerSnapshot.exists()) {
+                  await db
+                    .ref(`career/${group}/${newName}`)
+                    .set(careerSnapshot.val());
+                  await oldCareerRef.remove();
+                }
+              } catch (e) {
+                console.log("Offline mode: Name change saved locally");
+              }
+            }
+
+            // 3. Update member list
+            try {
+              await db.ref(`groups/${group}/members/${newName}`).update({
+                joined: Date.now(),
+                lastActive: Date.now(),
+              });
+
+              if (oldName) {
+                await db.ref(`groups/${group}/members/${oldName}`).remove();
+              }
+            } catch (e) {
+              console.log("Offline mode: Name change saved locally");
+            }
+          }
+        }
+
+        showMessage(`✅ Name changed to ${newName}!`);
+        cancelNameEdit();
+        loadLeaderboardData(); // Refresh leaderboard
       }
 
       async function initGame() {
@@ -3471,6 +3667,9 @@
       function showLeaderboardView() {
         document.getElementById("view-setup").style.display = "none";
         document.getElementById("view-leaderboard").style.display = "block";
+        document.getElementById("user-info-card").style.display = "block";
+        document.getElementById("user-name-display").textContent = userNick;
+        document.getElementById("name-edit-panel").style.display = "none";
         document.getElementById(
           "display-group-name"
         ).textContent = `Crew: ${activeGroup}`;
@@ -3663,6 +3862,9 @@
       window.showJoinNewCrew = showJoinNewCrew;
       window.hideJoinNewCrew = hideJoinNewCrew;
       window.startCracking = startCracking;
+      window.showNameEdit = showNameEdit;
+      window.cancelNameEdit = cancelNameEdit;
+      window.saveNewName = saveNewName;
     </script>
   </body>
 </html>
