@@ -1348,6 +1348,25 @@
       👥 Crew
     </button>
 
+    <script>
+      // Check for crew invite in URL on page load
+      (function checkCrewInvite() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const crewParam = urlParams.get("crew");
+
+        if (crewParam) {
+          const crewId = crewParam.toUpperCase();
+          sessionStorage.setItem("inviteCrew", crewId);
+
+          if (!localStorage.getItem("tumblerNick")) {
+            setTimeout(() => {
+              openGroupModal();
+            }, 500);
+          }
+        }
+      })();
+    </script>
+
     <div id="tutorial-modal" class="tutorial-modal">
       <div class="tutorial-content">
         <div class="mission-header">
@@ -1876,6 +1895,15 @@
             style="margin-bottom: 15px"
           >
             + Join Another Crew
+          </button>
+
+          <!-- Add Share Crew Button -->
+          <button
+            class="group-action-btn secondary"
+            onclick="shareCrewInvite()"
+            style="margin-bottom: 15px; background: var(--color-close)"
+          >
+            📤 Share Crew Invite
           </button>
 
           <div class="tab-container">
@@ -2745,6 +2773,10 @@
           "FANG",
           "LIST",
           "PUMP",
+          "WIFE",
+          "DUST",
+          "LUCK",
+          "ALSO",
         ];
 
         const index = daysPassed % manualWords.length;
@@ -3574,13 +3606,22 @@
       function openGroupModal() {
         document.getElementById("group-modal").style.display = "flex";
 
+        // Check for invite crew in session
+        const inviteCrew = sessionStorage.getItem("inviteCrew");
+        if (inviteCrew && !userNick) {
+          document.getElementById("group-id").value = inviteCrew;
+          document.getElementById("group-id").disabled = true;
+          document.getElementById("player-nick").focus();
+          document.getElementById("view-setup").style.display = "block";
+          document.getElementById("view-leaderboard").style.display = "none";
+          return;
+        }
+
         if (userNick && userGroups.length > 0) {
-          // Existing user - show leaderboard, hide setup form
           if (!activeGroup) activeGroup = userGroups[0];
           document.getElementById("view-setup").style.display = "none";
           showLeaderboardView();
         } else {
-          // First time user - show setup form only
           document.getElementById("view-setup").style.display = "block";
           document.getElementById("view-leaderboard").style.display = "none";
         }
@@ -3588,6 +3629,21 @@
 
       function closeGroupModal() {
         document.getElementById("group-modal").style.display = "none";
+      }
+
+      function shareCrewInvite() {
+        const inviteLink = `${window.location.origin}${window.location.pathname}?crew=${activeGroup}`;
+        const inviteText = `🔓 Join my Tumbler crew "${activeGroup}"!\n\nClick to join: ${inviteLink}`;
+
+        if (navigator.share && navigator.canShare({ text: inviteText })) {
+          navigator
+            .share({ text: inviteText })
+            .then(() => showMessage("✅ Invite shared!"))
+            .catch(() => copyToClipboard(inviteLink));
+        } else {
+          copyToClipboard(inviteLink);
+          showMessage("📋 Invite link copied!");
+        }
       }
 
       async function joinGroup() {
@@ -3629,6 +3685,10 @@
             syncTodaysScore();
           }
         }
+
+        // Clear invite session and re-enable field
+        sessionStorage.removeItem("inviteCrew");
+        document.getElementById("group-id").disabled = false;
 
         // 3. IMMEDIATELY Show View (Fixes the "Nothing Happens" bug)
         showLeaderboardView();
@@ -3872,6 +3932,7 @@
       window.showNameEdit = showNameEdit;
       window.cancelNameEdit = cancelNameEdit;
       window.saveNewName = saveNewName;
+      window.shareCrewInvite = shareCrewInvite;
     </script>
   </body>
 </html>
