@@ -3807,8 +3807,11 @@
           today.getMonth() + 1
         }-${today.getDate()}`;
 
-        // Update Daily
+        const currentStats =
+          JSON.parse(localStorage.getItem("tumblerStats")) || {};
+
         userGroups.forEach((group) => {
+          // Update daily scores ONLY for today's puzzle
           if (isToday) {
             db.ref(`scores/${group}/${dateKey}/${userNick}`).set({
               attempts: attempts,
@@ -3817,15 +3820,14 @@
               intel: intelUsed,
               timestamp: Date.now(),
             });
-
-            const currentStats =
-              JSON.parse(localStorage.getItem("tumblerStats")) || {};
-            db.ref(`career/${group}/${userNick}`).update({
-              totalCash: currentStats.totalCash || 0,
-              wins: currentStats.won || 0,
-              lastPlayed: Date.now(),
-            });
           }
+
+          // ALWAYS update career stats (moved outside the isToday check)
+          db.ref(`career/${group}/${userNick}`).update({
+            totalCash: currentStats.totalCash || 0,
+            wins: currentStats.won || 0,
+            lastPlayed: Date.now(),
+          });
         });
       }
 
