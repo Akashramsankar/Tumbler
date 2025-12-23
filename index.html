@@ -1099,6 +1099,51 @@
         }
       }
 
+      @media (max-width: 600px) {
+        /* ... existing styles ... */
+
+        .tutorial-content {
+          padding: 16px;
+          max-width: 95%;
+        }
+
+        .mission-title {
+          font-size: 1.4rem;
+        }
+
+        .mission-subtitle {
+          font-size: 0.65rem;
+        }
+
+        .example-set {
+          gap: 10px;
+          padding: 12px 8px;
+        }
+
+        .example-tile {
+          width: 45px;
+          height: 45px;
+          font-size: 1.3rem;
+        }
+
+        .example-caption {
+          font-size: 0.65rem;
+        }
+
+        .rule-grid {
+          gap: 10px;
+        }
+
+        .rule-line {
+          font-size: 0.85rem;
+        }
+
+        .tutorial-btn {
+          padding: 10px;
+          font-size: 0.9rem;
+        }
+      }
+
       @media (max-width: 480px) {
         body {
           padding: 5px;
@@ -1139,6 +1184,28 @@
         }
       }
 
+      @media (max-width: 480px) {
+        /* ... existing styles ... */
+
+        .tutorial-content {
+          padding: 14px;
+        }
+
+        .mission-title {
+          font-size: 1.3rem;
+        }
+
+        .example-tile {
+          width: 40px;
+          height: 40px;
+          font-size: 1.2rem;
+        }
+
+        .rule-line {
+          font-size: 0.8rem;
+        }
+      }
+
       @media (max-width: 380px) {
         body {
           padding: 3px;
@@ -1174,6 +1241,32 @@
           font-size: 0.65rem;
           gap: 8px;
           padding: 5px 10px;
+        }
+      }
+
+      @media (max-width: 380px) {
+        /* ... existing styles ... */
+
+        .tutorial-content {
+          padding: 12px;
+        }
+
+        .mission-title {
+          font-size: 1.2rem;
+        }
+
+        .example-tile {
+          width: 38px;
+          height: 38px;
+          font-size: 1.1rem;
+        }
+
+        .example-caption {
+          font-size: 0.6rem;
+        }
+
+        .rule-line {
+          font-size: 0.75rem;
         }
       }
 
@@ -1358,11 +1451,9 @@
           const crewId = crewParam.toUpperCase();
           sessionStorage.setItem("inviteCrew", crewId);
 
-          if (!localStorage.getItem("tumblerNick")) {
-            setTimeout(() => {
-              openGroupModal();
-            }, 500);
-          }
+          setTimeout(() => {
+            openGroupModal();
+          }, 500);
         }
       })();
     </script>
