@@ -2603,7 +2603,11 @@
 
         // Auto-open win modal after short delay
         setTimeout(() => {
-          showWinModal(gameData.attempts, gameData.cashWon, 0);
+          showWinModal(
+            gameData.attempts,
+            gameData.cashWon,
+            gameData.solveTime || 0
+          );
         }, 1500);
       }
 
