@@ -932,6 +932,31 @@
         border-radius: 50%;
       }
 
+      .keyboard-toggle {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 10px;
+        width: 100%;
+        max-width: 600px;
+      }
+
+      .keyboard-toggle-btn {
+        background: var(--key-bg);
+        color: var(--text-color);
+        border: none;
+        padding: 8px 16px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-size: 0.85rem;
+        font-weight: 700;
+        font-family: "Chivo Mono", monospace;
+        transition: all 0.2s;
+      }
+
+      .keyboard-toggle-btn:hover {
+        background: #475569;
+      }
+
       #message-container {
         min-height: 30px;
         display: flex;
@@ -1791,6 +1816,12 @@
       </div>
     </div>
 
+    <div class="keyboard-toggle">
+      <button class="keyboard-toggle-btn" onclick="toggleKeyboardLayout()">
+        ⌨️ <span id="keyboard-layout-text">ABC</span>
+      </button>
+    </div>
+
     <div id="keyboard"></div>
 
     <div id="group-modal" class="group-modal">
@@ -2136,6 +2167,8 @@
       let dictionary = new Set();
       let answerList = [];
       let slotConstraints = [];
+      let keyboardLayout =
+        localStorage.getItem("tumblerKeyboardLayout") || "abc"; // 'abc' or 'qwerty'
 
       const board = document.getElementById("game-board");
       const keyboardContainer = document.getElementById("keyboard");
@@ -2325,6 +2358,10 @@
       async function initGame() {
         try {
           await loadDictionaries();
+          const layoutText = document.getElementById("keyboard-layout-text");
+          if (layoutText) {
+            layoutText.textContent = keyboardLayout.toUpperCase();
+          }
           TARGET_WORD = getDailyWord();
 
           // Check if already played today
@@ -2958,7 +2995,15 @@
       }
 
       function createKeyboard() {
-        const rows = ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ"];
+        keyboardContainer.innerHTML = ""; // Clear existing keyboard
+
+        const layouts = {
+          abc: ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ"],
+          qwerty: ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"],
+        };
+
+        const rows = layouts[keyboardLayout];
+
         rows.forEach((rowString, index) => {
           const rowDiv = document.createElement("div");
           rowDiv.classList.add("key-row");
@@ -2987,6 +3032,51 @@
           }
           keyboardContainer.appendChild(rowDiv);
         });
+      }
+
+      function toggleKeyboardLayout() {
+        keyboardLayout = keyboardLayout === "abc" ? "qwerty" : "abc";
+        localStorage.setItem("tumblerKeyboardLayout", keyboardLayout);
+
+        // Update button text
+        const layoutText = document.getElementById("keyboard-layout-text");
+        if (layoutText) {
+          layoutText.textContent = keyboardLayout.toUpperCase();
+        }
+
+        // Store current keyboard state (which keys are colored/disabled)
+        const keyStates = {};
+        document.querySelectorAll(".key").forEach((key) => {
+          if (!key.classList.contains("wide")) {
+            const letter = key.textContent;
+            keyStates[letter] = {
+              correct: key.classList.contains("correct"),
+              disabled: key.hasAttribute("data-disabled"),
+              value: key.getAttribute("data-value"),
+            };
+          }
+        });
+
+        // Recreate keyboard with new layout
+        createKeyboard();
+
+        // Restore key states
+        Object.keys(keyStates).forEach((letter) => {
+          const key = document.getElementById(`key-${letter}`);
+          if (key) {
+            if (keyStates[letter].correct) {
+              key.classList.add("correct");
+            }
+            if (keyStates[letter].disabled) {
+              key.setAttribute("data-disabled", "true");
+            }
+            if (keyStates[letter].value) {
+              key.setAttribute("data-value", keyStates[letter].value);
+            }
+          }
+        });
+
+        playSound("keypress");
       }
 
       function updateKeyboardVisuals() {
@@ -3162,6 +3252,7 @@
 
         setTimeout(() => {
           if (correctCount === WORD_LENGTH) {
+            isGameOver = true;
             playSound("win");
             stopTimer();
             const solveTime = Math.floor((Date.now() - startTime) / 1000);
@@ -3176,6 +3267,9 @@
               stats.won++;
               stats.currentStreak++;
               stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+            } else {
+              // Archive games: still count wins and cash, but don't affect streak or played count
+              stats.won++;
             }
             stats.guessDistribution[currentRow]++;
             stats.totalCash += cashWon;
@@ -3222,8 +3316,6 @@
             setTimeout(() => {
               showWinModal(currentRow + 1, cashWon, solveTime);
             }, WORD_LENGTH * 200 + 800);
-
-            isGameOver = true;
           } else {
             if (currentRow < MAX_TRIES - 1) {
               currentRow++;
@@ -4028,6 +4120,7 @@
       window.cancelNameEdit = cancelNameEdit;
       window.saveNewName = saveNewName;
       window.shareCrewInvite = shareCrewInvite;
+      window.toggleKeyboardLayout = toggleKeyboardLayout;
     </script>
   </body>
 </html>
