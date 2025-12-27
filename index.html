@@ -2144,6 +2144,21 @@
         }
       }
 
+      function wasYesterdayPlayed() {
+        const yesterday = new Date(currentPlayDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+
+        const yesterdayKey = getStorageKey(yesterday);
+        const saved = localStorage.getItem(yesterdayKey);
+
+        if (!saved) return false;
+
+        const gameData = JSON.parse(saved);
+        // Check if they WON yesterday (not just played)
+        return gameData.cashWon > 0;
+      }
+
       function toggleMute() {
         isMuted = !isMuted;
         localStorage.setItem("tumblerMuted", isMuted);
@@ -3262,7 +3277,9 @@
         setTimeout(() => {
           if (correctCount === WORD_LENGTH) {
             isGameOver = true;
-            document.querySelector('.row.evaluating')?.classList.remove('evaluating');
+            document
+              .querySelector(".row.evaluating")
+              ?.classList.remove("evaluating");
             playSound("win");
             stopTimer();
             const solveTime = Math.floor((Date.now() - startTime) / 1000);
@@ -3275,12 +3292,17 @@
             if (isToday) {
               stats.played++;
               stats.won++;
-              stats.currentStreak++;
-              stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+              if (wasYesterdayPlayed()) {
+                stats.currentStreak++; // Continue the streak
+              } else {
+                stats.currentStreak = 1; // Start new streak
+              }
+              
             } else {
               // Archive games: still count wins and cash, but don't affect streak or played count
               stats.won++;
             }
+            stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
             stats.guessDistribution[currentRow]++;
             stats.totalCash += cashWon;
             saveTodayGame(currentRow + 1, cashWon, solveTime);
@@ -3327,8 +3349,10 @@
               showWinModal(currentRow + 1, cashWon, solveTime);
             }, WORD_LENGTH * 200 + 800);
           } else {
-            document.querySelector('.row.evaluating')?.classList.remove('evaluating');
-            
+            document
+              .querySelector(".row.evaluating")
+              ?.classList.remove("evaluating");
+
             if (currentRow < MAX_TRIES - 1) {
               currentRow++;
               currentTile = 0;
