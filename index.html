@@ -3185,6 +3185,11 @@
       function submitGuess() {
         if (isGameOver) return;
 
+        // NEW: Prevent duplicate submissions during evaluation
+        if (document.querySelector(".row.evaluating")) {
+          return;
+        }
+
         if (currentTile < WORD_LENGTH) {
           showMessage("Need full combination!");
           shakeRow();
@@ -3199,6 +3204,10 @@
           playSound("error");
           return;
         }
+
+        // NEW: Mark row as being evaluated
+        const row = document.getElementById(`row-${currentRow}`);
+        row.classList.add("evaluating");
 
         evaluateGuess(guesses[currentRow]);
       }
@@ -3253,6 +3262,7 @@
         setTimeout(() => {
           if (correctCount === WORD_LENGTH) {
             isGameOver = true;
+            document.querySelector('.row.evaluating')?.classList.remove('evaluating');
             playSound("win");
             stopTimer();
             const solveTime = Math.floor((Date.now() - startTime) / 1000);
@@ -3317,6 +3327,8 @@
               showWinModal(currentRow + 1, cashWon, solveTime);
             }, WORD_LENGTH * 200 + 800);
           } else {
+            document.querySelector('.row.evaluating')?.classList.remove('evaluating');
+            
             if (currentRow < MAX_TRIES - 1) {
               currentRow++;
               currentTile = 0;
