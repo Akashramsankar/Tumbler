@@ -1097,6 +1097,67 @@
         margin-top: 10px;
       }
 
+      /* ==================== CREW BADGES ==================== */
+      .badge {
+        display: inline-block;
+        font-size: 1.1rem;
+        margin-left: 4px;
+        vertical-align: middle;
+      }
+
+      .badge-showcase {
+        background: var(--safe-inset);
+        padding: 12px;
+        border-radius: 10px;
+        margin-bottom: 15px;
+        border: 1px solid var(--safe-border);
+      }
+
+      .showcase-label {
+        font-size: 0.75rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        margin-bottom: 8px;
+        text-align: center;
+      }
+
+      .user-badges {
+        display: flex;
+        justify-content: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .user-badge-item {
+        background: rgba(106, 170, 100, 0.15);
+        border: 1px solid var(--color-correct);
+        border-radius: 8px;
+        padding: 8px 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.85rem;
+      }
+
+      .user-badge-icon {
+        font-size: 1.3rem;
+      }
+
+      .user-badge-name {
+        font-weight: 700;
+        color: var(--text-color);
+      }
+
+      .weekly-reset-timer {
+        text-align: center;
+        font-size: 0.7rem;
+        color: #94a3b8;
+        margin-top: 15px;
+        padding-top: 10px;
+        border-top: 1px solid var(--safe-border);
+      }
+
       @media (max-width: 600px) {
         body {
           padding: 5px;
@@ -1901,6 +1962,19 @@
             >
               ✏️ Edit
             </button>
+          </div>
+        </div>
+
+        <!-- Badge Showcase -->
+        <div id="badge-showcase" style="display: none">
+          <div class="badge-showcase">
+            <div class="showcase-label">🏆 Your Crew Badges</div>
+            <div class="user-badges" id="user-badges-display">
+              <div style="color: #64748b; font-size: 0.85rem">
+                No badges yet. Start playing!
+              </div>
+            </div>
+            <div class="weekly-reset-timer" id="weekly-reset-timer"></div>
           </div>
         </div>
 
@@ -2924,6 +2998,16 @@
           "DUST",
           "LUCK",
           "ALSO",
+          "CREW",
+          "MASK",
+          "DEED",
+          "MOON",
+          "THIN",
+          "JUMP",
+          "BOLT",
+          "RIDE",
+          "SICK",
+          "RUST",
         ];
 
         const index = daysPassed % manualWords.length;
@@ -3297,7 +3381,6 @@
               } else {
                 stats.currentStreak = 1; // Start new streak
               }
-              
             } else {
               // Archive games: still count wins and cash, but don't affect streak or played count
               stats.won++;
@@ -3315,6 +3398,12 @@
                 solveTime,
                 intelUsed
               );
+            }
+
+            if (isToday && db && userGroups.length > 0) {
+              userGroups.forEach((group) => {
+                calculateWeeklyBadges(group);
+              });
             }
 
             // ===== ENHANCED WIN ANIMATION =====
@@ -3816,6 +3905,23 @@
         console.error("Firebase Error:", e);
       }
 
+      // Weekly Badge Definitions
+      const WEEKLY_BADGES = {
+        champion: { icon: "🥇", name: "Champion", desc: "#1 This Week" },
+        runnerUp: { icon: "🥈", name: "Runner Up", desc: "#2 This Week" },
+        bronze: { icon: "🥉", name: "Bronze", desc: "#3 This Week" },
+        speedKing: { icon: "⚡", name: "Speed King", desc: "Fastest Time" },
+      };
+
+      const CAREER_BADGES = {
+        legend: { icon: "👑", name: "Legend", desc: "Most Career Wins" },
+        vaultMaster: {
+          icon: "💎",
+          name: "Vault Master",
+          desc: "Highest Single Score",
+        },
+      };
+
       // --- 2. STATE ---
       let userNick = localStorage.getItem("tumblerNick") || "";
       let userGroups = JSON.parse(
@@ -3825,6 +3931,111 @@
       let currentTab = "daily";
 
       // --- 3. FUNCTIONS ---
+
+      // Get current week key (format: "2025-W01")
+      function getWeekKey(date = new Date()) {
+        const d = new Date(date);
+        d.setHours(0, 0, 0, 0);
+        d.setDate(d.getDate() + 4 - (d.getDay() || 7)); // Thursday of current week
+        const yearStart = new Date(d.getFullYear(), 0, 1);
+        const weekNum = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
+        return `${d.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+      }
+
+      // Calculate time until next Monday 00:00
+      function getTimeUntilMonday() {
+        const now = new Date();
+        const nextMonday = new Date(now);
+        nextMonday.setDate(now.getDate() + ((8 - now.getDay()) % 7 || 7));
+        nextMonday.setHours(0, 0, 0, 0);
+
+        const diff = nextMonday - now;
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        const hours = Math.floor(
+          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+        );
+
+        if (days > 0) return `${days}d ${hours}h until reset`;
+        return `${hours}h until reset`;
+      }
+
+      // Fetch user's badges for active crew
+      async function fetchUserBadges() {
+        if (!db || !activeGroup || !userNick) return [];
+
+        const badges = [];
+        const weekKey = getWeekKey();
+
+        try {
+          // Check weekly badges
+          const weeklySnapshot = await db
+            .ref(`weeklyBadges/${weekKey}/${activeGroup}`)
+            .once("value");
+          const weeklyData = weeklySnapshot.val();
+
+          if (weeklyData) {
+            Object.entries(WEEKLY_BADGES).forEach(([badgeId, badge]) => {
+              if (weeklyData[badgeId] === userNick) {
+                badges.push({ ...badge, id: badgeId, type: "weekly" });
+              }
+            });
+          }
+
+          // Check career badges
+          const careerSnapshot = await db
+            .ref(`careerBadges/${activeGroup}`)
+            .once("value");
+          const careerData = careerSnapshot.val();
+
+          if (careerData) {
+            Object.entries(CAREER_BADGES).forEach(([badgeId, badge]) => {
+              if (careerData[badgeId] === userNick) {
+                badges.push({ ...badge, id: badgeId, type: "career" });
+              }
+            });
+          }
+        } catch (e) {
+          console.log("Could not fetch badges:", e);
+        }
+
+        return badges;
+      }
+
+      // Display user's badges
+      async function displayUserBadges() {
+        const container = document.getElementById("user-badges-display");
+        const showcase = document.getElementById("badge-showcase");
+        const timer = document.getElementById("weekly-reset-timer");
+
+        if (!container || !showcase) return;
+
+        const badges = await fetchUserBadges();
+
+        if (badges.length === 0) {
+          container.innerHTML =
+            '<div style="color: #64748b; font-size: 0.85rem;">No badges yet. Start playing!</div>';
+          showcase.style.display = "block";
+          return;
+        }
+
+        container.innerHTML = badges
+          .map(
+            (badge) => `
+    <div class="user-badge-item">
+      <span class="user-badge-icon">${badge.icon}</span>
+      <span class="user-badge-name">${badge.name}</span>
+    </div>
+  `
+          )
+          .join("");
+
+        // Show reset timer
+        if (timer) {
+          timer.textContent = `⏰ ${getTimeUntilMonday()}`;
+        }
+
+        showcase.style.display = "block";
+      }
 
       function openGroupModal() {
         document.getElementById("group-modal").style.display = "flex";
@@ -3959,6 +4170,7 @@
         document.getElementById("player-nick").value = userNick;
         document.getElementById("group-id").value = activeGroup;
         loadLeaderboardData();
+
         // Show crew selector if multiple crews
         const selector = document.getElementById("crew-selector");
         const dropdown = document.getElementById("crew-dropdown");
@@ -3982,6 +4194,7 @@
 
         // Force reload leaderboard data
         loadLeaderboardData();
+        displayUserBadges();
       }
 
       function loadLeaderboardData() {
@@ -4060,18 +4273,26 @@
             scoreSub = `${stats.wins || 0} Wins`;
           }
 
+          let badgeHTML = "";
+          if (type === "daily" && index === 0)
+            badgeHTML += '<span class="badge">🥇</span>';
+          if (type === "daily" && index === 1)
+            badgeHTML += '<span class="badge">🥈</span>';
+          if (type === "daily" && index === 2)
+            badgeHTML += '<span class="badge">🥉</span>';
+
           const html = `
-        <div class="lb-row" style="${
-          isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
-        }">
-            <div class="lb-rank ${rankClass}">${index + 1}</div>
-            <div class="lb-user">${nick} ${isMe ? "(You)" : ""}</div>
-            <div class="lb-score">
-                <div class="lb-score-main">${scoreMain}</div>
-                <div class="lb-score-sub">${scoreSub}</div>
-            </div>
-        </div>
-      `;
+      <div class="lb-row" style="${
+        isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
+      }">
+          <div class="lb-rank ${rankClass}">${index + 1}</div>
+          <div class="lb-user">${nick} ${badgeHTML} ${isMe ? "(You)" : ""}</div>
+          <div class="lb-score">
+              <div class="lb-score-main">${scoreMain}</div>
+              <div class="lb-score-sub">${scoreSub}</div>
+          </div>
+      </div>
+    `;
           list.insertAdjacentHTML("beforeend", html);
         });
       }
@@ -4118,6 +4339,71 @@
         return window.hasPlayedToday();
       }
 
+      // Calculate and award weekly badges (call this every Sunday at midnight)
+      async function calculateWeeklyBadges(crewId) {
+        if (!db) return;
+
+        const weekKey = getWeekKey();
+        const today = new Date();
+        const dateKey = `${today.getFullYear()}-${
+          today.getMonth() + 1
+        }-${today.getDate()}`;
+
+        try {
+          // Get all scores for the crew this week
+          const scoresSnapshot = await db.ref(`scores/${crewId}`).once("value");
+          const allScores = scoresSnapshot.val();
+
+          if (!allScores) return;
+
+          // Aggregate weekly totals
+          const weeklyTotals = {};
+
+          Object.entries(allScores).forEach(([date, dayScores]) => {
+            Object.entries(dayScores).forEach(([nick, score]) => {
+              if (!weeklyTotals[nick]) {
+                weeklyTotals[nick] = {
+                  totalCash: 0,
+                  bestTime: 999999,
+                  plays: 0,
+                };
+              }
+              weeklyTotals[nick].totalCash += score.cash;
+              weeklyTotals[nick].bestTime = Math.min(
+                weeklyTotals[nick].bestTime,
+                score.time
+              );
+              weeklyTotals[nick].plays++;
+            });
+          });
+
+          // Sort by total cash
+          const sorted = Object.entries(weeklyTotals).sort(
+            ([, a], [, b]) => b.totalCash - a.totalCash
+          );
+
+          // Find speed king
+          const speedKing = Object.entries(weeklyTotals).sort(
+            ([, a], [, b]) => a.bestTime - b.bestTime
+          )[0];
+
+          // Award badges
+          const badges = {
+            champion: sorted[0] ? sorted[0][0] : null,
+            runnerUp: sorted[1] ? sorted[1][0] : null,
+            bronze: sorted[2] ? sorted[2][0] : null,
+            speedKing: speedKing ? speedKing[0] : null,
+          };
+
+          // Save to Firebase
+          await db.ref(`weeklyBadges/${weekKey}/${crewId}`).set(badges);
+
+          console.log(`Badges awarded for ${crewId}:`, badges);
+        } catch (e) {
+          console.error("Error calculating badges:", e);
+        }
+      }
+
       function syncTodaysScore() {
         const today = new Date();
         const year = today.getFullYear();
@@ -4157,6 +4443,8 @@
       window.saveNewName = saveNewName;
       window.shareCrewInvite = shareCrewInvite;
       window.toggleKeyboardLayout = toggleKeyboardLayout;
+      window.calculateWeeklyBadges = calculateWeeklyBadges;
+      window.displayUserBadges = displayUserBadges;
     </script>
   </body>
 </html>
