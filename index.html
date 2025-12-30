@@ -3781,6 +3781,7 @@
 
         // Reload the leaderboard with new crew data
         loadLeaderboardData();
+        displayUserBadges();
       }
 
       async function loadDate(dateObj) {
@@ -4024,6 +4025,12 @@
         const timer = document.getElementById("weekly-reset-timer");
 
         if (!container || !showcase) return;
+
+        // ADD THIS CHECK - only show badges if user is in this crew
+        if (!userGroups.includes(activeGroup)) {
+          showcase.style.display = "none";
+          return;
+        }
 
         const badges = await fetchUserBadges();
 
