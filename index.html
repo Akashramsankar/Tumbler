@@ -3848,8 +3848,10 @@
 
       function closeTutorial() {
         document.getElementById("tutorial-modal").style.display = "none";
-        // Start timer immediately for first-time users (they just read tutorial)
-        startTimer();
+        // Only start timer if it hasn't been started yet
+        if (!startTime) {
+          startTimer();
+        }
       }
 
       function showReadyModal() {
