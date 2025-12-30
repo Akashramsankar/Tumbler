@@ -2279,6 +2279,10 @@
           '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
       );
 
+      if (typeof stats.archiveWon !== "number") {
+        stats.archiveWon = 0;
+      }
+
       // Ensure totalCash exists (for users upgrading from old version)
       if (typeof stats.totalCash !== "number") {
         stats.totalCash = 0;
@@ -3554,7 +3558,9 @@
         ).textContent = `$${totalCashString}`;
         document.getElementById("stat-played").textContent = stats.played;
         document.getElementById("stat-winrate").textContent =
-          stats.played > 0 ? Math.round((stats.won / stats.played) * 100) : 0;
+          stats.played > 0
+            ? Math.min(100, Math.round((stats.won / stats.played) * 100))
+            : 0;
         document.getElementById("stat-streak").textContent =
           stats.currentStreak;
       }
