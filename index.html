@@ -2276,7 +2276,7 @@
       // Load stats from localStorage, including NEW: totalCash
       let stats = JSON.parse(
         localStorage.getItem("tumblerStats") ||
-          '{"played":0,"won":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
+          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
       );
 
       // Ensure totalCash exists (for users upgrading from old version)
@@ -3393,7 +3393,7 @@
               }
             } else {
               // Archive games: still count wins and cash, but don't affect streak or played count
-              stats.won++;
+              stats.archiveWon++;
             }
             stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
             stats.guessDistribution[currentRow]++;
