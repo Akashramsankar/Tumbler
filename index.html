@@ -1389,6 +1389,240 @@
           padding: 4px 8px;
         }
       }
+
+      /* Win Modal Responsive Styles */
+      @media (max-width: 600px) {
+        .stats-content {
+          padding: 20px;
+          max-height: 85vh;
+          overflow-y: auto;
+        }
+
+        .stash-display {
+          padding: 12px;
+          margin-bottom: 15px;
+        }
+
+        .stash-label {
+          font-size: 0.8rem;
+        }
+
+        .stash-value {
+          font-size: 2rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.85rem !important;
+          gap: 6px !important;
+        }
+
+        .stats-grid {
+          gap: 10px;
+          margin: 15px 0;
+        }
+
+        .stat-value {
+          font-size: 1.6rem;
+        }
+
+        .stat-label {
+          font-size: 0.7rem;
+        }
+
+        .distribution-bars {
+          gap: 6px;
+        }
+
+        .distribution-bar {
+          height: 20px;
+          font-size: 0.75rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 10px 16px;
+          font-size: 0.95rem;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .stats-content {
+          padding: 16px;
+          width: 95%;
+        }
+
+        .stash-display {
+          padding: 10px;
+          margin-bottom: 12px;
+        }
+
+        .stash-label {
+          font-size: 0.75rem;
+          margin-bottom: 4px;
+        }
+
+        .stash-value {
+          font-size: 1.8rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.8rem !important;
+          gap: 5px !important;
+          margin: 12px 0 !important;
+        }
+
+        .stats-grid {
+          gap: 8px;
+          margin: 12px 0;
+          padding-top: 12px;
+        }
+
+        .stat-value {
+          font-size: 1.4rem;
+        }
+
+        .stat-label {
+          font-size: 0.65rem;
+        }
+
+        .distribution-bars {
+          gap: 5px;
+        }
+
+        .distribution-bar {
+          height: 18px;
+          font-size: 0.7rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 9px 14px;
+          font-size: 0.9rem;
+        }
+
+        #win-modal h2 {
+          font-size: 1.5rem;
+          margin-bottom: 15px;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .stats-content {
+          padding: 14px;
+        }
+
+        .stash-display {
+          padding: 8px;
+          margin-bottom: 10px;
+        }
+
+        .stash-label {
+          font-size: 0.7rem;
+        }
+
+        .stash-value {
+          font-size: 1.6rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.75rem !important;
+          gap: 4px !important;
+          margin: 10px 0 !important;
+        }
+
+        .stats-grid {
+          gap: 6px;
+          margin: 10px 0;
+          padding-top: 10px;
+        }
+
+        .stat-value {
+          font-size: 1.2rem;
+        }
+
+        .stat-label {
+          font-size: 0.6rem;
+        }
+
+        .distribution-bars {
+          gap: 4px;
+        }
+
+        .distribution-bar {
+          height: 16px;
+          font-size: 0.65rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 8px 12px;
+          font-size: 0.85rem;
+        }
+
+        #win-modal h2 {
+          font-size: 1.3rem;
+          margin-bottom: 12px;
+        }
+      }
+
+      @media (max-width: 340px) {
+        .stats-content {
+          padding: 12px;
+        }
+
+        .stash-display {
+          padding: 6px;
+          margin-bottom: 8px;
+        }
+
+        .stash-label {
+          font-size: 0.65rem;
+        }
+
+        .stash-value {
+          font-size: 1.4rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.7rem !important;
+          gap: 3px !important;
+          margin: 8px 0 !important;
+        }
+
+        .stats-grid {
+          gap: 5px;
+          margin: 8px 0;
+          padding-top: 8px;
+        }
+
+        .stat-value {
+          font-size: 1.1rem;
+        }
+
+        .stat-label {
+          font-size: 0.55rem;
+        }
+
+        .distribution-bars {
+          gap: 3px;
+        }
+
+        .distribution-bar {
+          height: 14px;
+          font-size: 0.6rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 7px 10px;
+          font-size: 0.8rem;
+        }
+
+        #win-modal h2 {
+          font-size: 1.2rem;
+          margin-bottom: 10px;
+        }
+      }
       /* ==================== WIN ANIMATIONS ==================== */
       @keyframes confetti-fall {
         0% {
@@ -1744,8 +1978,78 @@
         <h2>🎉 VAULT BREACHED!</h2>
 
         <div class="stash-display">
-          <div class="stash-label">You Stole</div>
-          <div class="stash-value" id="win-cash-earned">$0</div>
+          <div class="stash-label">Heist Breakdown</div>
+
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              margin: 15px 0;
+              font-size: 0.9rem;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                color: #cbd5e1;
+              "
+            >
+              <span>💰 Base Vault:</span>
+              <span style="font-weight: 700">$10,000</span>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                color: #ef4444;
+              "
+            >
+              <span>🚨 Alarm Penalties:</span>
+              <span style="font-weight: 700" id="win-penalties">-$0</span>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                color: var(--color-correct);
+              "
+            >
+              <span>⚡ Speed Bonus:</span>
+              <span style="font-weight: 700" id="win-speed-bonus">+$0</span>
+            </div>
+
+            <div
+              id="intel-cost-row"
+              style="
+                display: none;
+                justify-content: space-between;
+                color: var(--color-close);
+              "
+            >
+              <span>🔍 Intel Cost:</span>
+              <span style="font-weight: 700">-$1,500</span>
+            </div>
+
+            <div
+              style="height: 1px; background: var(--safe-border); margin: 5px 0"
+            ></div>
+
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                font-size: 1.1rem;
+                color: var(--color-cash);
+              "
+            >
+              <span style="font-weight: 700">💼 Final Take:</span>
+              <span style="font-weight: 700" id="win-cash-earned">$0</span>
+            </div>
+          </div>
         </div>
 
         <div class="stats-grid">
@@ -3579,20 +3883,38 @@
           shareBtn.style.display = isToday ? "block" : "none";
         }
 
+        // Calculate breakdown components
+        const penalties = attempts * CASH_ATTEMPT_PENALTY;
+        const timeBonus =
+          Math.max(0, CASH_SPEED_BONUS_CAP - solveTime) * CASH_PER_SECOND_BONUS;
+
+        // Update breakdown display
+        document.getElementById(
+          "win-penalties"
+        ).textContent = `-$${penalties.toLocaleString()}`;
+        document.getElementById(
+          "win-speed-bonus"
+        ).textContent = `+$${timeBonus.toLocaleString()}`;
+
+        // Show/hide intel cost row
+        const intelRow = document.getElementById("intel-cost-row");
+        if (intelUsed) {
+          intelRow.style.display = "flex";
+        } else {
+          intelRow.style.display = "none";
+        }
+
         // Ensure cashWon is a valid number
         const safeCashWon = cashWon || 0;
         const safeTotalCash = stats.totalCash || 0;
 
-        // Animate the cash counter
-        animateCountUp("win-cash-earned", cashWon, 2000);
+        // Animate the final take counter
+        animateCountUp("win-cash-earned", safeCashWon, 2000);
 
-        document.getElementById(
-          "win-cash-earned"
-        ).textContent = `$${new Intl.NumberFormat("en-US").format(cashWon)}`;
         document.getElementById("win-attempts").textContent = attempts;
         document.getElementById("win-time").textContent = `${solveTime}s`;
 
-        // Animate total cash too
+        // Animate total stash too
         animateCountUp("win-total-cash", safeTotalCash, 2000);
         document.getElementById(
           "win-total-cash"
@@ -3608,16 +3930,14 @@
             const width = Math.max(percentage, 10);
             const isCurrent = idx === attempts - 1;
             return `
-                        <div class="distribution-row">
-                          <div class="distribution-label">${idx + 1}</div>
-                          <div class="distribution-bar ${
-                            isCurrent ? "current" : ""
-                          }"
-                               style="width: ${width}%">
-                            ${count}
-                          </div>
-                        </div>
-                      `;
+        <div class="distribution-row">
+          <div class="distribution-label">${idx + 1}</div>
+          <div class="distribution-bar ${isCurrent ? "current" : ""}"
+               style="width: ${width}%">
+            ${count}
+          </div>
+        </div>
+      `;
           })
           .join("");
 
