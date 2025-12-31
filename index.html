@@ -1393,62 +1393,9 @@
       /* Win Modal Responsive Styles */
       @media (max-width: 600px) {
         .stats-content {
-          padding: 20px;
-          max-height: 85vh;
-          overflow-y: auto;
-        }
-
-        .stash-display {
-          padding: 12px;
-          margin-bottom: 15px;
-        }
-
-        .stash-label {
-          font-size: 0.8rem;
-        }
-
-        .stash-value {
-          font-size: 2rem;
-        }
-
-        .stash-display > div {
-          font-size: 0.85rem !important;
-          gap: 6px !important;
-        }
-
-        .stats-grid {
-          gap: 10px;
-          margin: 15px 0;
-        }
-
-        .stat-value {
-          font-size: 1.6rem;
-        }
-
-        .stat-label {
-          font-size: 0.7rem;
-        }
-
-        .distribution-bars {
-          gap: 6px;
-        }
-
-        .distribution-bar {
-          height: 20px;
-          font-size: 0.75rem;
-        }
-
-        .tutorial-btn,
-        .close-stats {
-          padding: 10px 16px;
-          font-size: 0.95rem;
-        }
-      }
-
-      @media (max-width: 480px) {
-        .stats-content {
-          padding: 16px;
-          width: 95%;
+          padding: 18px;
+          max-height: none;
+          overflow: visible;
         }
 
         .stash-display {
@@ -1458,7 +1405,6 @@
 
         .stash-label {
           font-size: 0.75rem;
-          margin-bottom: 4px;
         }
 
         .stash-value {
@@ -1468,13 +1414,11 @@
         .stash-display > div {
           font-size: 0.8rem !important;
           gap: 5px !important;
-          margin: 12px 0 !important;
         }
 
         .stats-grid {
           gap: 8px;
           margin: 12px 0;
-          padding-top: 12px;
         }
 
         .stat-value {
@@ -1501,14 +1445,15 @@
         }
 
         #win-modal h2 {
-          font-size: 1.5rem;
-          margin-bottom: 15px;
+          font-size: 1.4rem;
+          margin-bottom: 12px;
         }
       }
 
-      @media (max-width: 380px) {
+      @media (max-width: 480px) {
         .stats-content {
           padding: 14px;
+          width: 95%;
         }
 
         .stash-display {
@@ -1518,6 +1463,7 @@
 
         .stash-label {
           font-size: 0.7rem;
+          margin-bottom: 3px;
         }
 
         .stash-value {
@@ -1561,11 +1507,11 @@
 
         #win-modal h2 {
           font-size: 1.3rem;
-          margin-bottom: 12px;
+          margin-bottom: 10px;
         }
       }
 
-      @media (max-width: 340px) {
+      @media (max-width: 380px) {
         .stats-content {
           padding: 12px;
         }
@@ -1620,7 +1566,289 @@
 
         #win-modal h2 {
           font-size: 1.2rem;
+          margin-bottom: 8px;
+        }
+      }
+
+      @media (max-width: 340px) {
+        .stats-content {
+          padding: 10px;
+        }
+
+        .stash-display {
+          padding: 5px;
+          margin-bottom: 6px;
+        }
+
+        .stash-label {
+          font-size: 0.6rem;
+        }
+
+        .stash-value {
+          font-size: 1.3rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.65rem !important;
+          gap: 2px !important;
+          margin: 6px 0 !important;
+        }
+
+        .stats-grid {
+          gap: 4px;
+          margin: 6px 0;
+          padding-top: 6px;
+        }
+
+        .stat-value {
+          font-size: 1rem;
+        }
+
+        .stat-label {
+          font-size: 0.5rem;
+        }
+
+        .distribution-bars {
+          gap: 2px;
+        }
+
+        .distribution-bar {
+          height: 12px;
+          font-size: 0.55rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 6px 8px;
+          font-size: 0.75rem;
+        }
+
+        #win-modal h2 {
+          font-size: 1.1rem;
+          margin-bottom: 6px;
+        }
+      }
+
+      /* Laptop/Desktop height constraints - NO SCROLLING */
+      @media (max-height: 800px) {
+        .stats-content {
+          padding: 16px;
+        }
+
+        .stash-display {
+          padding: 10px;
           margin-bottom: 10px;
+        }
+
+        .stash-label {
+          font-size: 0.75rem;
+        }
+
+        .stash-value {
+          font-size: 1.8rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.8rem !important;
+          margin: 10px 0 !important;
+        }
+
+        .stats-grid {
+          margin: 10px 0;
+          gap: 8px;
+        }
+
+        #win-modal h2 {
+          font-size: 1.5rem;
+          margin-bottom: 10px;
+        }
+
+        .distribution-bars {
+          gap: 4px;
+        }
+
+        .stat-value {
+          font-size: 1.5rem;
+        }
+      }
+
+      @media (max-height: 700px) {
+        .stats-content {
+          padding: 14px;
+        }
+
+        .stash-display {
+          padding: 8px;
+          margin-bottom: 8px;
+        }
+
+        .stash-label {
+          font-size: 0.7rem;
+        }
+
+        .stash-value {
+          font-size: 1.6rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.75rem !important;
+          margin: 8px 0 !important;
+          gap: 4px !important;
+        }
+
+        .stats-grid {
+          margin: 8px 0;
+          gap: 6px;
+          padding-top: 8px;
+        }
+
+        .stat-value {
+          font-size: 1.3rem;
+        }
+
+        .stat-label {
+          font-size: 0.65rem;
+        }
+
+        #win-modal h2 {
+          font-size: 1.3rem;
+          margin-bottom: 8px;
+        }
+
+        .distribution-bars {
+          gap: 3px;
+        }
+
+        .distribution-bar {
+          height: 18px;
+          font-size: 0.7rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 8px 14px;
+          font-size: 0.9rem;
+          margin-top: 12px;
+        }
+      }
+
+      @media (max-height: 600px) {
+        .stats-content {
+          padding: 10px;
+        }
+
+        .stash-display {
+          padding: 6px;
+          margin-bottom: 6px;
+        }
+
+        .stash-label {
+          font-size: 0.65rem;
+        }
+
+        .stash-value {
+          font-size: 1.4rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.7rem !important;
+          margin: 6px 0 !important;
+          gap: 3px !important;
+        }
+
+        .stats-grid {
+          margin: 6px 0;
+          gap: 5px;
+          padding-top: 6px;
+        }
+
+        .stat-value {
+          font-size: 1.2rem;
+        }
+
+        .stat-label {
+          font-size: 0.6rem;
+        }
+
+        #win-modal h2 {
+          font-size: 1.2rem;
+          margin-bottom: 6px;
+        }
+
+        .distribution-bars {
+          gap: 2px;
+        }
+
+        .distribution-bar {
+          height: 16px;
+          font-size: 0.65rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 7px 12px;
+          font-size: 0.85rem;
+          margin-top: 8px;
+        }
+      }
+
+      @media (max-height: 500px) {
+        .stats-content {
+          padding: 8px;
+        }
+
+        .stash-display {
+          padding: 5px;
+          margin-bottom: 5px;
+        }
+
+        .stash-label {
+          font-size: 0.6rem;
+        }
+
+        .stash-value {
+          font-size: 1.2rem;
+        }
+
+        .stash-display > div {
+          font-size: 0.65rem !important;
+          margin: 5px 0 !important;
+          gap: 2px !important;
+        }
+
+        .stats-grid {
+          margin: 5px 0;
+          gap: 4px;
+          padding-top: 5px;
+        }
+
+        .stat-value {
+          font-size: 1rem;
+        }
+
+        .stat-label {
+          font-size: 0.55rem;
+        }
+
+        #win-modal h2 {
+          font-size: 1.1rem;
+          margin-bottom: 5px;
+        }
+
+        .distribution-bars {
+          gap: 2px;
+        }
+
+        .distribution-bar {
+          height: 14px;
+          font-size: 0.6rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 6px 10px;
+          font-size: 0.8rem;
+          margin-top: 6px;
         }
       }
       /* ==================== WIN ANIMATIONS ==================== */
