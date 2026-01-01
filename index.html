@@ -1971,6 +1971,100 @@
         <span id="timer">00:00</span>
       </div>
 
+      <div
+        id="streak-indicator"
+        style="
+          display: none;
+          margin: 12px auto 0;
+          max-width: 350px;
+          width: 100%;
+        "
+      >
+        <div
+          style="
+            background: var(--safe-inset);
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid var(--safe-border);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+          "
+        >
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              gap: 8px;
+              margin-bottom: 10px;
+            "
+          >
+            <span style="font-size: 1.2rem">🔥</span>
+            <div style="text-align: center">
+              <div
+                style="
+                  font-size: 1.1rem;
+                  font-weight: 700;
+                  color: var(--text-color);
+                  line-height: 1.2;
+                "
+                id="streak-current"
+              >
+                0 Day Streak
+              </div>
+              <div
+                style="font-size: 0.7rem; color: #94a3b8; margin-top: 2px"
+                id="streak-subtitle"
+              >
+                Keep it going!
+              </div>
+            </div>
+          </div>
+
+          <div
+            style="
+              background: var(--safe-body);
+              border-radius: 10px;
+              height: 8px;
+              overflow: hidden;
+              border: 1px solid rgba(255, 255, 255, 0.05);
+              position: relative;
+            "
+          >
+            <div
+              id="streak-progress-bar"
+              style="
+                height: 100%;
+                background: linear-gradient(
+                  90deg,
+                  var(--color-close),
+                  var(--color-correct)
+                );
+                width: 0%;
+                transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+                box-shadow: 0 0 10px rgba(106, 170, 100, 0.5);
+              "
+            ></div>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              justify-content: space-between;
+              margin-top: 6px;
+              font-size: 0.65rem;
+              color: #64748b;
+            "
+          >
+            <span id="streak-start">0</span>
+            <span
+              id="streak-milestone"
+              style="color: var(--color-correct); font-weight: 700"
+              >25</span
+            >
+          </div>
+        </div>
+      </div>
+
       <button class="stats-btn" onclick="showStats()">📊 Stats</button>
       <button
         class="mute-btn stats-btn"
@@ -2181,6 +2275,71 @@
         <div class="stash-display">
           <div class="stash-label">Total Stash Value</div>
           <div class="stash-value" id="stat-total-cash">$0</div>
+        </div>
+
+        <div
+          style="
+            background: var(--safe-inset);
+            padding: 12px;
+            border-radius: 10px;
+            margin-bottom: 15px;
+            border: 1px solid var(--safe-border);
+          "
+        >
+          <div
+            style="
+              font-size: 0.85rem;
+              color: #94a3b8;
+              margin-bottom: 8px;
+              display: flex;
+              justify-content: space-between;
+              align-items: center;
+            "
+          >
+            <span>🛡️ Streak Protectors</span>
+            <span
+              style="color: var(--color-correct); font-weight: 700"
+              id="protector-count"
+              >0</span
+            >
+          </div>
+          <div
+            style="
+              display: grid;
+              grid-template-columns: 1fr 1fr;
+              gap: 8px;
+              font-size: 0.75rem;
+            "
+          >
+            <button
+              id="protector-btn"
+              onclick="buyProtector()"
+              class="group-action-btn secondary"
+              style="margin: 0; padding: 8px; font-size: 0.75rem"
+            >
+              Buy Insurance<br /><span style="opacity: 0.8">$50,000</span>
+            </button>
+            <button
+              onclick="buyRecovery()"
+              class="group-action-btn secondary"
+              style="margin: 0; padding: 8px; font-size: 0.75rem; opacity: 0.5"
+              id="recovery-btn"
+              disabled
+            >
+              Buy Recovery<br /><span style="opacity: 0.8">$75,000</span>
+            </button>
+          </div>
+          <div
+            style="
+              font-size: 0.65rem;
+              color: #64748b;
+              margin-top: 6px;
+              line-height: 1.3;
+            "
+          >
+            Insurance: Protects next missed day (max 3, once/month)<br />
+            Recovery: Available only after missing a day
+          </div>
         </div>
 
         <div class="stats-grid">
@@ -2680,6 +2839,11 @@
       const CASH_PER_SECOND_BONUS = 20;
       const CASH_MINIMUM_PAYOUT = 500;
       const INTEL_COST = 1500;
+      // STREAK REWARDS
+      const STREAK_MILESTONE = 25;
+      const STREAK_BONUS_PER_MILESTONE = 1000;
+      const STREAK_PROTECTOR_COST = 50000;
+      const STREAK_RECOVERY_COST = 75000;
 
       // ==================== SOUND EFFECTS ====================
       const audioContext = new (window.AudioContext ||
@@ -2783,6 +2947,157 @@
         playSound("keypress"); // Test sound
       }
 
+      function checkStreakMilestone() {
+        const currentStreak = stats.currentStreak;
+        const nextMilestone =
+          Math.ceil(currentStreak / STREAK_MILESTONE) * STREAK_MILESTONE;
+        const progress = currentStreak % STREAK_MILESTONE || STREAK_MILESTONE;
+        const daysUntil = nextMilestone - currentStreak;
+
+        return {
+          currentStreak,
+          nextMilestone,
+          progress,
+          daysUntil,
+          isAtMilestone:
+            currentStreak > 0 && currentStreak % STREAK_MILESTONE === 0,
+          shouldShowIndicator: currentStreak > 0,
+        };
+      }
+
+      function awardStreakBonus() {
+        const { currentStreak, isAtMilestone } = checkStreakMilestone();
+
+        if (isAtMilestone && stats.lastStreakMilestone < currentStreak) {
+          const bonus = currentStreak * STREAK_BONUS_PER_MILESTONE;
+          stats.totalCash += bonus;
+          stats.lastStreakMilestone = currentStreak;
+          localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+          return bonus;
+        }
+        return 0;
+      }
+
+      function updateStreakIndicator() {
+        const indicator = document.getElementById("streak-indicator");
+        const currentEl = document.getElementById("streak-current");
+        const subtitleEl = document.getElementById("streak-subtitle");
+        const bar = document.getElementById("streak-progress-bar");
+        const startEl = document.getElementById("streak-start");
+        const milestoneEl = document.getElementById("streak-milestone");
+
+        if (!indicator || !currentEl || !bar) return;
+
+        const {
+          shouldShowIndicator,
+          daysUntil,
+          progress,
+          nextMilestone,
+          currentStreak,
+        } = checkStreakMilestone();
+
+        if (shouldShowIndicator) {
+          indicator.style.display = "block";
+
+          // Update main text
+          currentEl.textContent = `${currentStreak} Day Streak`;
+
+          // Update subtitle
+          // Update subtitle
+          if (daysUntil === 0) {
+            const milestoneBonus = currentStreak * STREAK_BONUS_PER_MILESTONE;
+            subtitleEl.innerHTML = `🎉 <strong style="color: var(--color-correct);">Milestone reached!</strong> +$${milestoneBonus.toLocaleString()}`;
+          } else {
+            const nextBonus = nextMilestone * STREAK_BONUS_PER_MILESTONE;
+            subtitleEl.textContent = `${daysUntil} day${
+              daysUntil > 1 ? "s" : ""
+            } to $${nextBonus.toLocaleString()} bonus`;
+          }
+
+          // Update progress bar
+          const progressPercent = (progress / STREAK_MILESTONE) * 100;
+          bar.style.width = `${progressPercent}%`;
+
+          // Update milestone markers
+          const startOfProgress =
+            Math.floor(currentStreak / STREAK_MILESTONE) * STREAK_MILESTONE;
+          startEl.textContent = startOfProgress;
+          milestoneEl.textContent = nextMilestone;
+        } else {
+          indicator.style.display = "none";
+        }
+      }
+
+      function buyProtector() {
+        // Check monthly limit
+        const now = Date.now();
+        const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+        const timeSinceLastPurchase = now - (stats.lastProtectorPurchase || 0);
+
+        if (timeSinceLastPurchase < oneMonth) {
+          const daysRemaining = Math.ceil(
+            (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000)
+          );
+          showMessage(`❌ Available in ${daysRemaining} days!`);
+          playSound("error");
+          return;
+        }
+
+        if (stats.totalCash < STREAK_PROTECTOR_COST) {
+          showMessage("❌ Not enough cash!");
+          playSound("error");
+          return;
+        }
+
+        if (stats.streakProtectors >= 3) {
+          showMessage("❌ Max 3 protectors!");
+          playSound("error");
+          return;
+        }
+
+        stats.totalCash -= STREAK_PROTECTOR_COST;
+        stats.streakProtectors++;
+        stats.lastProtectorPurchase = now;
+        localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+        showMessage("✅ Protector purchased!");
+        playSound("correct");
+        showStats();
+      }
+
+      function buyRecovery() {
+        if (stats.currentStreak > 0) {
+          showMessage("❌ Only available after missing a day!");
+          playSound("error");
+          return;
+        }
+
+        if (stats.totalCash < STREAK_RECOVERY_COST) {
+          showMessage("❌ Not enough cash!");
+          playSound("error");
+          return;
+        }
+
+        if (!wasYesterdayPlayed()) {
+          showMessage("❌ Can only recover immediately after missing!");
+          playSound("error");
+          return;
+        }
+
+        stats.totalCash -= STREAK_RECOVERY_COST;
+        stats.currentStreak = 1;
+        localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+        showMessage("✅ Streak recovered to 1 day!");
+        playSound("correct");
+        showStats();
+        updateStreakIndicator();
+      }
+
+      window.buyProtector = buyProtector;
+      window.buyRecovery = buyRecovery;
+
       // --- STATE VARIABLES ---
       let TARGET_WORD = "";
       let currentRow = 0;
@@ -2808,8 +3123,19 @@
       // Load stats from localStorage, including NEW: totalCash
       let stats = JSON.parse(
         localStorage.getItem("tumblerStats") ||
-          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0}'
+          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0}'
       );
+
+      // Ensure new properties exist
+      if (typeof stats.streakProtectors !== "number") {
+        stats.streakProtectors = 0;
+      }
+      if (typeof stats.lastStreakMilestone !== "number") {
+        stats.lastStreakMilestone = 0;
+      }
+      if (typeof stats.lastProtectorPurchase !== "number") {
+        stats.lastProtectorPurchase = 0;
+      }
 
       if (typeof stats.archiveWon !== "number") {
         stats.archiveWon = 0;
@@ -3004,6 +3330,8 @@
             loadCompletedGame();
             return;
           }
+
+          updateStreakIndicator();
 
           // Setup game but don't start timer
           resetSlotConstraints();
@@ -3353,6 +3681,7 @@
             ).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
           }
         }, 1000);
+        updateStreakIndicator();
       }
 
       function generateShareText(attempts, cashWon) {
@@ -3923,9 +4252,27 @@
               stats.played++;
               stats.won++;
               if (wasYesterdayPlayed()) {
-                stats.currentStreak++; // Continue the streak
+                stats.currentStreak++;
               } else {
-                stats.currentStreak = 1; // Start new streak
+                if (stats.streakProtectors > 0) {
+                  stats.streakProtectors--;
+                  stats.currentStreak++;
+                  showMessage("🛡️ Streak Protector Used!");
+                } else {
+                  stats.currentStreak = 1;
+                }
+              }
+
+              // Check for milestone bonus
+              const milestoneBonus = awardStreakBonus();
+              if (milestoneBonus > 0) {
+                setTimeout(() => {
+                  showMessage(
+                    `🎉 ${
+                      stats.currentStreak
+                    } DAY MILESTONE! +$${milestoneBonus.toLocaleString()} BONUS!`
+                  );
+                }, 2000);
               }
             } else {
               // Archive games: still count wins and cash, but don't affect streak or played count
@@ -4095,6 +4442,46 @@
             : 0;
         document.getElementById("stat-streak").textContent =
           stats.currentStreak;
+        // Update protector display
+        // Update protector display
+        const protectorCount = document.getElementById("protector-count");
+        if (protectorCount) {
+          protectorCount.textContent = stats.streakProtectors;
+        }
+
+        // Check protector purchase availability
+        const protectorBtn = document.getElementById("protector-btn");
+        if (protectorBtn) {
+          const now = Date.now();
+          const oneMonth = 30 * 24 * 60 * 60 * 1000;
+          const timeSinceLastPurchase =
+            now - (stats.lastProtectorPurchase || 0);
+
+          if (timeSinceLastPurchase < oneMonth) {
+            const daysRemaining = Math.ceil(
+              (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000)
+            );
+            protectorBtn.disabled = true;
+            protectorBtn.style.opacity = "0.5";
+            protectorBtn.innerHTML = `Buy Insurance<br><span style="opacity: 0.8;">Available in ${daysRemaining}d</span>`;
+          } else {
+            protectorBtn.disabled = false;
+            protectorBtn.style.opacity = "1";
+            protectorBtn.innerHTML = `Buy Insurance<br><span style="opacity: 0.8;">$50,000</span>`;
+          }
+        }
+
+        // Enable/disable recovery button
+        const recoveryBtn = document.getElementById("recovery-btn");
+        if (recoveryBtn) {
+          if (stats.currentStreak === 0 && wasYesterdayPlayed()) {
+            recoveryBtn.disabled = false;
+            recoveryBtn.style.opacity = "1";
+          } else {
+            recoveryBtn.disabled = true;
+            recoveryBtn.style.opacity = "0.5";
+          }
+        }
       }
 
       // MODIFIED: Show Stats now displays total cash
@@ -4149,6 +4536,37 @@
         ).textContent = `$${new Intl.NumberFormat("en-US").format(
           stats.totalCash
         )}`;
+
+        
+        // Show milestone achievement
+        const { isAtMilestone, currentStreak } = checkStreakMilestone();
+        if (isAtMilestone && stats.lastStreakMilestone === currentStreak) {
+          const bonus = currentStreak * STREAK_BONUS_PER_MILESTONE;
+
+          const stashDisplay = document.querySelector(
+            "#win-modal .stash-display"
+          );
+          const milestoneDiv = document.createElement("div");
+          milestoneDiv.style.cssText =
+            "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 12px; border-radius: 10px; margin-top: 15px; text-align: center; border: 2px solid var(--color-correct); box-shadow: 0 0 20px rgba(106, 170, 100, 0.4);";
+          milestoneDiv.innerHTML = `
+      <div style="font-size: 1.8rem;">🎉</div>
+      <div style="font-size: 1.1rem; font-weight: 700; color: white; margin: 5px 0;">
+        ${currentStreak}-DAY MILESTONE!
+      </div>
+      <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
+        +$${bonus.toLocaleString()} BONUS
+      </div>
+    `;
+
+          stashDisplay.parentNode.insertBefore(
+            milestoneDiv,
+            stashDisplay.nextSibling
+          );
+        }
+
+        // Update streak indicator
+        updateStreakIndicator();
 
         // Build distribution bars
         const maxGuesses = Math.max(...stats.guessDistribution, 1);
@@ -4384,6 +4802,7 @@
             ? "Crack the code"
             : `ARCHIVE: ${dateObj.toLocaleDateString()}`;
         }
+        updateStreakIndicator();
       }
 
       function closeStats() {
