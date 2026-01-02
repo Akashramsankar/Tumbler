@@ -6,6 +6,7 @@
       name="viewport"
       content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
     />
+    <meta name="HandheldFriendly" content="true" />
 
     <title>TUMBLER - The Lockpick Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -43,6 +44,13 @@
 
       * {
         box-sizing: border-box;
+        touch-action: manipulation;
+      }
+
+      html,
+      body {
+        touch-action: manipulation; 
+        -ms-touch-action: manipulation;
       }
 
       body {
