@@ -703,8 +703,8 @@
         color: #cbd5e1;
         box-shadow: 0 4px 6px rgba(0, 0, 0, 0.4);
         transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-        touch-action: manipulation; 
-        -webkit-tap-highlight-color: transparent; 
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
       }
 
       .tile::before {
@@ -5703,6 +5703,40 @@
           );
         });
       });
+    </script>
+
+    <script>
+      // AGGRESSIVE iOS double-tap zoom prevention
+      (function () {
+        let lastTouchEnd = 0;
+
+        document.addEventListener(
+          "touchend",
+          function (event) {
+            const now = Date.now();
+            if (now - lastTouchEnd <= 300) {
+              event.preventDefault();
+            }
+            lastTouchEnd = now;
+          },
+          { passive: false }
+        );
+
+        // Specifically target the game board area
+        const gameBoard = document.getElementById("game-board");
+        if (gameBoard) {
+          gameBoard.addEventListener(
+            "touchstart",
+            function (event) {
+              // Prevent double-tap zoom
+              if (event.touches.length > 1) {
+                event.preventDefault();
+              }
+            },
+            { passive: false }
+          );
+        }
+      })();
     </script>
   </body>
 </html>
