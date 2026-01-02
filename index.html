@@ -839,6 +839,9 @@
         max-width: 600px;
         padding: 0 5px;
         margin-bottom: 10px;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
       }
 
       .key-row {
@@ -866,6 +869,12 @@
         position: relative;
         font-size: 1rem;
         transition: opacity 0.1s, transform 0.1s, background-color 0.3s;
+        touch-action: manipulation;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .key:focus {
+        outline: none;
       }
 
       .key:active {
@@ -3984,14 +3993,20 @@
 
           if (index === 2) {
             const enterKey = createKey("ENTER", "wide");
-            enterKey.onclick = submitGuess;
+            enterKey.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              submitGuess();
+            };
             rowDiv.appendChild(enterKey);
           }
 
           for (let char of rowString) {
             const key = createKey(char, "");
             key.id = `key-${char}`;
-            key.onclick = () => {
+            key.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
               if (!isGameOver && currentTile < WORD_LENGTH) {
                 addLetter(char);
               }
@@ -4001,7 +4016,11 @@
 
           if (index === 2) {
             const backKey = createKey("⌫", "wide");
-            backKey.onclick = deleteLetter;
+            backKey.onclick = (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              deleteLetter();
+            };
             rowDiv.appendChild(backKey);
           }
           keyboardContainer.appendChild(rowDiv);
@@ -4537,7 +4556,6 @@
           stats.totalCash
         )}`;
 
-        
         // Show milestone achievement
         const { isAtMilestone, currentStreak } = checkStreakMilestone();
         if (isAtMilestone && stats.lastStreakMilestone === currentStreak) {
@@ -5437,6 +5455,20 @@
       window.toggleKeyboardLayout = toggleKeyboardLayout;
       window.calculateWeeklyBadges = calculateWeeklyBadges;
       window.displayUserBadges = displayUserBadges;
+    </script>
+    <script>
+      // Fix mobile keyboard touch issues
+      document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".key").forEach((key) => {
+          key.addEventListener(
+            "touchstart",
+            (e) => {
+              e.preventDefault();
+            },
+            { passive: false }
+          );
+        });
+      });
     </script>
   </body>
 </html>
