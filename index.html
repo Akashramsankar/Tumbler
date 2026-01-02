@@ -4270,6 +4270,8 @@
             if (isToday) {
               stats.played++;
               stats.won++;
+              if (!stats.normalWinsCash) stats.normalWinsCash = 0;
+              stats.normalWinsCash += cashWon;
               if (wasYesterdayPlayed()) {
                 stats.currentStreak++;
               } else {
@@ -5280,7 +5282,14 @@
             }`;
           } else {
             scoreMain = `$${(stats.totalCash || 0).toLocaleString()}`;
-            scoreSub = `${stats.wins || 0} Wins`;
+
+            // NEW: Calculate and display average
+            const normalWins = stats.wins || 0;
+            const normalCash = stats.normalWinsCash || 0;
+            const avgCash =
+              normalWins > 0 ? Math.floor(normalCash / normalWins) : 0;
+
+            scoreSub = `${normalWins} Wins • Avg: $${avgCash.toLocaleString()}`;
           }
 
           let badgeHTML = "";
@@ -5340,6 +5349,7 @@
           db.ref(`career/${group}/${userNick}`).update({
             totalCash: currentStats.totalCash || 0,
             wins: currentStats.won || 0,
+            normalWinsCash: currentStats.normalWinsCash || 0,
             lastPlayed: Date.now(),
           });
         });
