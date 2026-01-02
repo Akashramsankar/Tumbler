@@ -2830,6 +2830,174 @@
       </div>
     </div>
 
+    <div
+      id="protector-confirm-modal"
+      class="tutorial-modal"
+      style="display: none"
+    >
+      <div class="tutorial-content" style="max-width: 380px">
+        <h2 style="margin-top: 0; font-size: 1.5rem">🛡️ Streak Insurance</h2>
+
+        <div
+          style="
+            background: var(--safe-inset);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid var(--safe-border);
+          "
+        >
+          <div
+            style="
+              font-size: 0.9rem;
+              color: #94a3b8;
+              margin-bottom: 12px;
+              line-height: 1.5;
+            "
+          >
+            Protect your streak from being lost if you miss a day.
+          </div>
+          <div
+            style="
+              font-size: 1.8rem;
+              font-weight: 700;
+              color: var(--color-far);
+              margin-bottom: 15px;
+            "
+          >
+            Cost: $50,000
+          </div>
+          <div
+            style="
+              background: var(--safe-body);
+              padding: 12px;
+              border-radius: 8px;
+              font-size: 0.85rem;
+              color: #cbd5e1;
+              line-height: 1.6;
+            "
+          >
+            <div style="margin-bottom: 8px">
+              <strong style="color: var(--color-correct)"
+                >✓ How it works:</strong
+              >
+            </div>
+            <div style="margin-left: 10px; margin-bottom: 6px">
+              • Automatically activates if you miss a day
+            </div>
+            <div style="margin-left: 10px; margin-bottom: 6px">
+              • Protects your streak once
+            </div>
+            <div style="margin-left: 10px; margin-bottom: 6px">
+              • Can hold up to 3 protectors
+            </div>
+            <div style="margin-left: 10px">• Limit: 1 purchase per month</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px">
+          <button
+            class="tutorial-btn"
+            onclick="confirmProtectorPurchase()"
+            style="flex: 1"
+          >
+            ✓ Purchase
+          </button>
+          <button
+            class="close-stats"
+            onclick="closeProtectorModal()"
+            style="flex: 1; margin-top: 0"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div
+      id="recovery-confirm-modal"
+      class="tutorial-modal"
+      style="display: none"
+    >
+      <div class="tutorial-content" style="max-width: 380px">
+        <h2 style="margin-top: 0; font-size: 1.5rem">🔄 Streak Recovery</h2>
+
+        <div
+          style="
+            background: var(--safe-inset);
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            border: 1px solid var(--safe-border);
+          "
+        >
+          <div
+            style="
+              font-size: 0.9rem;
+              color: #94a3b8;
+              margin-bottom: 12px;
+              line-height: 1.5;
+            "
+          >
+            Restore your broken streak after missing a day.
+          </div>
+          <div
+            style="
+              font-size: 1.8rem;
+              font-weight: 700;
+              color: var(--color-far);
+              margin-bottom: 15px;
+            "
+          >
+            Cost: $75,000
+          </div>
+          <div
+            style="
+              background: var(--safe-body);
+              padding: 12px;
+              border-radius: 8px;
+              font-size: 0.85rem;
+              color: #cbd5e1;
+              line-height: 1.6;
+            "
+          >
+            <div style="margin-bottom: 8px">
+              <strong style="color: var(--color-correct)"
+                >✓ How it works:</strong
+              >
+            </div>
+            <div style="margin-left: 10px; margin-bottom: 6px">
+              • Only available after missing a day
+            </div>
+            <div style="margin-left: 10px; margin-bottom: 6px">
+              • Must be used immediately (next day)
+            </div>
+            <div style="margin-left: 10px; margin-bottom: 6px">
+              • Restores your streak to 1 day
+            </div>
+            <div style="margin-left: 10px">• One-time emergency recovery</div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 10px">
+          <button
+            class="tutorial-btn"
+            onclick="confirmRecoveryPurchase()"
+            style="flex: 1"
+          >
+            ✓ Recover Streak
+          </button>
+          <button
+            class="close-stats"
+            onclick="closeRecoveryModal()"
+            style="flex: 1; margin-top: 0"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+
     <script>
       // --- CONFIGURATION ---
       let currentPlayDate = new Date();
@@ -3039,9 +3207,23 @@
       }
 
       function buyProtector() {
+        // Check if user has enough cash first
+        if (stats.totalCash < STREAK_PROTECTOR_COST) {
+          showMessage("❌ Not enough cash!");
+          playSound("error");
+          return;
+        }
+
+        // Check if already at max protectors
+        if (stats.streakProtectors >= 3) {
+          showMessage("❌ Max 3 protectors!");
+          playSound("error");
+          return;
+        }
+
         // Check monthly limit
         const now = Date.now();
-        const oneMonth = 30 * 24 * 60 * 60 * 1000; // 30 days in milliseconds
+        const oneMonth = 30 * 24 * 60 * 60 * 1000;
         const timeSinceLastPurchase = now - (stats.lastProtectorPurchase || 0);
 
         if (timeSinceLastPurchase < oneMonth) {
@@ -3053,26 +3235,43 @@
           return;
         }
 
-        if (stats.totalCash < STREAK_PROTECTOR_COST) {
-          showMessage("❌ Not enough cash!");
-          playSound("error");
-          return;
-        }
+        // Show confirmation modal
+        document.getElementById("protector-confirm-modal").style.display =
+          "flex";
+      }
 
-        if (stats.streakProtectors >= 3) {
-          showMessage("❌ Max 3 protectors!");
-          playSound("error");
-          return;
-        }
-
+      function confirmProtectorPurchase() {
         stats.totalCash -= STREAK_PROTECTOR_COST;
         stats.streakProtectors++;
-        stats.lastProtectorPurchase = now;
+        stats.lastProtectorPurchase = Date.now();
         localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
+        closeProtectorModal();
         showMessage("✅ Protector purchased!");
         playSound("correct");
-        showStats();
+        showStats(); // Refresh the stats modal
+      }
+
+      function closeProtectorModal() {
+        document.getElementById("protector-confirm-modal").style.display =
+          "none";
+      }
+
+      function confirmRecoveryPurchase() {
+        stats.totalCash -= STREAK_RECOVERY_COST;
+        stats.currentStreak = 1;
+        localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+        closeRecoveryModal();
+        showMessage("✅ Streak recovered to 1 day!");
+        playSound("correct");
+        showStats(); // Refresh the stats modal
+        updateStreakIndicator();
+      }
+
+      function closeRecoveryModal() {
+        document.getElementById("recovery-confirm-modal").style.display =
+          "none";
       }
 
       function buyRecovery() {
@@ -3093,6 +3292,9 @@
           playSound("error");
           return;
         }
+
+        document.getElementById("recovery-confirm-modal").style.display =
+          "flex";
 
         stats.totalCash -= STREAK_RECOVERY_COST;
         stats.currentStreak = 1;
@@ -4880,6 +5082,18 @@
         if (e.target.id === "ready-modal") startCracking();
       });
 
+      document
+        .getElementById("protector-confirm-modal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "protector-confirm-modal") closeProtectorModal();
+        });
+
+      document
+        .getElementById("recovery-confirm-modal")
+        .addEventListener("click", (e) => {
+          if (e.target.id === "recovery-confirm-modal") closeRecoveryModal();
+        });
+
       initGame();
 
       // --- 1. CONFIGURATION ---
@@ -5455,6 +5669,12 @@
       window.toggleKeyboardLayout = toggleKeyboardLayout;
       window.calculateWeeklyBadges = calculateWeeklyBadges;
       window.displayUserBadges = displayUserBadges;
+      window.buyProtector = buyProtector;
+      window.confirmProtectorPurchase = confirmProtectorPurchase;
+      window.closeProtectorModal = closeProtectorModal;
+      window.buyRecovery = buyRecovery;
+      window.confirmRecoveryPurchase = confirmRecoveryPurchase;
+      window.closeRecoveryModal = closeRecoveryModal;
     </script>
     <script>
       // Fix mobile keyboard touch issues
