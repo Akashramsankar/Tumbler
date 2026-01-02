@@ -1044,6 +1044,7 @@
         cursor: pointer;
         border-radius: 6px;
         transition: all 0.2s;
+        font-size: 0.85rem;
       }
 
       .tab-btn.active {
@@ -2833,6 +2834,15 @@
             <button class="tab-btn" onclick="switchTab('overall')">
               Career Stash
             </button>
+            <button class="tab-btn" onclick="switchTab('efficiency')">
+              Efficiency
+            </button>
+            <button class="tab-btn" onclick="switchTab('best')">
+              Best Heist
+            </button>
+            <button class="tab-btn" onclick="switchTab('month')">
+              This Month
+            </button>
           </div>
 
           <div id="lb-list" style="min-height: 200px">
@@ -3348,7 +3358,7 @@
       // Load stats from localStorage, including NEW: totalCash
       let stats = JSON.parse(
         localStorage.getItem("tumblerStats") ||
-          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0}'
+          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0, "bestSingleHeist": 0}'
       );
 
       // Ensure new properties exist
@@ -3369,6 +3379,10 @@
       // Ensure totalCash exists (for users upgrading from old version)
       if (typeof stats.totalCash !== "number") {
         stats.totalCash = 0;
+      }
+
+      if (typeof stats.bestSingleHeist !== "number") {
+        stats.bestSingleHeist = 0;
       }
 
       // ==================== WIN ANIMATIONS ====================
@@ -4516,6 +4530,10 @@
             stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
             stats.guessDistribution[currentRow]++;
             stats.totalCash += cashWon;
+            stats.bestSingleHeist = Math.max(
+              stats.bestSingleHeist || 0,
+              cashWon
+            );
             saveTodayGame(currentRow + 1, cashWon, solveTime);
             localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
@@ -5446,23 +5464,29 @@
           return;
         }
 
-        // Safety Timeout: If Firebase doesn't respond in 5 seconds, stop waiting.
         const timeout = setTimeout(() => {
           list.innerHTML =
             '<div style="text-align:center; padding:20px; color:orange;">Connection Timeout.<br>Check your Firebase Rules or Internet.</div>';
         }, 5000);
 
-        let path =
-          currentTab === "daily"
-            ? `scores/${activeGroup}/${new Date().getFullYear()}-${
-                new Date().getMonth() + 1
-              }-${new Date().getDate()}`
-            : `career/${activeGroup}`;
+        // Determine path based on tab
+        let path;
+        if (currentTab === "daily") {
+          const today = new Date();
+          path = `scores/${activeGroup}/${today.getFullYear()}-${
+            today.getMonth() + 1
+          }-${today.getDate()}`;
+        } else if (currentTab === "month") {
+          // Load all scores for current month
+          path = `scores/${activeGroup}`;
+        } else {
+          path = `career/${activeGroup}`;
+        }
 
         db.ref(path).once(
           "value",
           (snapshot) => {
-            clearTimeout(timeout); // Data arrived, cancel the timeout!
+            clearTimeout(timeout);
             const data = snapshot.val();
 
             if (!data) {
@@ -5471,15 +5495,51 @@
               return;
             }
 
-            const sorted = Object.entries(data).sort(([, a], [, b]) => {
-              if (currentTab === "daily") {
-                // First sort by cash (higher is better)
-                if (b.cash !== a.cash) return b.cash - a.cash;
-                // If cash is equal, sort by time (lower is better)
-                return (a.time || 999999) - (b.time || 999999);
-              }
-              return (b.totalCash || 0) - (a.totalCash || 0);
-            });
+            let sorted;
+
+            if (currentTab === "month") {
+              // Aggregate monthly scores
+              const monthlyTotals = {};
+              const today = new Date();
+              const currentMonth = today.getMonth() + 1;
+              const currentYear = today.getFullYear();
+
+              Object.entries(data).forEach(([dateKey, dayScores]) => {
+                const [year, month] = dateKey.split("-").map(Number);
+                if (year === currentYear && month === currentMonth) {
+                  Object.entries(dayScores).forEach(([nick, score]) => {
+                    if (!monthlyTotals[nick]) {
+                      monthlyTotals[nick] = { cash: 0, wins: 0 };
+                    }
+                    monthlyTotals[nick].cash += score.cash;
+                    monthlyTotals[nick].wins++;
+                  });
+                }
+              });
+
+              sorted = Object.entries(monthlyTotals).sort(
+                ([, a], [, b]) => b.cash - a.cash
+              );
+            } else {
+              sorted = Object.entries(data).sort(([, a], [, b]) => {
+                if (currentTab === "daily") {
+                  if (b.cash !== a.cash) return b.cash - a.cash;
+                  return (a.time || 999999) - (b.time || 999999);
+                } else if (currentTab === "efficiency") {
+                  const effA =
+                    (a.totalCash || 0) /
+                    Math.max(a.gamesPlayed || a.wins || 1, 1);
+                  const effB =
+                    (b.totalCash || 0) /
+                    Math.max(b.gamesPlayed || b.wins || 1, 1);
+                  return effB - effA;
+                } else if (currentTab === "best") {
+                  return (b.bestSingleHeist || 0) - (a.bestSingleHeist || 0);
+                } else {
+                  return (b.totalCash || 0) - (a.totalCash || 0);
+                }
+              });
+            }
 
             renderList(sorted, currentTab);
           },
@@ -5506,6 +5566,17 @@
             scoreSub = `${stats.attempts}/6 in ${stats.time}s ${
               stats.intel ? "🔍" : ""
             }`;
+          } else if (type === "efficiency") {
+            const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
+            const efficiency = Math.floor((stats.totalCash || 0) / gamesPlayed);
+            scoreMain = `$${efficiency.toLocaleString()}/game`;
+            scoreSub = `${gamesPlayed} games played`;
+          } else if (type === "best") {
+            scoreMain = `$${(stats.bestSingleHeist || 0).toLocaleString()}`;
+            scoreSub = `Best single heist`;
+          } else if (type === "month") {
+            scoreMain = `$${stats.cash.toLocaleString()}`;
+            scoreSub = `${stats.wins} wins this month`;
           } else {
             scoreMain = `$${(stats.totalCash || 0).toLocaleString()}`;
             scoreSub = `${stats.wins || 0} Wins`;
@@ -5564,10 +5635,15 @@
             });
           }
 
-          // ALWAYS update career stats (moved outside the isToday check)
+          // ALWAYS update career stats
           db.ref(`career/${group}/${userNick}`).update({
             totalCash: currentStats.totalCash || 0,
             wins: currentStats.won || 0,
+            gamesPlayed: currentStats.played || 0, // NEW - track all games
+            bestSingleHeist: Math.max(
+              currentStats.bestSingleHeist || 0,
+              isToday ? cash : 0
+            ), // NEW - track best score
             lastPlayed: Date.now(),
           });
         });
