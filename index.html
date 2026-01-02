@@ -3135,6 +3135,29 @@
           '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0}'
       );
 
+      // --- MIGRATION: Calculate normalWinsCash from saved games ---
+      if (typeof stats.normalWinsCash !== "number") {
+        let totalFromSavedGames = 0;
+
+        for (let i = 0; i < localStorage.length; i++) {
+          const key = localStorage.key(i);
+          if (key && key.startsWith("tumblerGame_")) {
+            try {
+              const gameData = JSON.parse(localStorage.getItem(key));
+              // Only count normal wins (cashWon >= 1000, archive pays ~10%)
+              if (gameData.cashWon && gameData.cashWon >= 1000) {
+                totalFromSavedGames += gameData.cashWon;
+              }
+            } catch (e) {}
+          }
+        }
+
+        stats.normalWinsCash = totalFromSavedGames;
+        localStorage.setItem("tumblerStats", JSON.stringify(stats));
+        console.log("✅ Migrated normalWinsCash:", totalFromSavedGames); // Debug log
+      }
+      // --- END MIGRATION ---
+
       // Ensure new properties exist
       if (typeof stats.streakProtectors !== "number") {
         stats.streakProtectors = 0;
@@ -5207,6 +5230,31 @@
         // Force reload leaderboard data
         loadLeaderboardData();
         displayUserBadges();
+
+        // --- FIREBASE MIGRATION: Sync normalWinsCash ---
+        if (db && userNick && activeGroup) {
+          const currentStats = JSON.parse(localStorage.getItem("tumblerStats"));
+
+          // Check if Firebase record needs the field
+          db.ref(`career/${activeGroup}/${userNick}/normalWinsCash`).once(
+            "value",
+            (snapshot) => {
+              if (!snapshot.exists() && currentStats.normalWinsCash) {
+                // Field doesn't exist in Firebase, upload it
+                db.ref(`career/${activeGroup}/${userNick}`)
+                  .update({
+                    normalWinsCash: currentStats.normalWinsCash,
+                  })
+                  .then(() => {
+                    console.log("✅ Synced normalWinsCash to Firebase");
+                    loadLeaderboardData(); // Refresh to show updated data
+                  })
+                  .catch((e) => console.log("Offline mode"));
+              }
+            }
+          );
+        }
+        // --- END FIREBASE MIGRATION ---
       }
 
       function loadLeaderboardData() {
