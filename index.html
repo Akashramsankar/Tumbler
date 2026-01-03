@@ -1031,20 +1031,26 @@
         background: var(--safe-inset);
         padding: 4px;
         border-radius: 8px;
+        flex-wrap: wrap;
+        gap: 4px;
       }
 
-      .tab-btn {
+      tab-btn {
         flex: 1;
+        min-width: 0;
         background: transparent;
         border: none;
         color: #94a3b8;
-        padding: 10px;
+        padding: 10px 6px; /* REDUCED horizontal padding from 10px to 6px */
         font-family: "Chivo Mono", monospace;
         font-weight: 700;
         cursor: pointer;
         border-radius: 6px;
         transition: all 0.2s;
         font-size: 0.85rem;
+        white-space: nowrap; /* Prevent text wrapping inside buttons */
+        overflow: hidden; /* Hide overflow */
+        text-overflow: ellipsis; /* Show ellipsis for very long text */
       }
 
       .tab-btn.active {
@@ -1899,6 +1905,52 @@
         /* Further reduce margins */
         #win-modal .stats-content > div[style*="margin"] {
           margin: 8px 0 !important;
+        }
+      }
+
+      /* Mobile-specific crew leaderboard fixes */
+      @media (max-width: 600px) {
+        .tab-container {
+          padding: 3px;
+          gap: 3px;
+        }
+
+        .tab-btn {
+          padding: 8px 4px;
+          font-size: 0.75rem;
+          min-width: 0;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .tab-container {
+          padding: 2px;
+          gap: 2px;
+        }
+
+        .tab-btn {
+          padding: 7px 3px;
+          font-size: 0.7rem;
+          letter-spacing: -0.5px; /* Slightly tighter letter spacing */
+        }
+      }
+
+      @media (max-width: 380px) {
+        .tab-btn {
+          padding: 6px 2px;
+          font-size: 0.65rem;
+        }
+      }
+
+      @media (max-width: 340px) {
+        .tab-container {
+          flex-wrap: wrap; /* Force wrap on very small screens */
+        }
+
+        .tab-btn {
+          flex: 1 1 30%; /* Each button takes ~30% width, allowing 3 per row */
+          padding: 6px 2px;
+          font-size: 0.6rem;
         }
       }
       /* ==================== WIN ANIMATIONS ==================== */
