@@ -1653,10 +1653,10 @@
         }
       }
 
-      /* Laptop/Desktop height constraints - NO SCROLLING */
-      @media (max-height: 800px) {
+      /* UPDATED: Better laptop/desktop height constraints - NO SCROLLING */
+      @media (max-height: 900px) {
         .stats-content {
-          padding: 16px;
+          padding: 14px;
         }
 
         .stash-display {
@@ -1669,21 +1669,30 @@
         }
 
         .stash-value {
-          font-size: 1.8rem;
+          font-size: 1.6rem;
         }
 
         .stash-display > div {
           font-size: 0.8rem !important;
-          margin: 10px 0 !important;
+          margin: 8px 0 !important;
         }
 
         .stats-grid {
           margin: 10px 0;
           gap: 8px;
+          padding-top: 10px;
+        }
+
+        .stat-value {
+          font-size: 1.4rem;
+        }
+
+        .stat-label {
+          font-size: 0.7rem;
         }
 
         #win-modal h2 {
-          font-size: 1.5rem;
+          font-size: 1.4rem;
           margin-bottom: 10px;
         }
 
@@ -1691,14 +1700,22 @@
           gap: 4px;
         }
 
-        .stat-value {
-          font-size: 1.5rem;
+        .distribution-bar {
+          height: 20px;
+          font-size: 0.75rem;
+        }
+
+        .tutorial-btn,
+        .close-stats {
+          padding: 10px 16px;
+          font-size: 0.9rem;
+          margin-top: 10px;
         }
       }
 
-      @media (max-height: 700px) {
+      @media (max-height: 800px) {
         .stats-content {
-          padding: 14px;
+          padding: 12px;
         }
 
         .stash-display {
@@ -1711,13 +1728,12 @@
         }
 
         .stash-value {
-          font-size: 1.6rem;
+          font-size: 1.4rem;
         }
 
         .stash-display > div {
           font-size: 0.75rem !important;
-          margin: 8px 0 !important;
-          gap: 4px !important;
+          margin: 6px 0 !important;
         }
 
         .stats-grid {
@@ -1751,12 +1767,12 @@
         .tutorial-btn,
         .close-stats {
           padding: 8px 14px;
-          font-size: 0.9rem;
-          margin-top: 12px;
+          font-size: 0.85rem;
+          margin-top: 8px;
         }
       }
 
-      @media (max-height: 600px) {
+      @media (max-height: 700px) {
         .stats-content {
           padding: 10px;
         }
@@ -1771,12 +1787,12 @@
         }
 
         .stash-value {
-          font-size: 1.4rem;
+          font-size: 1.2rem;
         }
 
         .stash-display > div {
           font-size: 0.7rem !important;
-          margin: 6px 0 !important;
+          margin: 5px 0 !important;
           gap: 3px !important;
         }
 
@@ -1787,7 +1803,7 @@
         }
 
         .stat-value {
-          font-size: 1.2rem;
+          font-size: 1.1rem;
         }
 
         .stat-label {
@@ -1811,12 +1827,17 @@
         .tutorial-btn,
         .close-stats {
           padding: 7px 12px;
-          font-size: 0.85rem;
-          margin-top: 8px;
+          font-size: 0.8rem;
+          margin-top: 6px;
+        }
+
+        /* Reduce distribution section margin */
+        #win-modal .stats-content > div[style*="margin: 20px 0"] {
+          margin: 12px 0 !important;
         }
       }
 
-      @media (max-height: 500px) {
+      @media (max-height: 600px) {
         .stats-content {
           padding: 8px;
         }
@@ -1831,12 +1852,12 @@
         }
 
         .stash-value {
-          font-size: 1.2rem;
+          font-size: 1.1rem;
         }
 
         .stash-display > div {
           font-size: 0.65rem !important;
-          margin: 5px 0 !important;
+          margin: 4px 0 !important;
           gap: 2px !important;
         }
 
@@ -1871,8 +1892,13 @@
         .tutorial-btn,
         .close-stats {
           padding: 6px 10px;
-          font-size: 0.8rem;
-          margin-top: 6px;
+          font-size: 0.75rem;
+          margin-top: 5px;
+        }
+
+        /* Further reduce margins */
+        #win-modal .stats-content > div[style*="margin"] {
+          margin: 8px 0 !important;
         }
       }
       /* ==================== WIN ANIMATIONS ==================== */
