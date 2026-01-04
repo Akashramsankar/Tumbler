@@ -2981,6 +2981,9 @@
             <button class="tab-btn active" onclick="switchTab('daily')">
               Today's Take
             </button>
+            <button class="tab-btn" onclick="switchTab('yesterday')">
+              Yesterday's Take
+            </button>
             <button class="tab-btn" onclick="switchTab('overall')">
               Career Stash
             </button>
@@ -5616,7 +5619,7 @@
 
         const timeout = setTimeout(() => {
           list.innerHTML =
-            '<div style="text-align:center; padding:20px; color:orange;">Connection Timeout.<br>Check your Firebase Rules or Internet.</div>';
+            '<div style="text-align:center; padding:20px; color:orange;">Connection Timeout.<br>Check your  Internet.</div>';
         }, 5000);
 
         // Determine path based on tab
@@ -5626,6 +5629,13 @@
           path = `scores/${activeGroup}/${today.getFullYear()}-${
             today.getMonth() + 1
           }-${today.getDate()}`;
+        } else if (currentTab === "yesterday") {
+          // NEW: Yesterday's scores
+          const yesterday = new Date();
+          yesterday.setDate(yesterday.getDate() - 1);
+          path = `scores/${activeGroup}/${yesterday.getFullYear()}-${
+            yesterday.getMonth() + 1
+          }-${yesterday.getDate()}`;
         } else if (currentTab === "month") {
           // Load all scores for current month
           path = `scores/${activeGroup}`;
@@ -5672,7 +5682,7 @@
               );
             } else {
               sorted = Object.entries(data).sort(([, a], [, b]) => {
-                if (currentTab === "daily") {
+                if (currentTab === "daily" || currentTab === "yesterday") {
                   if (b.cash !== a.cash) return b.cash - a.cash;
                   return (a.time || 999999) - (b.time || 999999);
                 } else if (currentTab === "efficiency") {
@@ -5711,7 +5721,7 @@
 
           let scoreMain, scoreSub;
 
-          if (type === "daily") {
+          if (type === "daily" || type === "yesterday") {
             scoreMain = `$${stats.cash.toLocaleString()}`;
             scoreSub = `${stats.attempts}/6 in ${stats.time}s ${
               stats.intel ? "🔍" : ""
