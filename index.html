@@ -170,7 +170,7 @@
 
       .stats-btn {
         position: absolute;
-        top: 15px;
+        top: 10px;
         right: 10px;
         background: var(--key-bg);
         color: var(--text-color);
@@ -180,6 +180,7 @@
         cursor: pointer;
         font-size: 0.9rem;
         font-weight: 700;
+        z-index: 10;
       }
 
       .stats-btn:hover {
@@ -1902,6 +1903,52 @@
         /* Further reduce margins */
         #win-modal .stats-content > div[style*="margin"] {
           margin: 8px 0 !important;
+        }
+      }
+
+      @media (max-width: 600px) {
+        .stats-btn {
+          top: 8px;
+          right: 8px;
+          padding: 6px 10px;
+          font-size: 0.85rem;
+        }
+
+        .mute-btn {
+          right: 75px !important;
+        }
+
+        header {
+          padding-bottom: 12px;
+        }
+
+        h1 {
+          padding-top: 8px;
+          margin-bottom: 5px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        .stats-btn {
+          top: 6px;
+          padding: 5px 8px;
+          font-size: 0.8rem;
+        }
+
+        .mute-btn {
+          right: 68px !important;
+        }
+      }
+
+      @media (max-width: 380px) {
+        .stats-btn {
+          top: 5px;
+          padding: 4px 7px;
+          font-size: 0.75rem;
+        }
+
+        .mute-btn {
+          right: 62px !important;
         }
       }
       /* ==================== WIN ANIMATIONS ==================== */
