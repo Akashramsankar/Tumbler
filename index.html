@@ -1951,6 +1951,80 @@
           right: 62px !important;
         }
       }
+
+      /* Fix keyboard width on very small devices */
+      @media (max-width: 340px) {
+        .key {
+          height: 38px;
+          font-size: 0.75rem;
+          min-width: 0; /* Allow keys to shrink */
+        }
+
+        .key::after {
+          font-size: 0.5rem;
+          right: 3px;
+        }
+
+        .key-row {
+          gap: 2px;
+          margin-bottom: 3px;
+        }
+
+        .key.wide {
+          flex: 1.8; /* Reduce size of ENTER/BACKSPACE */
+          font-size: 0.9rem;
+        }
+      }
+
+      @media (max-width: 320px) {
+        .key {
+          height: 36px;
+          font-size: 0.7rem;
+          padding: 0 2px; /* Tighter padding */
+        }
+
+        .key::after {
+          font-size: 0.45rem;
+          right: 2px;
+        }
+
+        .key-row {
+          gap: 1px;
+          margin-bottom: 2px;
+        }
+
+        .key.wide {
+          flex: 1.6;
+          font-size: 0.85rem;
+        }
+      }
+
+      @media (max-width: 280px) {
+        #keyboard {
+          max-width: 100%;
+          padding: 0 2px;
+        }
+
+        .key {
+          height: 34px;
+          font-size: 0.65rem;
+          padding: 0 1px;
+        }
+
+        .key::after {
+          display: none; /* Hide A-Z numbers on smallest screens */
+        }
+
+        .key-row {
+          gap: 1px;
+          margin-bottom: 2px;
+        }
+
+        .key.wide {
+          flex: 1.5;
+          font-size: 0.8rem;
+        }
+      }
       /* ==================== WIN ANIMATIONS ==================== */
       @keyframes confetti-fall {
         0% {
