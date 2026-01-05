@@ -4892,6 +4892,12 @@
 
       // MODIFIED: Show Stats now displays total cash
       function showWinModal(attempts, cashWon, solveTime) {
+        // Check if this is first win AND they haven't seen crew intro
+        if (stats.won === 1 && !hasSeenCrewIntro && !userGroups.length) {
+          showCrewIntroModal(attempts, cashWon, solveTime);
+          return; // Show crew intro INSTEAD of win modal first
+        }
+
         const modal = document.getElementById("win-modal");
         modal.style.display = "flex";
 
@@ -4993,6 +4999,77 @@
           .join("");
 
         document.getElementById("distribution-bars").innerHTML = barsHTML;
+      }
+
+      function showCrewIntroModal(attempts, cashWon, solveTime) {
+        const modal = document.getElementById("tutorial-modal");
+        modal.style.display = "flex";
+
+        const content = modal.querySelector(".tutorial-content");
+        content.innerHTML = `
+    <div class="mission-header">
+      <h2 class="mission-title">🎉 First Heist Complete!</h2>
+      <div class="mission-subtitle">$${cashWon.toLocaleString()} STOLEN IN ${attempts} ATTEMPTS</div>
+    </div>
+
+    <div style="background: var(--safe-inset); padding: 20px; border-radius: 12px; 
+                margin: 20px 0; border: 1px solid var(--safe-border);">
+      <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-color); 
+                  text-align: center; margin-bottom: 15px;">
+        Playing Solo vs. With a Crew
+      </div>
+      
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+        <div style="text-align: center; opacity: 0.6;">
+          <div style="font-size: 2rem; margin-bottom: 5px;">🧑</div>
+          <div style="font-size: 0.85rem; color: #94a3b8;">Solo Mode</div>
+          <div style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">
+            Track your own stats
+          </div>
+        </div>
+        
+        <div style="text-align: center;">
+          <div style="font-size: 2rem; margin-bottom: 5px;">👥</div>
+          <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700;">
+            Crew Mode
+          </div>
+          <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 5px;">
+            Daily leaderboards<br>
+            Weekly badges<br>
+            Friend competition
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; 
+                text-align: center; margin-bottom: 20px;">
+      Create a crew with friends or join an existing one to see who's the best lockpick!
+    </div>
+
+    <button class="tutorial-btn" onclick="startCrewSetup()" style="margin-bottom: 10px;">
+      👥 Create/Join Crew
+    </button>
+    
+    <button class="close-stats" onclick="skipCrewIntro(${attempts}, ${cashWon}, ${solveTime})" 
+            style="margin-top: 0;">
+      Skip for Now
+    </button>
+  `;
+      }
+
+      function startCrewSetup() {
+        localStorage.setItem("tumblerCrewIntroSeen", "true");
+        hasSeenCrewIntro = true;
+        document.getElementById("tutorial-modal").style.display = "none";
+        openGroupModal();
+      }
+
+      function skipCrewIntro(attempts, cashWon, solveTime) {
+        localStorage.setItem("tumblerCrewIntroSeen", "true");
+        hasSeenCrewIntro = true;
+        document.getElementById("tutorial-modal").style.display = "none";
+        showWinModal(attempts, cashWon, solveTime);
       }
 
       function closeWinModal() {
@@ -5331,6 +5408,8 @@
         localStorage.getItem("tumblerGroups") || "[]"
       ); // Array of crew IDs
       let activeGroup = localStorage.getItem("tumblerActiveGroup") || ""; // Currently viewing crew
+      let hasSeenCrewIntro =
+        localStorage.getItem("tumblerCrewIntroSeen") === "true";
       let currentTab = "daily";
 
       // --- 3. FUNCTIONS ---
@@ -5916,6 +5995,8 @@
       window.cancelNameEdit = cancelNameEdit;
       window.saveNewName = saveNewName;
       window.shareCrewInvite = shareCrewInvite;
+      window.startCrewSetup = startCrewSetup;
+      window.skipCrewIntro = skipCrewIntro;
       window.toggleKeyboardLayout = toggleKeyboardLayout;
       window.calculateWeeklyBadges = calculateWeeklyBadges;
       window.displayUserBadges = displayUserBadges;
