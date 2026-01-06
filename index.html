@@ -5874,16 +5874,28 @@
             });
           }
 
-          // ALWAYS update career stats
-          db.ref(`career/${group}/${userNick}`).update({
-            totalCash: currentStats.totalCash || 0,
-            wins: currentStats.won || 0,
-            gamesPlayed: currentStats.played || 0, // NEW - track all games
-            bestSingleHeist: Math.max(
-              currentStats.bestSingleHeist || 0,
-              isToday ? cash : 0
-            ), // NEW - track best score
-            lastPlayed: Date.now(),
+          // ALWAYS update career stats - fetch existing first to avoid overwriting
+          const careerRef = db.ref(`career/${group}/${userNick}`);
+          careerRef.once("value", (snapshot) => {
+            const existingData = snapshot.val() || {};
+
+            careerRef.update({
+              totalCash: Math.max(
+                existingData.totalCash || 0,
+                currentStats.totalCash || 0
+              ),
+              wins: Math.max(existingData.wins || 0, currentStats.won || 0),
+              gamesPlayed: Math.max(
+                existingData.gamesPlayed || 0,
+                currentStats.played || 0
+              ),
+              bestSingleHeist: Math.max(
+                existingData.bestSingleHeist || 0,
+                currentStats.bestSingleHeist || 0,
+                isToday ? cash : 0
+              ),
+              lastPlayed: Date.now(),
+            });
           });
         });
       }
