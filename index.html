@@ -3511,7 +3511,7 @@
       // Load stats from localStorage, including NEW: totalCash
       let stats = JSON.parse(
         localStorage.getItem("tumblerStats") ||
-          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0, "bestSingleHeist": 0}'
+          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "gameplayCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0, "bestSingleHeist": 0}'
       );
 
       // Ensure new properties exist
@@ -3536,6 +3536,11 @@
 
       if (typeof stats.bestSingleHeist !== "number") {
         stats.bestSingleHeist = 0;
+      }
+
+      if (typeof stats.gameplayCash !== "number") {
+        stats.gameplayCash = stats.totalCash;
+        localStorage.setItem("tumblerStats", JSON.stringify(stats));
       }
 
       // ==================== WIN ANIMATIONS ====================
@@ -4683,6 +4688,7 @@
             stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
             stats.guessDistribution[currentRow]++;
             stats.totalCash += cashWon;
+            stats.gameplayCash += cashWon; // Track gameplay cash separately
             stats.bestSingleHeist = Math.max(
               stats.bestSingleHeist || 0,
               cashWon
@@ -5805,9 +5811,11 @@
             scoreSub = `${stats.attempts}/6 in ${stats.time}s ${
               stats.intel ? "🔍" : ""
             }`;
-          } else if (type === "efficiency") {
+          } else if (currentTab === "efficiency") {
             const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
-            const efficiency = Math.floor((stats.totalCash || 0) / gamesPlayed);
+            const efficiency = Math.floor(
+              (stats.gameplayCash || 0) / gamesPlayed
+            );
             scoreMain = `$${efficiency.toLocaleString()}/game`;
             scoreSub = `${gamesPlayed} games played`;
           } else if (type === "best") {
@@ -5882,7 +5890,7 @@
             careerRef.update({
               totalCash: Math.max(
                 existingData.totalCash || 0,
-                currentStats.totalCash || 0
+                currentStats.gameplayCash || 0
               ),
               wins: Math.max(existingData.wins || 0, currentStats.won || 0),
               gamesPlayed: Math.max(
