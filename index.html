@@ -5930,9 +5930,8 @@
             }`;
           } else if (currentTab === "efficiency") {
             const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
-            const efficiency = Math.floor(
-              (stats.gameplayCash || 0) / gamesPlayed
-            );
+            const totalCash = stats.totalCash || 0;
+            const efficiency = Math.floor(totalCash / gamesPlayed);
             scoreMain = `$${efficiency.toLocaleString()}/game`;
             scoreSub = `${gamesPlayed} games played`;
           } else if (type === "best") {
@@ -6007,7 +6006,7 @@
             careerRef.update({
               totalCash: Math.max(
                 existingData.totalCash || 0,
-                currentStats.gameplayCash || 0
+                currentStats.totalCash || 0
               ),
               wins: Math.max(existingData.wins || 0, currentStats.won || 0),
               gamesPlayed: Math.max(
