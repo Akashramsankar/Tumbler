@@ -2025,6 +2025,107 @@
           font-size: 0.8rem;
         }
       }
+
+      /* MOBILE: Further compress win modal when milestone is present */
+      @media (max-height: 750px) and (max-width: 600px) {
+        #win-modal .stats-content {
+          padding: 10px !important;
+          max-height: 90vh;
+        }
+
+        #win-modal h2 {
+          font-size: 1.2rem !important;
+          margin-bottom: 8px !important;
+        }
+
+        #win-modal .stash-display {
+          padding: 8px !important;
+          margin-bottom: 8px !important;
+        }
+
+        #win-modal .stash-label {
+          font-size: 0.7rem !important;
+        }
+
+        #win-modal .stash-display > div {
+          font-size: 0.7rem !important;
+          gap: 3px !important;
+          margin: 6px 0 !important;
+        }
+
+        #win-modal .stats-grid {
+          margin: 8px 0 !important;
+          gap: 6px !important;
+          padding-top: 6px !important;
+        }
+
+        #win-modal .stat-value {
+          font-size: 1.1rem !important;
+        }
+
+        #win-modal .stat-label {
+          font-size: 0.6rem !important;
+        }
+
+        #win-modal .distribution-bars {
+          gap: 2px !important;
+        }
+
+        #win-modal .distribution-bar {
+          height: 14px !important;
+          font-size: 0.6rem !important;
+        }
+
+        #win-modal .tutorial-btn,
+        #win-modal .close-stats {
+          padding: 7px 10px !important;
+          font-size: 0.8rem !important;
+          margin-top: 6px !important;
+        }
+
+        /* Compress distribution section margin */
+        #win-modal .stats-content > div[style*="margin"] {
+          margin: 6px 0 !important;
+        }
+      }
+
+      /* Extra small mobile screens */
+      @media (max-height: 670px) and (max-width: 600px) {
+        #win-modal .stats-content {
+          padding: 8px !important;
+        }
+
+        #win-modal h2 {
+          font-size: 1.1rem !important;
+          margin-bottom: 6px !important;
+        }
+
+        #win-modal .stash-display {
+          padding: 6px !important;
+          margin-bottom: 6px !important;
+        }
+
+        #win-modal .stash-display > div {
+          font-size: 0.65rem !important;
+          margin: 4px 0 !important;
+        }
+
+        #win-modal .stats-grid {
+          margin: 6px 0 !important;
+          gap: 4px !important;
+        }
+
+        #win-modal .stat-value {
+          font-size: 1rem !important;
+        }
+
+        #win-modal .tutorial-btn,
+        #win-modal .close-stats {
+          padding: 6px 8px !important;
+          font-size: 0.75rem !important;
+          margin-top: 4px !important;
+        }
+      }
       /* ==================== WIN ANIMATIONS ==================== */
       @keyframes confetti-fall {
         0% {
@@ -4964,17 +5065,33 @@
             "#win-modal .stash-display"
           );
           const milestoneDiv = document.createElement("div");
-          milestoneDiv.style.cssText =
-            "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 12px; border-radius: 10px; margin-top: 15px; text-align: center; border: 2px solid var(--color-correct); box-shadow: 0 0 20px rgba(106, 170, 100, 0.4);";
-          milestoneDiv.innerHTML = `
-      <div style="font-size: 1.8rem;">🎉</div>
-      <div style="font-size: 1.1rem; font-weight: 700; color: white; margin: 5px 0;">
-        ${currentStreak}-DAY MILESTONE!
-      </div>
-      <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
-        +$${bonus.toLocaleString()} BONUS
-      </div>
-    `;
+
+          // Check if mobile
+          const isMobile = window.innerWidth <= 600;
+
+          milestoneDiv.style.cssText = isMobile
+            ? "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 8px; border-radius: 8px; margin-top: 10px; text-align: center; border: 1px solid var(--color-correct); box-shadow: 0 0 15px rgba(106, 170, 100, 0.3);"
+            : "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 12px; border-radius: 10px; margin-top: 15px; text-align: center; border: 2px solid var(--color-correct); box-shadow: 0 0 20px rgba(106, 170, 100, 0.4);";
+
+          milestoneDiv.innerHTML = isMobile
+            ? `
+  <div style="font-size: 1.2rem;">🎉</div>
+  <div style="font-size: 0.85rem; font-weight: 700; color: white; margin: 3px 0;">
+    ${currentStreak}-DAY MILESTONE!
+  </div>
+  <div style="font-size: 1rem; font-weight: 700; color: var(--color-cash);">
+    +$${bonus.toLocaleString()}
+  </div>
+`
+            : `
+  <div style="font-size: 1.8rem;">🎉</div>
+  <div style="font-size: 1.1rem; font-weight: 700; color: white; margin: 5px 0;">
+    ${currentStreak}-DAY MILESTONE!
+  </div>
+  <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
+    +$${bonus.toLocaleString()} BONUS
+  </div>
+`;
 
           stashDisplay.parentNode.insertBefore(
             milestoneDiv,
