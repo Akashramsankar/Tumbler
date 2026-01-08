@@ -3829,6 +3829,12 @@
             return;
           }
 
+          if (restoreGameState()) {
+            createKeyboard(); // Add keyboard after restoring
+            document.addEventListener("keydown", handleKeydown);
+            return; // Resume from saved state
+          }
+
           updateStreakIndicator();
 
           // Setup game but don't start timer
@@ -3856,7 +3862,14 @@
       function startTimer() {
         const timerElement = document.getElementById("timer");
         const timerDisplay = document.querySelector(".timer-display");
-        startTime = Date.now();
+
+        // FIX: Only set startTime if it hasn't been restored from a saved state
+        if (!startTime) {
+          startTime = Date.now();
+        }
+
+        // Clear any existing interval to prevent duplicates
+        if (timerInterval) clearInterval(timerInterval);
 
         timerInterval = setInterval(() => {
           if (isGameOver) {
@@ -3910,6 +3923,13 @@
         const month = String(dateObj.getMonth() + 1).padStart(2, "0");
         const day = String(dateObj.getDate()).padStart(2, "0");
         return `tumblerGame_${year}-${month}-${day}`;
+      }
+
+      function getActiveSessionKey(dateObj) {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const day = String(dateObj.getDate()).padStart(2, "0");
+        return `tumblerActiveGame_${year}-${month}-${day}`;
       }
 
       function resetIntelUI() {
@@ -3972,6 +3992,127 @@
           getStorageKey(currentPlayDate),
           JSON.stringify(gameData)
         );
+      }
+
+      function saveCurrentGameState() {
+        if (isGameOver || !startTime) return;
+
+        // Save the date at midnight for consistent comparison
+        const playDateMidnight = new Date(currentPlayDate);
+        playDateMidnight.setHours(0, 0, 0, 0);
+
+        const gameState = {
+          guesses: guesses,
+          currentRow: currentRow,
+          currentTile: currentTile,
+          startTime: startTime,
+          intelUsed: intelUsed,
+          slotConstraints: slotConstraints,
+          timestamp: Date.now(),
+          playDate: playDateMidnight.getTime(),
+        };
+
+        sessionStorage.setItem(
+          getActiveSessionKey(currentPlayDate),
+          JSON.stringify(gameState)
+        );
+      }
+
+      function restoreGameState() {
+        // CHANGE: Look for specific key based on date
+        const saved = sessionStorage.getItem(
+          getActiveSessionKey(currentPlayDate)
+        );
+
+        if (!saved) return false;
+
+        const state = JSON.parse(saved);
+
+        // Double check dates match (extra safety)
+        const savedPlayDate = new Date(state.playDate || Date.now());
+        savedPlayDate.setHours(0, 0, 0, 0);
+
+        const currentDate = new Date(currentPlayDate);
+        currentDate.setHours(0, 0, 0, 0);
+
+        if (savedPlayDate.getTime() !== currentDate.getTime()) {
+          return false;
+        }
+
+        // Restore state
+        guesses = state.guesses;
+        currentRow = state.currentRow;
+        currentTile = state.currentTile;
+        startTime = state.startTime;
+        intelUsed = state.intelUsed;
+        slotConstraints = state.slotConstraints;
+
+        // CREATE BOARD FIRST
+        createBoard();
+
+        // Rebuild board with saved guesses
+        for (let r = 0; r <= currentRow; r++) {
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const letter = guesses[r][c];
+            if (letter) {
+              const tile = document.getElementById(`row-${r}-tile-${c}`);
+              if (!tile) continue;
+
+              tile.querySelector(".letter").textContent = letter;
+              tile.setAttribute("data-status", "filled");
+
+              // Re-evaluate completed rows
+              if (r < currentRow) {
+                const targetLetter = TARGET_WORD[c];
+                const diff = targetLetter.charCodeAt(0) - letter.charCodeAt(0);
+
+                tile.classList.add("evaluated");
+                if (diff === 0) {
+                  tile.classList.add("correct");
+                  const key = document.getElementById(`key-${letter}`);
+                  if (key) key.classList.add("correct");
+                } else {
+                  const rotateClass = diff > 0 ? "up" : "down";
+                  const distClass = Math.abs(diff) > 9 ? "far" : "close";
+                  const symbol =
+                    Math.abs(diff) > 9
+                      ? diff > 0
+                        ? "▲▲"
+                        : "▼▼"
+                      : diff > 0
+                      ? "▲"
+                      : "▼";
+
+                  tile.classList.add(distClass, rotateClass);
+                  tile.querySelector(".indicator").innerHTML = symbol;
+                }
+              }
+            }
+          }
+        }
+
+        // Restore intel UI
+        if (intelUsed) {
+          const targetSum = TARGET_WORD.split("").reduce(
+            (sum, char) => sum + (char.charCodeAt(0) - 64),
+            0
+          );
+          document.getElementById("intel-panel").style.display = "block";
+          document.getElementById("code-sum-value").textContent = targetSum;
+
+          const btn = document.getElementById("intel-btn");
+          btn.disabled = true;
+          btn.innerHTML = "✓ Intel Used (-$1,000)";
+          btn.style.opacity = "0.6";
+          btn.style.cursor = "default";
+        }
+
+        updateActiveRow();
+        updateKeyboardVisuals();
+        updateCurrentSum();
+        startTimer();
+
+        return true;
       }
 
       // Check if already played today
@@ -4613,7 +4754,7 @@
         currentTile++;
 
         playSound("keypress");
-
+        saveCurrentGameState();
         updateKeyboardVisuals();
         updateCurrentSum();
       }
@@ -4630,6 +4771,7 @@
           tile.removeAttribute("data-status");
 
           updateKeyboardVisuals();
+          saveCurrentGameState();
           updateCurrentSum();
         }
       }
@@ -4788,6 +4930,7 @@
             }
             stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
             stats.guessDistribution[currentRow]++;
+            sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
             stats.totalCash += cashWon;
             stats.gameplayCash += cashWon; // Track gameplay cash separately
             stats.bestSingleHeist = Math.max(
@@ -4851,6 +4994,7 @@
             if (currentRow < MAX_TRIES - 1) {
               currentRow++;
               currentTile = 0;
+              saveCurrentGameState();
               updateActiveRow();
               updateKeyboardVisuals();
             } else {
@@ -4868,6 +5012,7 @@
               saveTodayGame(MAX_TRIES, 0, 0);
 
               showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
+              sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
               isGameOver = true;
             }
           }
@@ -5249,6 +5394,7 @@
 
       function useIntel() {
         intelUsed = true;
+        saveCurrentGameState();
         closeIntelModal();
 
         // Calculate target sum (YES - AUTOMATIC!)
@@ -5358,11 +5504,23 @@
       async function loadDate(dateObj) {
         closeCalendar();
 
+        // ADD THIS CHECK: Save current game state before switching
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const wasPlayingToday = currentPlayDate.getTime() === today.getTime();
+
+        if (wasPlayingToday && !isGameOver && startTime) {
+          saveCurrentGameState(); // Save before leaving
+        }
+
         // 1. Update Current Date
         currentPlayDate = new Date(dateObj);
         currentPlayDate.setHours(0, 0, 0, 0);
 
-        // 2. Reset Board UI
+        // 2. Stop current timer if running
+        stopTimer();
+
+        // 3. Reset Board UI
         document.getElementById("game-board").innerHTML = "";
         document.getElementById("keyboard").innerHTML = "";
 
@@ -5370,6 +5528,7 @@
         resetIntelUI();
         // --------------------------------------
 
+        startTime = null;
         guesses = Array(6)
           .fill(null)
           .map(() => Array(4).fill(""));
@@ -5378,34 +5537,45 @@
         isGameOver = false;
         intelUsed = false;
 
+        // DECLARE ONCE: Check if returning to today
+        const isReturningToToday =
+          currentPlayDate.getTime() === today.getTime();
+
+        // MODIFIED: Only clear session if NOT returning to today
+        // if (!isReturningToToday) {
+        //   sessionStorage.removeItem("tumblerActiveGame");
+        // }
+
         // Remove any existing countdown containers from previous views
         const existingCountdown = document.getElementById(
           "countdown-container"
         );
         if (existingCountdown) existingCountdown.remove();
 
-        // 3. Re-Init Game
+        // 4. Re-Init Game
         TARGET_WORD = getDailyWord(currentPlayDate);
-        createBoard();
-        createKeyboard();
 
         if (hasPlayedToday()) {
           loadCompletedGame();
+        } else if (isReturningToToday && restoreGameState()) {
+          // Returning to today's active game - restoreGameState handles everything
+          createKeyboard();
+          document.addEventListener("keydown", handleKeydown);
         } else {
+          // New game or archive
+          createBoard();
+          createKeyboard();
           resetSlotConstraints();
           updateActiveRow();
           updateKeyboardVisuals();
-          // Enable keyboard for new games only
           document.addEventListener("keydown", handleKeydown);
           startTimer(); // Ensure timer starts for new games
 
           // Update header text
-          const isToday =
-            new Date().setHours(0, 0, 0, 0) ===
-            currentPlayDate.setHours(0, 0, 0, 0);
-          document.querySelector(".sub-text").textContent = isToday
-            ? "Crack the code"
-            : `ARCHIVE: ${dateObj.toLocaleDateString()}`;
+          const isArchive = !isReturningToToday;
+          document.querySelector(".sub-text").textContent = isArchive
+            ? `ARCHIVE: ${dateObj.toLocaleDateString()}`
+            : "Crack the code";
         }
         updateStreakIndicator();
       }
