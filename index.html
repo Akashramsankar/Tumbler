@@ -5504,29 +5504,22 @@
       async function loadDate(dateObj) {
         closeCalendar();
 
-        // ADD THIS CHECK: Save current game state before switching
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const wasPlayingToday = currentPlayDate.getTime() === today.getTime();
-
-        if (wasPlayingToday && !isGameOver && startTime) {
-          saveCurrentGameState(); // Save before leaving
+        // 1. CHANGE: Remove "wasPlayingToday" check. Save ANY active game before switching.
+        if (!isGameOver && startTime) {
+          saveCurrentGameState();
         }
 
-        // 1. Update Current Date
+        // 2. Update Current Date
         currentPlayDate = new Date(dateObj);
         currentPlayDate.setHours(0, 0, 0, 0);
 
-        // 2. Stop current timer if running
+        // 3. Stop current timer if running
         stopTimer();
 
-        // 3. Reset Board UI
+        // 4. Reset Board UI
         document.getElementById("game-board").innerHTML = "";
         document.getElementById("keyboard").innerHTML = "";
-
-        // --- NEW: FORCE RESET INTEL UI HERE ---
         resetIntelUI();
-        // --------------------------------------
 
         startTime = null;
         guesses = Array(6)
@@ -5537,39 +5530,37 @@
         isGameOver = false;
         intelUsed = false;
 
-        // DECLARE ONCE: Check if returning to today
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
         const isReturningToToday =
           currentPlayDate.getTime() === today.getTime();
 
-        // MODIFIED: Only clear session if NOT returning to today
-        // if (!isReturningToToday) {
-        //   sessionStorage.removeItem("tumblerActiveGame");
-        // }
-
-        // Remove any existing countdown containers from previous views
+        // Remove any existing countdown containers
         const existingCountdown = document.getElementById(
           "countdown-container"
         );
         if (existingCountdown) existingCountdown.remove();
 
-        // 4. Re-Init Game
+        // 5. Re-Init Game
         TARGET_WORD = getDailyWord(currentPlayDate);
 
         if (hasPlayedToday()) {
           loadCompletedGame();
-        } else if (isReturningToToday && restoreGameState()) {
-          // Returning to today's active game - restoreGameState handles everything
+        }
+        // 6. CHANGE: Remove "isReturningToToday" check here.
+        // Now it tries to restore progress for Archive dates too!
+        else if (restoreGameState()) {
           createKeyboard();
           document.addEventListener("keydown", handleKeydown);
         } else {
-          // New game or archive
+          // New game or archive (fresh start)
           createBoard();
           createKeyboard();
           resetSlotConstraints();
           updateActiveRow();
           updateKeyboardVisuals();
           document.addEventListener("keydown", handleKeydown);
-          startTimer(); // Ensure timer starts for new games
+          startTimer();
 
           // Update header text
           const isArchive = !isReturningToToday;
