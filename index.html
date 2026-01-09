@@ -5876,7 +5876,7 @@
       }
 
       function setupBadgeTooltips() {
-        // 1. Create tooltip element if it doesn't exist
+        // 1. Create or get tooltip element
         let tooltip = document.getElementById("badge-tooltip");
         if (!tooltip) {
           tooltip = document.createElement("div");
@@ -5885,26 +5885,46 @@
           document.body.appendChild(tooltip);
         }
 
-        // 2. Add handlers to all badge items
+        // 2. Global Dismiss Listener (Click only)
+        // We avoid touchstart/touchend here to prevent conflicts with scrolling
+        if (!window.tooltipDismissListenerAttached) {
+          window.tooltipDismissListenerAttached = true;
+          document.addEventListener("click", (e) => {
+            if (tooltip && !e.target.closest(".user-badge-item")) {
+              tooltip.classList.remove("show");
+            }
+          });
+        }
+
+        // 3. Add Handlers to Badges
         document.querySelectorAll(".user-badge-item").forEach((badge) => {
+          // Visual cue for Safari
           badge.style.cursor = "pointer";
 
+          // The core logic to show the tooltip
           const showTooltip = (e) => {
-            // Stop click from bubbling to document (which would immediately hide it)
+            // STOP propagation so the global "double-tap preventer" doesn't see this
             e.stopPropagation();
-            
-            const desc = badge.getAttribute("data-badge-desc");
-            const rect = badge.getBoundingClientRect();
 
+            // If this is a touch event, prevent the mouse emulation (click)
+            // so we don't trigger this function twice
+            if (e.type === "touchend") {
+              e.preventDefault();
+            }
+
+            const desc = badge.getAttribute("data-badge-desc");
+
+            // Populate and Show
             tooltip.textContent = desc;
             tooltip.classList.add("show");
 
-            // Position tooltip logic
+            // Positioning Logic
+            const rect = badge.getBoundingClientRect();
             const tooltipRect = tooltip.getBoundingClientRect();
             let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
             let top = rect.top - tooltipRect.height - 8;
 
-            // Boundary checks
+            // Keep on screen
             if (left < 10) left = 10;
             if (left + tooltipRect.width > window.innerWidth - 10) {
               left = window.innerWidth - tooltipRect.width - 10;
@@ -5916,41 +5936,22 @@
             tooltip.style.left = left + "px";
             tooltip.style.top = top + "px";
 
-            // Clear any existing timeout stored on the element to prevent premature closing
+            // Reset Auto-hide Timer
             if (tooltip.dataset.timeoutId) {
               clearTimeout(parseInt(tooltip.dataset.timeoutId));
             }
-
-            // Auto-hide after 2 seconds
             const timeoutId = setTimeout(() => {
               tooltip.classList.remove("show");
             }, 2000);
-            
-            // Store ID on the DOM element so we can access it globally
             tooltip.dataset.timeoutId = timeoutId;
           };
 
-          // 3. Use CLICK only. Mobile browsers translate Tap -> Click automatically.
-          // Removing 'touchend' fixes the conflict and scroll-blocking issues.
-          badge.onclick = showTooltip; 
+          // 4. Bind listeners
+          // 'touchend' makes it responsive on iOS/Safari and bypasses issues
+          badge.addEventListener("touchend", showTooltip, { passive: false });
+          // 'click' handles desktop/mouse users
+          badge.addEventListener("click", showTooltip);
         });
-
-        // 4. Attach Global Dismiss Listener (Only once)
-        if (!window.tooltipDismissListenerAttached) {
-          window.tooltipDismissListenerAttached = true;
-          
-          const hideTooltip = () => {
-            if (tooltip) {
-               tooltip.classList.remove("show");
-               // We don't need to clear timeout; CSS hiding is enough
-            }
-          };
-
-          // Listen for clicks anywhere to dismiss
-          document.addEventListener("click", hideTooltip);
-          // Listen for touchstart to dismiss on background tap (mobile behavior)
-          document.addEventListener("touchstart", hideTooltip, { passive: true });
-        }
       }
 
       function openGroupModal() {
