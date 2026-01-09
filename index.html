@@ -5836,7 +5836,7 @@
         container.innerHTML = badges
           .map(
             (badge) => `
-    <div class="user-badge-item">
+    <div class="user-badge-item" title="${badge.desc}">
       <span class="user-badge-icon">${badge.icon}</span>
       <span class="user-badge-name">${badge.name}</span>
     </div>
