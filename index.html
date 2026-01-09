@@ -1258,6 +1258,26 @@
         }
       }
 
+      .badge-tooltip {
+        position: fixed;
+        background: rgba(15, 23, 42, 0.95);
+        color: #fff;
+        padding: 8px 12px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        z-index: 10000;
+        pointer-events: none;
+        opacity: 0;
+        transition: opacity 0.2s;
+        border: 1px solid var(--safe-border);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        white-space: nowrap;
+      }
+
+      .badge-tooltip.show {
+        opacity: 1;
+      }
+
       @media (max-width: 480px) {
         body {
           padding: 5px;
@@ -5818,7 +5838,7 @@
 
         if (!container || !showcase) return;
 
-        // ADD THIS CHECK - only show badges if user is in this crew
+        // Only show badges if user is in this crew
         if (!userGroups.includes(activeGroup)) {
           showcase.style.display = "none";
           return;
@@ -5835,8 +5855,8 @@
 
         container.innerHTML = badges
           .map(
-            (badge) => `
-    <div class="user-badge-item" title="${badge.desc}">
+            (badge, index) => `
+    <div class="user-badge-item" data-badge-index="${index}" data-badge-desc="${badge.desc}" title="${badge.desc}">
       <span class="user-badge-icon">${badge.icon}</span>
       <span class="user-badge-name">${badge.name}</span>
     </div>
@@ -5844,12 +5864,79 @@
           )
           .join("");
 
+        // Add tooltip functionality
+        setupBadgeTooltips();
+
         // Show reset timer
         if (timer) {
           timer.textContent = `⏰ ${getTimeUntilMonday()}`;
         }
 
         showcase.style.display = "block";
+      }
+
+      function setupBadgeTooltips() {
+        // Create tooltip element if it doesn't exist
+        let tooltip = document.getElementById("badge-tooltip");
+        if (!tooltip) {
+          tooltip = document.createElement("div");
+          tooltip.id = "badge-tooltip";
+          tooltip.className = "badge-tooltip";
+          document.body.appendChild(tooltip);
+        }
+
+        let activeTimeout = null;
+
+        // Add click handlers to all badge items
+        document.querySelectorAll(".user-badge-item").forEach((badge) => {
+          badge.style.cursor = "pointer";
+
+          const showTooltip = (e) => {
+            e.stopPropagation();
+            const desc = badge.getAttribute("data-badge-desc");
+            const rect = badge.getBoundingClientRect();
+
+            tooltip.textContent = desc;
+            tooltip.classList.add("show");
+
+            // Position tooltip above the badge
+            const tooltipRect = tooltip.getBoundingClientRect();
+            let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
+            let top = rect.top - tooltipRect.height - 8;
+
+            // Keep tooltip on screen
+            if (left < 10) left = 10;
+            if (left + tooltipRect.width > window.innerWidth - 10) {
+              left = window.innerWidth - tooltipRect.width - 10;
+            }
+            if (top < 10) {
+              top = rect.bottom + 8; // Show below if not enough space above
+            }
+
+            tooltip.style.left = left + "px";
+            tooltip.style.top = top + "px";
+
+            // Auto-hide after 2 seconds
+            if (activeTimeout) clearTimeout(activeTimeout);
+            activeTimeout = setTimeout(() => {
+              tooltip.classList.remove("show");
+            }, 2000);
+          };
+
+          badge.addEventListener("click", showTooltip);
+          badge.addEventListener("touchend", (e) => {
+            e.preventDefault();
+            showTooltip(e);
+          });
+        });
+
+        // Hide tooltip when clicking elsewhere
+        document.addEventListener("click", (e) => {
+          if (!e.target.closest(".user-badge-item")) {
+            tooltip.classList.remove("show");
+            if (activeTimeout) clearTimeout(activeTimeout);
+          }
+        });
       }
 
       function openGroupModal() {
@@ -6368,6 +6455,7 @@
       window.buyRecovery = buyRecovery;
       window.confirmRecoveryPurchase = confirmRecoveryPurchase;
       window.closeRecoveryModal = closeRecoveryModal;
+      window.setupBadgeTooltips = setupBadgeTooltips;
     </script>
     <script>
       // Fix mobile keyboard touch issues
