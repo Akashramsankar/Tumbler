@@ -5993,88 +5993,99 @@
             today.getMonth() + 1
           }-${today.getDate()}`;
         } else if (currentTab === "yesterday") {
-          // NEW: Yesterday's scores
           const yesterday = new Date();
           yesterday.setDate(yesterday.getDate() - 1);
           path = `scores/${activeGroup}/${yesterday.getFullYear()}-${
             yesterday.getMonth() + 1
           }-${yesterday.getDate()}`;
         } else if (currentTab === "month") {
-          // Load all scores for current month
           path = `scores/${activeGroup}`;
         } else {
           path = `career/${activeGroup}`;
         }
 
-        db.ref(path).once(
+        // --- NEW: Fetch Weekly Badges First ---
+        const weekKey = getWeekKey();
+        db.ref(`weeklyBadges/${weekKey}/${activeGroup}`).once(
           "value",
-          (snapshot) => {
-            clearTimeout(timeout);
-            const data = snapshot.val();
+          (badgeSnap) => {
+            const weeklyBadges = badgeSnap.val() || {};
 
-            if (!data) {
-              list.innerHTML =
-                '<div style="text-align:center; padding:20px; color:#64748b;">No data found yet.<br>Be the first to score!</div>';
-              return;
-            }
+            // --- Now Fetch Scores ---
+            db.ref(path).once(
+              "value",
+              (snapshot) => {
+                clearTimeout(timeout);
+                const data = snapshot.val();
 
-            let sorted;
+                if (!data) {
+                  list.innerHTML =
+                    '<div style="text-align:center; padding:20px; color:#64748b;">No data found yet.<br>Be the first to score!</div>';
+                  return;
+                }
 
-            if (currentTab === "month") {
-              // Aggregate monthly scores
-              const monthlyTotals = {};
-              const today = new Date();
-              const currentMonth = today.getMonth() + 1;
-              const currentYear = today.getFullYear();
+                let sorted;
 
-              Object.entries(data).forEach(([dateKey, dayScores]) => {
-                const [year, month] = dateKey.split("-").map(Number);
-                if (year === currentYear && month === currentMonth) {
-                  Object.entries(dayScores).forEach(([nick, score]) => {
-                    if (!monthlyTotals[nick]) {
-                      monthlyTotals[nick] = { cash: 0, wins: 0 };
+                if (currentTab === "month") {
+                  // Aggregate monthly scores
+                  const monthlyTotals = {};
+                  const today = new Date();
+                  const currentMonth = today.getMonth() + 1;
+                  const currentYear = today.getFullYear();
+
+                  Object.entries(data).forEach(([dateKey, dayScores]) => {
+                    const [year, month] = dateKey.split("-").map(Number);
+                    if (year === currentYear && month === currentMonth) {
+                      Object.entries(dayScores).forEach(([nick, score]) => {
+                        if (!monthlyTotals[nick]) {
+                          monthlyTotals[nick] = { cash: 0, wins: 0 };
+                        }
+                        monthlyTotals[nick].cash += score.cash;
+                        monthlyTotals[nick].wins++;
+                      });
                     }
-                    monthlyTotals[nick].cash += score.cash;
-                    monthlyTotals[nick].wins++;
+                  });
+
+                  sorted = Object.entries(monthlyTotals).sort(
+                    ([, a], [, b]) => b.cash - a.cash
+                  );
+                } else {
+                  sorted = Object.entries(data).sort(([, a], [, b]) => {
+                    if (currentTab === "daily" || currentTab === "yesterday") {
+                      if (b.cash !== a.cash) return b.cash - a.cash;
+                      return (a.time || 999999) - (b.time || 999999);
+                    } else if (currentTab === "efficiency") {
+                      const effA =
+                        (a.totalCash || 0) /
+                        Math.max(a.gamesPlayed || a.wins || 1, 1);
+                      const effB =
+                        (b.totalCash || 0) /
+                        Math.max(b.gamesPlayed || b.wins || 1, 1);
+                      return effB - effA;
+                    } else if (currentTab === "best") {
+                      return (
+                        (b.bestSingleHeist || 0) - (a.bestSingleHeist || 0)
+                      );
+                    } else {
+                      return (b.totalCash || 0) - (a.totalCash || 0);
+                    }
                   });
                 }
-              });
 
-              sorted = Object.entries(monthlyTotals).sort(
-                ([, a], [, b]) => b.cash - a.cash
-              );
-            } else {
-              sorted = Object.entries(data).sort(([, a], [, b]) => {
-                if (currentTab === "daily" || currentTab === "yesterday") {
-                  if (b.cash !== a.cash) return b.cash - a.cash;
-                  return (a.time || 999999) - (b.time || 999999);
-                } else if (currentTab === "efficiency") {
-                  const effA =
-                    (a.totalCash || 0) /
-                    Math.max(a.gamesPlayed || a.wins || 1, 1);
-                  const effB =
-                    (b.totalCash || 0) /
-                    Math.max(b.gamesPlayed || b.wins || 1, 1);
-                  return effB - effA;
-                } else if (currentTab === "best") {
-                  return (b.bestSingleHeist || 0) - (a.bestSingleHeist || 0);
-                } else {
-                  return (b.totalCash || 0) - (a.totalCash || 0);
-                }
-              });
-            }
-
-            renderList(sorted, currentTab);
-          },
-          (error) => {
-            clearTimeout(timeout);
-            console.error("Firebase Read Error:", error);
-            list.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Permission Denied.<br>Check Firebase Rules.</div>`;
+                // Pass weeklyBadges to renderList
+                renderList(sorted, currentTab, weeklyBadges);
+              },
+              (error) => {
+                clearTimeout(timeout);
+                console.error("Firebase Read Error:", error);
+                list.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Permission Denied.<br>Check Firebase Rules.</div>`;
+              }
+            );
           }
         );
       }
 
-      function renderList(data, type) {
+      function renderList(data, type, weeklyBadges = {}) {
         const list = document.getElementById("lb-list");
         list.innerHTML = "";
 
@@ -6106,26 +6117,37 @@
             scoreSub = `${stats.wins || 0} Wins`;
           }
 
+          // --- NEW: Weekly Badges Logic ---
           let badgeHTML = "";
-          if (type === "daily" && index === 0)
-            badgeHTML += '<span class="badge">🥇</span>';
-          if (type === "daily" && index === 1)
-            badgeHTML += '<span class="badge">🥈</span>';
-          if (type === "daily" && index === 2)
-            badgeHTML += '<span class="badge">🥉</span>';
+
+          // Check if this user (nick) has any specific weekly badge
+          if (weeklyBadges.champion === nick) {
+            badgeHTML += `<span class="badge" title="Champion">🥇</span>`;
+          }
+          if (weeklyBadges.runnerUp === nick) {
+            badgeHTML += `<span class="badge" title="Runner Up">🥈</span>`;
+          }
+          if (weeklyBadges.bronze === nick) {
+            badgeHTML += `<span class="badge" title="Bronze">🥉</span>`;
+          }
+          if (weeklyBadges.speedKing === nick) {
+            badgeHTML += `<span class="badge" title="Speed King">⚡</span>`;
+          }
 
           const html = `
-      <div class="lb-row" style="${
-        isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
-      }">
-          <div class="lb-rank ${rankClass}">${index + 1}</div>
-          <div class="lb-user">${nick} ${badgeHTML} ${isMe ? "(You)" : ""}</div>
-          <div class="lb-score">
-              <div class="lb-score-main">${scoreMain}</div>
-              <div class="lb-score-sub">${scoreSub}</div>
-          </div>
-      </div>
-    `;
+            <div class="lb-row" style="${
+              isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
+            }">
+                <div class="lb-rank ${rankClass}">${index + 1}</div>
+                <div class="lb-user">${nick} ${badgeHTML} ${
+            isMe ? "(You)" : ""
+          }</div>
+                <div class="lb-score">
+                    <div class="lb-score-main">${scoreMain}</div>
+                    <div class="lb-score-sub">${scoreSub}</div>
+                </div>
+            </div>
+          `;
           list.insertAdjacentHTML("beforeend", html);
         });
       }
