@@ -1260,22 +1260,34 @@
 
       .badge-tooltip {
         position: fixed;
-        background: rgba(15, 23, 42, 0.95);
+        background: rgba(15, 23, 42, 0.98); /* Increased opacity */
         color: #fff;
-        padding: 8px 12px;
+        padding: 10px 14px; /* Slightly larger */
         border-radius: 6px;
-        font-size: 0.85rem;
+        font-size: 0.9rem; /* Slightly larger */
+        font-weight: 600; /* Added weight */
         z-index: 10000;
         pointer-events: none;
         opacity: 0;
         transition: opacity 0.2s;
-        border: 1px solid var(--safe-border);
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        border: 1px solid var(--color-correct); /* More visible border */
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
         white-space: nowrap;
       }
 
       .badge-tooltip.show {
         opacity: 1;
+      }
+
+      /* Add visual feedback for touchable badges */
+      .user-badge-item {
+        cursor: pointer;
+        transition: transform 0.1s;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      .user-badge-item:active {
+        transform: scale(0.95);
       }
 
       @media (max-width: 480px) {
@@ -5885,41 +5897,52 @@
           document.body.appendChild(tooltip);
         }
 
-        // 2. Global Dismiss Listener (Click only)
-        // We avoid touchstart/touchend here to prevent conflicts with scrolling
+        // 2. Global Dismiss Listener
         if (!window.tooltipDismissListenerAttached) {
           window.tooltipDismissListenerAttached = true;
+
+          // Dismiss on click anywhere
           document.addEventListener("click", (e) => {
             if (tooltip && !e.target.closest(".user-badge-item")) {
               tooltip.classList.remove("show");
             }
           });
+
+          // Dismiss on scroll
+          document.addEventListener(
+            "scroll",
+            () => {
+              if (tooltip) {
+                tooltip.classList.remove("show");
+              }
+            },
+            true
+          );
         }
 
         // 3. Add Handlers to Badges
         document.querySelectorAll(".user-badge-item").forEach((badge) => {
-          // Visual cue for Safari
-          badge.style.cursor = "pointer";
+          // Clear any existing listeners
+          const newBadge = badge.cloneNode(true);
+          badge.parentNode.replaceChild(newBadge, badge);
+
+          // Visual cue
+          newBadge.style.cursor = "pointer";
+          newBadge.style.webkitTapHighlightColor = "transparent";
 
           // The core logic to show the tooltip
           const showTooltip = (e) => {
-            // STOP propagation so the global "double-tap preventer" doesn't see this
             e.stopPropagation();
+            e.preventDefault();
 
-            // If this is a touch event, prevent the mouse emulation (click)
-            // so we don't trigger this function twice
-            if (e.type === "touchend") {
-              e.preventDefault();
-            }
-
-            const desc = badge.getAttribute("data-badge-desc");
+            const desc = newBadge.getAttribute("data-badge-desc");
 
             // Populate and Show
             tooltip.textContent = desc;
             tooltip.classList.add("show");
 
             // Positioning Logic
-            const rect = badge.getBoundingClientRect();
+            const rect = newBadge.getBoundingClientRect();
             const tooltipRect = tooltip.getBoundingClientRect();
             let left = rect.left + rect.width / 2 - tooltipRect.width / 2;
             let top = rect.top - tooltipRect.height - 8;
@@ -5936,21 +5959,21 @@
             tooltip.style.left = left + "px";
             tooltip.style.top = top + "px";
 
-            // Reset Auto-hide Timer
+            // Auto-hide after 3 seconds
             if (tooltip.dataset.timeoutId) {
               clearTimeout(parseInt(tooltip.dataset.timeoutId));
             }
             const timeoutId = setTimeout(() => {
               tooltip.classList.remove("show");
-            }, 2000);
+            }, 3000); // Increased from 2000
             tooltip.dataset.timeoutId = timeoutId;
           };
 
-          // 4. Bind listeners
-          // 'touchend' makes it responsive on iOS/Safari and bypasses issues
-          badge.addEventListener("touchend", showTooltip, { passive: false });
-          // 'click' handles desktop/mouse users
-          badge.addEventListener("click", showTooltip);
+          // Bind listeners (using the cloned element)
+          newBadge.addEventListener("touchend", showTooltip, {
+            passive: false,
+          });
+          newBadge.addEventListener("click", showTooltip);
         });
       }
 
@@ -6266,17 +6289,18 @@
           let badgeHTML = "";
 
           // Check if this user (nick) has any specific weekly badge
+          // Check if this user (nick) has any specific weekly badge
           if (weeklyBadges.champion === nick) {
-            badgeHTML += `<span class="badge" title="Champion">🥇</span>`;
+            badgeHTML += `<span class="badge" title="Champion - #1 This Week">🥇</span>`;
           }
           if (weeklyBadges.runnerUp === nick) {
-            badgeHTML += `<span class="badge" title="Runner Up">🥈</span>`;
+            badgeHTML += `<span class="badge" title="Runner Up - #2 This Week">🥈</span>`;
           }
           if (weeklyBadges.bronze === nick) {
-            badgeHTML += `<span class="badge" title="Bronze">🥉</span>`;
+            badgeHTML += `<span class="badge" title="Bronze - #3 This Week">🥉</span>`;
           }
           if (weeklyBadges.speedKing === nick) {
-            badgeHTML += `<span class="badge" title="Speed King">⚡</span>`;
+            badgeHTML += `<span class="badge" title="Speed King - Fastest Time This Week">⚡</span>`;
           }
 
           const html = `
