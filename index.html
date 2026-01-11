@@ -6381,26 +6381,39 @@
       }
 
       // Calculate and award weekly badges (call this every Sunday at midnight)
+      // Calculate and award weekly badges (call this every Sunday at midnight)
       async function calculateWeeklyBadges(crewId) {
         if (!db) return;
 
         const weekKey = getWeekKey();
-        const today = new Date();
-        const dateKey = `${today.getFullYear()}-${
-          today.getMonth() + 1
-        }-${today.getDate()}`;
 
         try {
-          // Get all scores for the crew this week
+          // Get all scores for the crew
           const scoresSnapshot = await db.ref(`scores/${crewId}`).once("value");
           const allScores = scoresSnapshot.val();
 
           if (!allScores) return;
 
-          // Aggregate weekly totals
+          // Calculate the start of the current week (Monday)
+          const now = new Date();
+          const currentDay = now.getDay();
+          const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1; // Sunday = 0, so 6 days back
+          const weekStart = new Date(now);
+          weekStart.setDate(now.getDate() - daysFromMonday);
+          weekStart.setHours(0, 0, 0, 0);
+
+          // Aggregate weekly totals (ONLY for current week)
           const weeklyTotals = {};
 
-          Object.entries(allScores).forEach(([date, dayScores]) => {
+          Object.entries(allScores).forEach(([dateKey, dayScores]) => {
+            // Parse the date key (format: "2025-1-13")
+            const [year, month, day] = dateKey.split("-").map(Number);
+            const scoreDate = new Date(year, month - 1, day);
+            scoreDate.setHours(0, 0, 0, 0);
+
+            // Skip if this date is before the week start
+            if (scoreDate < weekStart) return;
+
             Object.entries(dayScores).forEach(([nick, score]) => {
               if (!weeklyTotals[nick]) {
                 weeklyTotals[nick] = {
@@ -6439,7 +6452,10 @@
           // Save to Firebase
           await db.ref(`weeklyBadges/${weekKey}/${crewId}`).set(badges);
 
-          console.log(`Badges awarded for ${crewId}:`, badges);
+          console.log(
+            `Badges awarded for ${crewId} (Week ${weekKey}):`,
+            badges
+          );
         } catch (e) {
           console.error("Error calculating badges:", e);
         }
