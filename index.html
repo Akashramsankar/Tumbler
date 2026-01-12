@@ -2624,7 +2624,7 @@
               class="group-action-btn secondary"
               style="margin: 0; padding: 8px; font-size: 0.75rem"
             >
-              Buy Insurance<br /><span style="opacity: 0.8">$50,000</span>
+              Buy Insurance<br /><span style="opacity: 0.8">$20,000</span>
             </button>
             <button
               onclick="buyRecovery()"
@@ -2633,7 +2633,7 @@
               id="recovery-btn"
               disabled
             >
-              Buy Recovery<br /><span style="opacity: 0.8">$75,000</span>
+              Buy Recovery<br /><span style="opacity: 0.8">$30,000</span>
             </button>
           </div>
           <div
@@ -3175,7 +3175,7 @@
               margin-bottom: 15px;
             "
           >
-            Cost: $50,000
+            Cost: $20,000
           </div>
           <div
             style="
@@ -3259,7 +3259,7 @@
               margin-bottom: 15px;
             "
           >
-            Cost: $75,000
+            Cost: $30,000
           </div>
           <div
             style="
@@ -3329,8 +3329,8 @@
       // STREAK REWARDS
       const STREAK_MILESTONE = 25;
       const STREAK_BONUS_PER_MILESTONE = 1000;
-      const STREAK_PROTECTOR_COST = 50000;
-      const STREAK_RECOVERY_COST = 75000;
+      const STREAK_PROTECTOR_COST = 20000;
+      const STREAK_RECOVERY_COST = 30000;
 
       // ==================== SOUND EFFECTS ====================
       const audioContext = new (window.AudioContext ||
@@ -5200,7 +5200,7 @@
           } else {
             protectorBtn.disabled = false;
             protectorBtn.style.opacity = "1";
-            protectorBtn.innerHTML = `Buy Insurance<br><span style="opacity: 0.8;">$50,000</span>`;
+            protectorBtn.innerHTML = `Buy Insurance<br><span style="opacity: 0.8;">$20,000</span>`;
           }
         }
 
