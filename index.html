@@ -6385,6 +6385,17 @@
 
         const weekKey = getWeekKey();
 
+        // 1. Check if badges for this week already exist.
+        // If they do, STOP. Do not recalculate. This "freezes" them.
+        const badgeRef = db.ref(`weeklyBadges/${weekKey}/${crewId}`);
+        const badgeSnap = await badgeRef.once("value");
+
+        if (badgeSnap.exists()) {
+          console.log("Badges already locked in for this week.");
+          return;
+        }
+        // --- END ADDITION ---
+
         try {
           // Get all scores for the crew
           const scoresSnapshot = await db.ref(`scores/${crewId}`).once("value");
