@@ -3126,8 +3126,8 @@
             <button class="tab-btn" onclick="switchTab('best')">
               Best Heist
             </button>
-            <button class="tab-btn" onclick="switchTab('month')">
-              This Month
+            <button class="tab-btn" onclick="switchTab('week')">
+              This Week
             </button>
           </div>
 
@@ -6154,6 +6154,7 @@
         }, 5000);
 
         // Determine path based on tab
+        // Determine path based on tab
         let path;
         if (currentTab === "daily") {
           const today = new Date();
@@ -6166,8 +6167,8 @@
           path = `scores/${activeGroup}/${yesterday.getFullYear()}-${
             yesterday.getMonth() + 1
           }-${yesterday.getDate()}`;
-        } else if (currentTab === "month") {
-          path = `scores/${activeGroup}`;
+        } else if (currentTab === "week") {
+          path = `scores/${activeGroup}`; // ADD THIS - need all dates to aggregate
         } else {
           path = `career/${activeGroup}`;
         }
@@ -6194,27 +6195,43 @@
 
                 let sorted;
 
-                if (currentTab === "month") {
-                  // Aggregate monthly scores
-                  const monthlyTotals = {};
-                  const today = new Date();
-                  const currentMonth = today.getMonth() + 1;
-                  const currentYear = today.getFullYear();
+                if (currentTab === "week") {
+                  // Aggregate THIS WEEK's scores (Monday to Sunday)
+                  const weeklyTotals = {};
+                  const now = new Date();
+                  const currentDay = now.getDay();
+                  const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1;
+
+                  const weekStart = new Date(now);
+                  weekStart.setDate(now.getDate() - daysFromMonday);
+                  weekStart.setHours(0, 0, 0, 0);
 
                   Object.entries(data).forEach(([dateKey, dayScores]) => {
-                    const [year, month] = dateKey.split("-").map(Number);
-                    if (year === currentYear && month === currentMonth) {
+                    const [year, month, day] = dateKey.split("-").map(Number);
+                    const scoreDate = new Date(year, month - 1, day);
+                    scoreDate.setHours(0, 0, 0, 0);
+
+                    // Only include scores from this week (Monday onwards)
+                    if (scoreDate >= weekStart && scoreDate <= now) {
                       Object.entries(dayScores).forEach(([nick, score]) => {
-                        if (!monthlyTotals[nick]) {
-                          monthlyTotals[nick] = { cash: 0, wins: 0 };
+                        if (!weeklyTotals[nick]) {
+                          weeklyTotals[nick] = {
+                            cash: 0,
+                            wins: 0,
+                            bestTime: 999999,
+                          };
                         }
-                        monthlyTotals[nick].cash += score.cash;
-                        monthlyTotals[nick].wins++;
+                        weeklyTotals[nick].cash += score.cash;
+                        weeklyTotals[nick].wins++;
+                        weeklyTotals[nick].bestTime = Math.min(
+                          weeklyTotals[nick].bestTime,
+                          score.time || 999999
+                        );
                       });
                     }
                   });
 
-                  sorted = Object.entries(monthlyTotals).sort(
+                  sorted = Object.entries(weeklyTotals).sort(
                     ([, a], [, b]) => b.cash - a.cash
                   );
                 } else {
@@ -6240,6 +6257,26 @@
                   });
                 }
 
+                // Add info header for weekly tab
+                if (currentTab === "week") {
+                  list.innerHTML = `
+    <div style="background: var(--safe-inset); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--safe-border);">
+      <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700; margin-bottom: 8px; text-align: center;">
+        ðŸ† Weekly Badge Race
+      </div>
+      <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.4; text-align: center;">
+        Top 3 by total cash earn badges on Monday reset<br>
+        <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King</span>
+      </div>
+      <div style="text-align: center; margin-top: 8px; font-size: 0.75rem; color: var(--color-close);">
+        â° ${getTimeUntilMonday()}
+      </div>
+    </div>
+  `;
+                }
+
+                renderList(sorted, currentTab, weeklyBadges);
+
                 // Pass weeklyBadges to renderList
                 renderList(sorted, currentTab, weeklyBadges);
               },
@@ -6260,6 +6297,26 @@
         data.forEach(([nick, stats], index) => {
           const isMe = nick === userNick;
           const rankClass = index < 3 ? `top-${index + 1}` : "";
+          // Show provisional badge positions for "This Week" tab
+          let provisionalBadge = "";
+          if (type === "week") {
+            if (index === 0) {
+              provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Champion badge">🥇</span>`;
+            } else if (index === 1) {
+              provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Runner Up badge">🥈</span>`;
+            } else if (index === 2) {
+              provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Bronze badge">🥉</span>`;
+            }
+
+            // Speed King indicator (check if this person has best time)
+            if (stats.bestTime && stats.bestTime < 999999) {
+              const allTimes = data.map(([, s]) => s.bestTime || 999999);
+              const fastestTime = Math.min(...allTimes);
+              if (stats.bestTime === fastestTime) {
+                provisionalBadge += `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Speed King badge">⚡</span>`;
+              }
+            }
+          }
 
           let scoreMain, scoreSub;
 
@@ -6277,9 +6334,9 @@
           } else if (type === "best") {
             scoreMain = `$${(stats.bestSingleHeist || 0).toLocaleString()}`;
             scoreSub = `Best single heist`;
-          } else if (type === "month") {
+          } else if (type === "week") {
             scoreMain = `$${stats.cash.toLocaleString()}`;
-            scoreSub = `${stats.wins} wins this month`;
+            scoreSub = `${stats.wins} wins this week`;
           } else {
             scoreMain = `$${(stats.totalCash || 0).toLocaleString()}`;
             scoreSub = `${stats.wins || 0} Wins`;
@@ -6308,7 +6365,7 @@
               isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
             }">
                 <div class="lb-rank ${rankClass}">${index + 1}</div>
-                <div class="lb-user">${nick} ${badgeHTML} ${
+                <div class="lb-user">${nick} ${badgeHTML}${provisionalBadge} ${
             isMe ? "(You)" : ""
           }</div>
                 <div class="lb-score">
