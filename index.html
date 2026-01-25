@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -282,7 +282,9 @@
         /* Glass/Metal Heist Look */
         background: linear-gradient(160deg, #1e293b 0%, #0f172a 100%);
         border: 1px solid rgba(255, 255, 255, 0.1);
-        box-shadow: 0 0 0 1px #0f172a, 0 20px 50px rgba(0, 0, 0, 0.9);
+        box-shadow:
+          0 0 0 1px #0f172a,
+          0 20px 50px rgba(0, 0, 0, 0.9);
         padding: 24px;
         max-width: 420px;
         width: 90%;
@@ -403,7 +405,9 @@
         text-transform: uppercase;
         cursor: pointer;
         /* 3D Key Effect */
-        box-shadow: 0 4px 0 #538d4e, 0 5px 10px rgba(0, 0, 0, 0.3);
+        box-shadow:
+          0 4px 0 #538d4e,
+          0 5px 10px rgba(0, 0, 0, 0.3);
         transition: all 0.1s ease;
         width: 100%;
         margin-top: auto;
@@ -632,8 +636,10 @@
         padding: 20px;
         background: var(--safe-body);
         border-radius: 16px;
-        box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.1),
-          0 20px 40px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--safe-border);
+        box-shadow:
+          inset 0 1px 1px rgba(255, 255, 255, 0.1),
+          0 20px 40px rgba(0, 0, 0, 0.5),
+          0 0 0 1px var(--safe-border);
         display: flex;
         flex-direction: column;
         gap: 10px;
@@ -687,7 +693,8 @@
         width: 58px;
         height: 58px;
         border-radius: 50%;
-        background: repeating-conic-gradient(
+        background:
+          repeating-conic-gradient(
             from 0deg,
             #334155 0deg 3.46deg,
             transparent 3.46deg 6.92deg
@@ -796,8 +803,10 @@
 
       /* --- FEEDBACK STATES --- */
       .tile.evaluated {
-        transition: transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
-          background 0.3s, border-color 0.3s;
+        transition:
+          transform 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+          background 0.3s,
+          border-color 0.3s;
       }
 
       /* CORRECT (Green) */
@@ -883,7 +892,10 @@
         box-shadow: 0 3px 0 #0f172a;
         position: relative;
         font-size: 1rem;
-        transition: opacity 0.1s, transform 0.1s, background-color 0.3s;
+        transition:
+          opacity 0.1s,
+          transform 0.1s,
+          background-color 0.3s;
         touch-action: manipulation;
         -webkit-tap-highlight-color: transparent;
       }
@@ -2199,12 +2211,16 @@
       @keyframes glow-pulse {
         0%,
         100% {
-          box-shadow: 0 0 20px rgba(106, 170, 100, 0.6),
-            0 0 40px rgba(106, 170, 100, 0.4), 0 0 60px rgba(106, 170, 100, 0.2);
+          box-shadow:
+            0 0 20px rgba(106, 170, 100, 0.6),
+            0 0 40px rgba(106, 170, 100, 0.4),
+            0 0 60px rgba(106, 170, 100, 0.2);
         }
         50% {
-          box-shadow: 0 0 30px rgba(106, 170, 100, 0.8),
-            0 0 60px rgba(106, 170, 100, 0.6), 0 0 90px rgba(106, 170, 100, 0.4);
+          box-shadow:
+            0 0 30px rgba(106, 170, 100, 0.8),
+            0 0 60px rgba(106, 170, 100, 0.6),
+            0 0 90px rgba(106, 170, 100, 0.4);
         }
       }
 
@@ -2691,7 +2707,7 @@
               "
             >
               <span>💰 Base Vault:</span>
-              <span style="font-weight: 700">$10,000</span>
+              <span style="font-weight: 700" id="win-base-vault">$10,000</span>
             </div>
 
             <div
@@ -3333,8 +3349,9 @@
       const STREAK_RECOVERY_COST = 30000;
 
       // ==================== SOUND EFFECTS ====================
-      const audioContext = new (window.AudioContext ||
-        window.webkitAudioContext)();
+      const audioContext = new (
+        window.AudioContext || window.webkitAudioContext
+      )();
       let isMuted = localStorage.getItem("tumblerMuted") === "true";
 
       function playSound(type) {
@@ -3402,7 +3419,7 @@
               gain.gain.setValueAtTime(0.3, now + i * 0.15);
               gain.gain.exponentialRampToValueAtTime(
                 0.01,
-                now + i * 0.15 + 0.4
+                now + i * 0.15 + 0.4,
               );
               osc.start(now + i * 0.15);
               osc.stop(now + i * 0.15 + 0.4);
@@ -3538,7 +3555,7 @@
 
         if (timeSinceLastPurchase < oneMonth) {
           const daysRemaining = Math.ceil(
-            (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000)
+            (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000),
           );
           showMessage(`❌ Available in ${daysRemaining} days!`);
           playSound("error");
@@ -3644,7 +3661,7 @@
       // Load stats from localStorage, including NEW: totalCash
       let stats = JSON.parse(
         localStorage.getItem("tumblerStats") ||
-          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "gameplayCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0, "bestSingleHeist": 0}'
+          '{"played":0,"won":0,"archiveWon":0,"currentStreak":0,"maxStreak":0,"guessDistribution":[0,0,0,0,0,0], "totalCash": 0, "gameplayCash": 0, "streakProtectors": 0, "lastStreakMilestone": 0, "lastProtectorPurchase": 0, "bestSingleHeist": 0}',
       );
 
       // Ensure new properties exist
@@ -3739,7 +3756,7 @@
           // Easing function for smooth deceleration
           const easeOutQuart = 1 - Math.pow(1 - progress, 4);
           const currentValue = Math.floor(
-            startValue + (targetValue - startValue) * easeOutQuart
+            startValue + (targetValue - startValue) * easeOutQuart,
           );
 
           element.textContent = `$${formatter.format(currentValue)}`;
@@ -3801,7 +3818,7 @@
             if (oldName) {
               try {
                 const oldScoreRef = db.ref(
-                  `scores/${group}/${dateKey}/${oldName}`
+                  `scores/${group}/${dateKey}/${oldName}`,
                 );
                 const snapshot = await oldScoreRef.once("value");
                 if (snapshot.exists()) {
@@ -3915,7 +3932,7 @@
 
           timerElement.textContent = `${String(minutes).padStart(
             2,
-            "0"
+            "0",
           )}:${String(seconds).padStart(2, "0")}`;
 
           // Visual feedback based on time
@@ -3944,7 +3961,7 @@
         const currentMidnight = new Date(dateObj).setHours(0, 0, 0, 0);
         const launchMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
         const daysPassed = Math.floor(
-          (currentMidnight - launchMidnight) / msPerDay
+          (currentMidnight - launchMidnight) / msPerDay,
         );
         return daysPassed + 1;
       }
@@ -4001,10 +4018,10 @@
                 status: tile.classList.contains("correct")
                   ? "correct"
                   : tile.classList.contains("close")
-                  ? "close"
-                  : tile.classList.contains("far")
-                  ? "far"
-                  : "",
+                    ? "close"
+                    : tile.classList.contains("far")
+                      ? "far"
+                      : "",
               });
             }
           }
@@ -4022,7 +4039,7 @@
         };
         localStorage.setItem(
           getStorageKey(currentPlayDate),
-          JSON.stringify(gameData)
+          JSON.stringify(gameData),
         );
       }
 
@@ -4046,14 +4063,14 @@
 
         sessionStorage.setItem(
           getActiveSessionKey(currentPlayDate),
-          JSON.stringify(gameState)
+          JSON.stringify(gameState),
         );
       }
 
       function restoreGameState() {
         // CHANGE: Look for specific key based on date
         const saved = sessionStorage.getItem(
-          getActiveSessionKey(currentPlayDate)
+          getActiveSessionKey(currentPlayDate),
         );
 
         if (!saved) return false;
@@ -4112,8 +4129,8 @@
                         ? "▲▲"
                         : "▼▼"
                       : diff > 0
-                      ? "▲"
-                      : "▼";
+                        ? "▲"
+                        : "▼";
 
                   tile.classList.add(distClass, rotateClass);
                   tile.querySelector(".indicator").innerHTML = symbol;
@@ -4127,7 +4144,7 @@
         if (intelUsed) {
           const targetSum = TARGET_WORD.split("").reduce(
             (sum, char) => sum + (char.charCodeAt(0) - 64),
-            0
+            0,
           );
           document.getElementById("intel-panel").style.display = "block";
           document.getElementById("code-sum-value").textContent = targetSum;
@@ -4183,7 +4200,7 @@
           gameData.grid.forEach((row, rowIndex) => {
             row.forEach((tileData, colIndex) => {
               const tile = document.getElementById(
-                `row-${rowIndex}-tile-${colIndex}`
+                `row-${rowIndex}-tile-${colIndex}`,
               );
 
               if (tile && tileData.letter) {
@@ -4257,7 +4274,7 @@
           intelPanel.style.display = "block";
           const targetSum = TARGET_WORD.split("").reduce(
             (sum, char) => sum + (char.charCodeAt(0) - 64),
-            0
+            0,
           );
           document.getElementById("code-sum-value").textContent = targetSum;
 
@@ -4277,7 +4294,7 @@
           showWinModal(
             gameData.attempts,
             gameData.cashWon,
-            gameData.solveTime || 0
+            gameData.solveTime || 0,
           );
         }, 1500);
       }
@@ -4287,7 +4304,7 @@
       function showCountdownMessage(gameData) {
         const puzzleNum = getPuzzleNumber();
         const cashString = new Intl.NumberFormat("en-US").format(
-          gameData.cashWon
+          gameData.cashWon,
         );
 
         // Calculate time until next puzzle
@@ -4299,7 +4316,7 @@
 
         const hours = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
         const minutes = Math.floor(
-          (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+          (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60),
         );
         const seconds = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
 
@@ -4318,8 +4335,8 @@
                       <div class="countdown-label" style="margin-top: 15px;">Next Heist Available In</div>
                       <div class="countdown-timer" id="live-countdown">
                         ${String(hours).padStart(2, "0")}:${String(
-          minutes
-        ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}
+                          minutes,
+                        ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}
                       </div>
                       <div class="streak-badge">
                         🔥 ${stats.currentStreak} Day Streak
@@ -4341,14 +4358,14 @@
 
           const h = Math.floor(msUntilTomorrow / (1000 * 60 * 60));
           const m = Math.floor(
-            (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60)
+            (msUntilTomorrow % (1000 * 60 * 60)) / (1000 * 60),
           );
           const s = Math.floor((msUntilTomorrow % (1000 * 60)) / 1000);
 
           const countdownEl = document.getElementById("live-countdown");
           if (countdownEl) {
             countdownEl.textContent = `${String(h).padStart(2, "0")}:${String(
-              m
+              m,
             ).padStart(2, "0")}:${String(s).padStart(2, "0")}`;
           }
         }, 1000);
@@ -4362,7 +4379,7 @@
 
         let shareText = `Tumbler #${puzzleNum} 🔓\n`;
         shareText += `💰 Stole: $${new Intl.NumberFormat("en-US").format(
-          safeCashWon
+          safeCashWon,
         )}\n`;
 
         // ADD THESE LINES
@@ -4374,7 +4391,7 @@
 
         shareText += `🔥 Streak: ${stats.currentStreak} days\n`;
         shareText += `💼 Total Stash: $${new Intl.NumberFormat("en-US").format(
-          totalCash
+          totalCash,
         )}\n\n`;
 
         // Generate grid with simple arrows and locks
@@ -4417,7 +4434,7 @@
 
         const shareText = generateShareText(
           gameData.attempts,
-          gameData.cashWon
+          gameData.cashWon,
         );
 
         // Check if Web Share API is available AND if sharing text is supported
@@ -4676,7 +4693,7 @@
         if (!className && content.length === 1) {
           button.setAttribute(
             "data-value",
-            content.charCodeAt(0) - ASCII_A + 1
+            content.charCodeAt(0) - ASCII_A + 1,
           );
         }
         return button;
@@ -4819,7 +4836,7 @@
 
         guesses[currentRow][currentTile] = letter;
         const tile = document.getElementById(
-          `row-${currentRow}-tile-${currentTile}`
+          `row-${currentRow}-tile-${currentTile}`,
         );
 
         if (!tile) return;
@@ -4840,7 +4857,7 @@
           currentTile--;
           guesses[currentRow][currentTile] = "";
           const tile = document.getElementById(
-            `row-${currentRow}-tile-${currentTile}`
+            `row-${currentRow}-tile-${currentTile}`,
           );
           tile.querySelector(".letter").textContent = "";
           tile.removeAttribute("data-status");
@@ -4958,140 +4975,146 @@
           }, i * 200);
         }
 
-        setTimeout(() => {
-          if (correctCount === WORD_LENGTH) {
-            isGameOver = true;
-            document
-              .querySelector(".row.evaluating")
-              ?.classList.remove("evaluating");
-            playSound("win");
-            stopTimer();
-            const solveTime = Math.floor((Date.now() - startTime) / 1000);
-            const cashWon = calculateCash(currentRow + 1, solveTime);
+        setTimeout(
+          () => {
+            if (correctCount === WORD_LENGTH) {
+              isGameOver = true;
+              document
+                .querySelector(".row.evaluating")
+                ?.classList.remove("evaluating");
+              playSound("win");
+              stopTimer();
+              const solveTime = Math.floor((Date.now() - startTime) / 1000);
+              const cashWon = calculateCash(currentRow + 1, solveTime);
 
-            // Update Stats
-            const isToday =
-              new Date().setHours(0, 0, 0, 0) ===
-              currentPlayDate.setHours(0, 0, 0, 0);
-            if (isToday) {
-              stats.played++;
-              stats.won++;
-              if (wasYesterdayPlayed()) {
-                stats.currentStreak++;
-              } else {
-                if (stats.streakProtectors > 0) {
-                  stats.streakProtectors--;
-                  stats.currentStreak++;
-                  showMessage("🛡️ Streak Protector Used!");
-                } else {
-                  stats.currentStreak = 1;
-                }
-              }
-
-              // Check for milestone bonus
-              const milestoneBonus = awardStreakBonus();
-              if (milestoneBonus > 0) {
-                setTimeout(() => {
-                  showMessage(
-                    `🎉 ${
-                      stats.currentStreak
-                    } DAY MILESTONE! +$${milestoneBonus.toLocaleString()} BONUS!`
-                  );
-                }, 2000);
-              }
-            } else {
-              // Archive games: still count wins and cash, but don't affect streak or played count
-              stats.archiveWon++;
-            }
-            stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
-            stats.guessDistribution[currentRow]++;
-            sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
-            stats.totalCash += cashWon;
-            stats.gameplayCash += cashWon; // Track gameplay cash separately
-            stats.bestSingleHeist = Math.max(
-              stats.bestSingleHeist || 0,
-              cashWon
-            );
-            saveTodayGame(currentRow + 1, cashWon, solveTime);
-            localStorage.setItem("tumblerStats", JSON.stringify(stats));
-
-            if (window.submitScoreToFirebase) {
-              window.submitScoreToFirebase(
-                currentRow + 1,
-                cashWon,
-                solveTime,
-                intelUsed
-              );
-            }
-
-            if (isToday && db && userGroups.length > 0) {
-              userGroups.forEach((group) => {
-                calculateWeeklyBadges(group);
-              });
-            }
-
-            // ===== ENHANCED WIN ANIMATION =====
-            const currentRowEl = document.getElementById(`row-${currentRow}`);
-
-            // Screen flash
-            createScreenFlash();
-
-            // Pulsing glow on winning row
-            currentRowEl.classList.add("win-glow");
-            currentRowEl.style.borderColor = "#6aaa64";
-            currentRowEl.style.transition = "all 0.3s ease";
-            // Animate each tile with stagger
-            for (let i = 0; i < WORD_LENGTH; i++) {
-              const tile = document.getElementById(
-                `row-${currentRow}-tile-${i}`
-              );
-              setTimeout(() => {
-                tile.style.transform = "rotate(720deg) scale(1.2)";
-                tile.style.boxShadow = "0 0 20px rgba(106, 170, 100, 0.8)";
-              }, i * 100);
-            }
-
-            // Start confetti and cash rain
-            setTimeout(() => {
-              createConfetti();
-              createCashRain();
-            }, 400);
-
-            // Show win modal with animated counter
-            setTimeout(() => {
-              showWinModal(currentRow + 1, cashWon, solveTime);
-            }, WORD_LENGTH * 200 + 800);
-          } else {
-            document
-              .querySelector(".row.evaluating")
-              ?.classList.remove("evaluating");
-
-            if (currentRow < MAX_TRIES - 1) {
-              currentRow++;
-              currentTile = 0;
-              saveCurrentGameState();
-              updateActiveRow();
-              updateKeyboardVisuals();
-            } else {
+              // Update Stats
               const isToday =
                 new Date().setHours(0, 0, 0, 0) ===
                 currentPlayDate.setHours(0, 0, 0, 0);
               if (isToday) {
                 stats.played++;
-                stats.currentStreak = 0;
+                stats.won++;
+                if (wasYesterdayPlayed()) {
+                  stats.currentStreak++;
+                } else {
+                  if (stats.streakProtectors > 0) {
+                    stats.streakProtectors--;
+                    stats.currentStreak++;
+                    showMessage("🛡️ Streak Protector Used!");
+                  } else {
+                    stats.currentStreak = 1;
+                  }
+                }
+
+                // Check for milestone bonus
+                const milestoneBonus = awardStreakBonus();
+                if (milestoneBonus > 0) {
+                  setTimeout(() => {
+                    showMessage(
+                      `🎉 ${
+                        stats.currentStreak
+                      } DAY MILESTONE! +$${milestoneBonus.toLocaleString()} BONUS!`,
+                    );
+                  }, 2000);
+                }
+              } else {
+                // Archive games: still count wins and cash, but don't affect streak or played count
+                stats.archiveWon++;
               }
-              stopTimer();
+              stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
+              stats.guessDistribution[currentRow]++;
+              sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
+              stats.totalCash += cashWon;
+              stats.gameplayCash += cashWon; // Track gameplay cash separately
+              stats.bestSingleHeist = Math.max(
+                stats.bestSingleHeist || 0,
+                cashWon,
+              );
+              saveTodayGame(currentRow + 1, cashWon, solveTime);
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
-              // ADD THIS LINE BELOW:
-              saveTodayGame(MAX_TRIES, 0, 0);
+              if (window.submitScoreToFirebase) {
+                window.submitScoreToFirebase(
+                  currentRow + 1,
+                  cashWon,
+                  solveTime,
+                  intelUsed,
+                );
+              }
 
-              showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
-              sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
-              isGameOver = true;
+              if (isToday && db && userGroups.length > 0) {
+                userGroups.forEach((group) => {
+                  calculateWeeklyBadges(group);
+                });
+              }
+
+              // ===== ENHANCED WIN ANIMATION =====
+              const currentRowEl = document.getElementById(`row-${currentRow}`);
+
+              // Screen flash
+              createScreenFlash();
+
+              // Pulsing glow on winning row
+              currentRowEl.classList.add("win-glow");
+              currentRowEl.style.borderColor = "#6aaa64";
+              currentRowEl.style.transition = "all 0.3s ease";
+              // Animate each tile with stagger
+              for (let i = 0; i < WORD_LENGTH; i++) {
+                const tile = document.getElementById(
+                  `row-${currentRow}-tile-${i}`,
+                );
+                setTimeout(() => {
+                  tile.style.transform = "rotate(720deg) scale(1.2)";
+                  tile.style.boxShadow = "0 0 20px rgba(106, 170, 100, 0.8)";
+                }, i * 100);
+              }
+
+              // Start confetti and cash rain
+              setTimeout(() => {
+                createConfetti();
+                createCashRain();
+              }, 400);
+
+              // Show win modal with animated counter
+              setTimeout(
+                () => {
+                  showWinModal(currentRow + 1, cashWon, solveTime);
+                },
+                WORD_LENGTH * 200 + 800,
+              );
+            } else {
+              document
+                .querySelector(".row.evaluating")
+                ?.classList.remove("evaluating");
+
+              if (currentRow < MAX_TRIES - 1) {
+                currentRow++;
+                currentTile = 0;
+                saveCurrentGameState();
+                updateActiveRow();
+                updateKeyboardVisuals();
+              } else {
+                const isToday =
+                  new Date().setHours(0, 0, 0, 0) ===
+                  currentPlayDate.setHours(0, 0, 0, 0);
+                if (isToday) {
+                  stats.played++;
+                  stats.currentStreak = 0;
+                }
+                stopTimer();
+                localStorage.setItem("tumblerStats", JSON.stringify(stats));
+
+                // ADD THIS LINE BELOW:
+                saveTodayGame(MAX_TRIES, 0, 0);
+
+                showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
+                sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
+                isGameOver = true;
+              }
             }
-          }
-        }, WORD_LENGTH * 200 + 300);
+          },
+          WORD_LENGTH * 200 + 300,
+        );
       }
 
       function handleKeydown(e) {
@@ -5162,12 +5185,11 @@
         // Format cash for display
         const safeTotalCash = stats.totalCash || 0;
         const totalCashString = new Intl.NumberFormat("en-US").format(
-          safeTotalCash
+          safeTotalCash,
         );
 
-        document.getElementById(
-          "stat-total-cash"
-        ).textContent = `$${totalCashString}`;
+        document.getElementById("stat-total-cash").textContent =
+          `$${totalCashString}`;
         document.getElementById("stat-played").textContent = stats.played;
         document.getElementById("stat-winrate").textContent =
           stats.played > 0
@@ -5192,7 +5214,7 @@
 
           if (timeSinceLastPurchase < oneMonth) {
             const daysRemaining = Math.ceil(
-              (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000)
+              (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000),
             );
             protectorBtn.disabled = true;
             protectorBtn.style.opacity = "0.5";
@@ -5238,17 +5260,25 @@
         }
 
         // Calculate breakdown components
-        const penalties = attempts * CASH_ATTEMPT_PENALTY;
-        const timeBonus =
+        let baseVault = CASH_BASE_VALUE;
+        let penalties = attempts * CASH_ATTEMPT_PENALTY;
+        let timeBonus =
           Math.max(0, CASH_SPEED_BONUS_CAP - solveTime) * CASH_PER_SECOND_BONUS;
 
+        // Apply 10% multiplier for archive games
+        if (!isToday) {
+          baseVault = Math.floor(baseVault * 0.1);
+          penalties = Math.floor(penalties * 0.1);
+          timeBonus = Math.floor(timeBonus * 0.1);
+        }
+
         // Update breakdown display
-        document.getElementById(
-          "win-penalties"
-        ).textContent = `-$${penalties.toLocaleString()}`;
-        document.getElementById(
-          "win-speed-bonus"
-        ).textContent = `+$${timeBonus.toLocaleString()}`;
+        document.getElementById("win-base-vault").textContent =
+          `$${baseVault.toLocaleString()}`;
+        document.getElementById("win-penalties").textContent =
+          `-$${penalties.toLocaleString()}`;
+        document.getElementById("win-speed-bonus").textContent =
+          `+$${timeBonus.toLocaleString()}`;
 
         // Show/hide intel cost row
         const intelRow = document.getElementById("intel-cost-row");
@@ -5270,11 +5300,8 @@
 
         // Animate total stash too
         animateCountUp("win-total-cash", safeTotalCash, 2000);
-        document.getElementById(
-          "win-total-cash"
-        ).textContent = `$${new Intl.NumberFormat("en-US").format(
-          stats.totalCash
-        )}`;
+        document.getElementById("win-total-cash").textContent =
+          `$${new Intl.NumberFormat("en-US").format(stats.totalCash)}`;
 
         // Show milestone achievement
         const { isAtMilestone, currentStreak } = checkStreakMilestone();
@@ -5282,7 +5309,7 @@
           const bonus = currentStreak * STREAK_BONUS_PER_MILESTONE;
 
           const stashDisplay = document.querySelector(
-            "#win-modal .stash-display"
+            "#win-modal .stash-display",
           );
           const milestoneDiv = document.createElement("div");
 
@@ -5315,7 +5342,7 @@
 
           stashDisplay.parentNode.insertBefore(
             milestoneDiv,
-            stashDisplay.nextSibling
+            stashDisplay.nextSibling,
           );
         }
 
@@ -5567,9 +5594,8 @@
         const dropdown = document.getElementById("crew-dropdown");
         activeGroup = dropdown.value;
         localStorage.setItem("tumblerActiveGroup", activeGroup);
-        document.getElementById(
-          "display-group-name"
-        ).textContent = `Crew: ${activeGroup}`;
+        document.getElementById("display-group-name").textContent =
+          `Crew: ${activeGroup}`;
 
         // Reload the leaderboard with new crew data
         loadLeaderboardData();
@@ -5612,7 +5638,7 @@
 
         // Remove any existing countdown containers
         const existingCountdown = document.getElementById(
-          "countdown-container"
+          "countdown-container",
         );
         if (existingCountdown) existingCountdown.remove();
 
@@ -5666,16 +5692,12 @@
         const modal = document.getElementById("ready-modal");
         const puzzleNum = getPuzzleNumber(currentPlayDate);
 
-        document.getElementById(
-          "ready-puzzle-number"
-        ).textContent = `TUMBLER #${puzzleNum}`;
+        document.getElementById("ready-puzzle-number").textContent =
+          `TUMBLER #${puzzleNum}`;
         document.getElementById("ready-streak").textContent =
           stats.currentStreak;
-        document.getElementById(
-          "ready-cash"
-        ).textContent = `$${new Intl.NumberFormat("en-US").format(
-          stats.totalCash || 0
-        )}`;
+        document.getElementById("ready-cash").textContent =
+          `$${new Intl.NumberFormat("en-US").format(stats.totalCash || 0)}`;
 
         modal.style.display = "flex";
       }
@@ -5764,7 +5786,7 @@
       // --- 2. STATE ---
       let userNick = localStorage.getItem("tumblerNick") || "";
       let userGroups = JSON.parse(
-        localStorage.getItem("tumblerGroups") || "[]"
+        localStorage.getItem("tumblerGroups") || "[]",
       ); // Array of crew IDs
       let activeGroup = localStorage.getItem("tumblerActiveGroup") || ""; // Currently viewing crew
       let hasSeenCrewIntro =
@@ -5793,7 +5815,7 @@
         const diff = nextMonday - now;
         const days = Math.floor(diff / (1000 * 60 * 60 * 24));
         const hours = Math.floor(
-          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60)
+          (diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60),
         );
 
         if (days > 0) return `${days}d ${hours}h until reset`;
@@ -5872,7 +5894,7 @@
       <span class="user-badge-icon">${badge.icon}</span>
       <span class="user-badge-name">${badge.name}</span>
     </div>
-  `
+  `,
           )
           .join("");
 
@@ -5916,7 +5938,7 @@
                 tooltip.classList.remove("show");
               }
             },
-            true
+            true,
           );
         }
 
@@ -6104,9 +6126,8 @@
         document.getElementById("user-info-card").style.display = "block";
         document.getElementById("user-name-display").textContent = userNick;
         document.getElementById("name-edit-panel").style.display = "none";
-        document.getElementById(
-          "display-group-name"
-        ).textContent = `Crew: ${activeGroup}`;
+        document.getElementById("display-group-name").textContent =
+          `Crew: ${activeGroup}`;
         document.getElementById("player-nick").value = userNick;
         document.getElementById("group-id").value = activeGroup;
         loadLeaderboardData();
@@ -6125,7 +6146,7 @@
               (g) =>
                 `<option value="${g}" ${
                   g === activeGroup ? "selected" : ""
-                }>${g}</option>`
+                }>${g}</option>`,
             )
             .join("");
         } else {
@@ -6225,14 +6246,14 @@
                         weeklyTotals[nick].wins++;
                         weeklyTotals[nick].bestTime = Math.min(
                           weeklyTotals[nick].bestTime,
-                          score.time || 999999
+                          score.time || 999999,
                         );
                       });
                     }
                   });
 
                   sorted = Object.entries(weeklyTotals).sort(
-                    ([, a], [, b]) => b.cash - a.cash
+                    ([, a], [, b]) => b.cash - a.cash,
                   );
                 } else {
                   sorted = Object.entries(data).sort(([, a], [, b]) => {
@@ -6284,9 +6305,9 @@
                 clearTimeout(timeout);
                 console.error("Firebase Read Error:", error);
                 list.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Permission Denied.<br>Check Firebase Rules.</div>`;
-              }
+              },
             );
-          }
+          },
         );
       }
 
@@ -6366,8 +6387,8 @@
             }">
                 <div class="lb-rank ${rankClass}">${index + 1}</div>
                 <div class="lb-user">${nick} ${badgeHTML}${provisionalBadge} ${
-            isMe ? "(You)" : ""
-          }</div>
+                  isMe ? "(You)" : ""
+                }</div>
                 <div class="lb-score">
                     <div class="lb-score-main">${scoreMain}</div>
                     <div class="lb-score-sub">${scoreSub}</div>
@@ -6415,17 +6436,17 @@
             careerRef.update({
               totalCash: Math.max(
                 existingData.totalCash || 0,
-                currentStats.totalCash || 0
+                currentStats.totalCash || 0,
               ),
               wins: Math.max(existingData.wins || 0, currentStats.won || 0),
               gamesPlayed: Math.max(
                 existingData.gamesPlayed || 0,
-                currentStats.played || 0
+                currentStats.played || 0,
               ),
               bestSingleHeist: Math.max(
                 existingData.bestSingleHeist || 0,
                 currentStats.bestSingleHeist || 0,
-                isToday ? cash : 0
+                isToday ? cash : 0,
               ),
               lastPlayed: Date.now(),
             });
@@ -6498,7 +6519,7 @@
               weeklyTotals[nick].totalCash += score.cash;
               weeklyTotals[nick].bestTime = Math.min(
                 weeklyTotals[nick].bestTime,
-                score.time
+                score.time,
               );
               weeklyTotals[nick].plays++;
             });
@@ -6506,12 +6527,12 @@
 
           // Sort by total cash
           const sorted = Object.entries(weeklyTotals).sort(
-            ([, a], [, b]) => b.totalCash - a.totalCash
+            ([, a], [, b]) => b.totalCash - a.totalCash,
           );
 
           // Find speed king
           const speedKing = Object.entries(weeklyTotals).sort(
-            ([, a], [, b]) => a.bestTime - b.bestTime
+            ([, a], [, b]) => a.bestTime - b.bestTime,
           )[0];
 
           // Award badges
@@ -6527,7 +6548,7 @@
 
           console.log(
             `Badges awarded for ${crewId} (Week ${weekKey} using Last Week's Data):`,
-            badges
+            badges,
           );
         } catch (e) {
           console.error("Error calculating badges:", e);
@@ -6549,7 +6570,7 @@
               data.attempts,
               data.cashWon,
               data.solveTime || 0,
-              data.intelUsed
+              data.intelUsed,
             );
           }
         }
@@ -6594,7 +6615,7 @@
             (e) => {
               e.preventDefault();
             },
-            { passive: false }
+            { passive: false },
           );
         });
       });
@@ -6614,7 +6635,7 @@
             }
             lastTouchEnd = now;
           },
-          { passive: false }
+          { passive: false },
         );
 
         // Specifically target the game board area
@@ -6628,7 +6649,7 @@
                 event.preventDefault();
               }
             },
-            { passive: false }
+            { passive: false },
           );
         }
       })();
