@@ -6315,17 +6315,50 @@
         const list = document.getElementById("lb-list");
         list.innerHTML = "";
 
+        let currentRank = 1;
+        let previousScore = null;
+        let skipCount = 0;
+
         data.forEach(([nick, stats], index) => {
           const isMe = nick === userNick;
-          const rankClass = index < 3 ? `top-${index + 1}` : "";
+
+          // Determine current score for comparison
+          let currentScore;
+          if (type === "daily" || type === "yesterday") {
+            currentScore = `${stats.cash}-${stats.time || 999999}`; // Cash and time for tiebreaker
+          } else if (type === "efficiency") {
+            const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
+            currentScore = Math.floor((stats.totalCash || 0) / gamesPlayed);
+          } else if (type === "best") {
+            currentScore = stats.bestSingleHeist || 0;
+          } else if (type === "week") {
+            currentScore = stats.cash;
+          } else {
+            currentScore = stats.totalCash || 0;
+          }
+
+          // Update rank logic
+          if (index === 0) {
+            currentRank = 1;
+          } else if (previousScore !== null && currentScore !== previousScore) {
+            currentRank = index + 1;
+            skipCount = 0;
+          } else {
+            skipCount++;
+          }
+
+          previousScore = currentScore;
+
+          const rankClass = currentRank <= 3 ? `top-${currentRank}` : "";
+
           // Show provisional badge positions for "This Week" tab
           let provisionalBadge = "";
           if (type === "week") {
-            if (index === 0) {
+            if (currentRank === 1) {
               provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Champion badge">🥇</span>`;
-            } else if (index === 1) {
+            } else if (currentRank === 2) {
               provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Runner Up badge">🥈</span>`;
-            } else if (index === 2) {
+            } else if (currentRank === 3) {
               provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Bronze badge">🥉</span>`;
             }
 
@@ -6346,7 +6379,7 @@
             scoreSub = `${stats.attempts}/6 in ${stats.time}s ${
               stats.intel ? "🔍" : ""
             }`;
-          } else if (currentTab === "efficiency") {
+          } else if (type === "efficiency") {
             const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
             const totalCash = stats.totalCash || 0;
             const efficiency = Math.floor(totalCash / gamesPlayed);
@@ -6363,11 +6396,8 @@
             scoreSub = `${stats.wins || 0} Wins`;
           }
 
-          // --- NEW: Weekly Badges Logic ---
+          // Weekly Badges Logic
           let badgeHTML = "";
-
-          // Check if this user (nick) has any specific weekly badge
-          // Check if this user (nick) has any specific weekly badge
           if (weeklyBadges.champion === nick) {
             badgeHTML += `<span class="badge" title="Champion - #1 This Week">🥇</span>`;
           }
@@ -6382,19 +6412,19 @@
           }
 
           const html = `
-            <div class="lb-row" style="${
-              isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
-            }">
-                <div class="lb-rank ${rankClass}">${index + 1}</div>
-                <div class="lb-user">${nick} ${badgeHTML}${provisionalBadge} ${
-                  isMe ? "(You)" : ""
-                }</div>
-                <div class="lb-score">
-                    <div class="lb-score-main">${scoreMain}</div>
-                    <div class="lb-score-sub">${scoreSub}</div>
-                </div>
-            </div>
-          `;
+      <div class="lb-row" style="${
+        isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
+      }">
+          <div class="lb-rank ${rankClass}">${currentRank}</div>
+          <div class="lb-user">${nick} ${badgeHTML}${provisionalBadge} ${
+            isMe ? "(You)" : ""
+          }</div>
+          <div class="lb-score">
+              <div class="lb-score-main">${scoreMain}</div>
+              <div class="lb-score-sub">${scoreSub}</div>
+          </div>
+      </div>
+    `;
           list.insertAdjacentHTML("beforeend", html);
         });
       }
