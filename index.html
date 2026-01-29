@@ -2585,9 +2585,19 @@
           Timer starts when you begin. Good luck! 🍀
         </div>
 
-        <button class="tutorial-btn" onclick="startCracking()">
-          START CRACKING
-        </button>
+        <div style="display: flex; gap: 10px; flex-direction: column;">
+          <button class="tutorial-btn" onclick="startCracking()">
+            START CRACKING
+          </button>
+          <button 
+            id="ready-crew-btn"
+            class="tutorial-btn" 
+            onclick="openGroupModal()" 
+            style="background: var(--key-bg); border: 2px solid var(--safe-border);"
+          >
+            👥 CHECK CREW
+          </button>
+        </div>
       </div>
     </div>
 
