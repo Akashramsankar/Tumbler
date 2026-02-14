@@ -432,6 +432,35 @@
         box-shadow: 0 0 0 #538d4e; /* Shadow disappears */
       }
 
+      /* Compact Crew Button */
+      .crew-btn-compact {
+        background: var(--safe-inset) !important;
+        border: 1px solid var(--safe-border) !important;
+        padding: 10px 20px !important;
+        font-size: 0.85rem !important;
+        font-weight: 600 !important;
+        letter-spacing: 0.5px !important;
+        margin-top: 12px !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+        display: inline-flex !important;
+        align-items: center !important;
+        gap: 8px !important;
+        width: auto !important;
+        align-self: center !important;
+      }
+
+      .crew-btn-compact:hover {
+        background: var(--key-bg) !important;
+        border-color: #475569 !important;
+        transform: translateY(-1px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+      }
+
+      .crew-btn-compact:active {
+        transform: translateY(1px) !important;
+        box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3) !important;
+      }
+
       .help-icon {
         position: absolute;
         top: 15px;
@@ -2585,15 +2614,14 @@
           Timer starts when you begin. Good luck! 🍀
         </div>
 
-        <div style="display: flex; gap: 10px; flex-direction: column;">
+        <div style="display: flex; gap: 10px; flex-direction: column">
           <button class="tutorial-btn" onclick="startCracking()">
             START CRACKING
           </button>
-          <button 
+          <button
             id="ready-crew-btn"
-            class="tutorial-btn" 
-            onclick="openGroupModal()" 
-            style="background: var(--key-bg); border: 2px solid var(--safe-border);"
+            class="tutorial-btn crew-btn-compact"
+            onclick="openGroupModal()"
           >
             👥 CHECK CREW
           </button>
@@ -6518,7 +6546,7 @@
             const existingData = snapshot.val() || {};
 
             const wonThisGame = cash > 0 ? 1 : 0; // 1 if won, 0 if lost
-            
+
             careerRef.update({
               totalCash: (existingData.totalCash || 0) + cash,
               wins: (existingData.wins || 0) + wonThisGame,
