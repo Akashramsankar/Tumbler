@@ -6517,19 +6517,14 @@
           careerRef.once("value", (snapshot) => {
             const existingData = snapshot.val() || {};
 
+            const wonThisGame = cash > 0 ? 1 : 0; // 1 if won, 0 if lost
+            
             careerRef.update({
-              totalCash: Math.max(
-                existingData.totalCash || 0,
-                currentStats.totalCash || 0,
-              ),
-              wins: Math.max(existingData.wins || 0, currentStats.won || 0),
-              gamesPlayed: Math.max(
-                existingData.gamesPlayed || 0,
-                currentStats.played || 0,
-              ),
+              totalCash: (existingData.totalCash || 0) + cash,
+              wins: (existingData.wins || 0) + wonThisGame,
+              gamesPlayed: (existingData.gamesPlayed || 0) + 1,
               bestSingleHeist: Math.max(
                 existingData.bestSingleHeist || 0,
-                currentStats.bestSingleHeist || 0,
                 isToday ? cash : 0,
               ),
               lastPlayed: Date.now(),
