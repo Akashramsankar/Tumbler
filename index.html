@@ -6162,6 +6162,7 @@
           if (hasPlayedTodayCheck()) {
             syncTodaysScore();
           }
+          syncAllStatsFromFirebase();
         }
 
         // Clear invite session and re-enable field
@@ -6525,9 +6526,6 @@
           today.getMonth() + 1
         }-${today.getDate()}`;
 
-        const currentStats =
-          JSON.parse(localStorage.getItem("tumblerStats")) || {};
-
         userGroups.forEach((group) => {
           // Update daily scores ONLY for today's puzzle
           if (isToday) {
@@ -6544,13 +6542,22 @@
           const careerRef = db.ref(`career/${group}/${userNick}`);
           careerRef.once("value", (snapshot) => {
             const existingData = snapshot.val() || {};
+            const wonThisGame = cash > 0 ? 1 : 0;
 
-            const wonThisGame = cash > 0 ? 1 : 0; // 1 if won, 0 if lost
+            // Read current values from localStorage (which were updated by game logic)
+            const localStats =
+              JSON.parse(localStorage.getItem("tumblerStats")) || {};
 
             careerRef.update({
+              // Use Firebase value as base, add today's cash
               totalCash: (existingData.totalCash || 0) + cash,
+              // Use Firebase value as base, add today's win
               wins: (existingData.wins || 0) + wonThisGame,
+              // Use Firebase value as base, add today's game
               gamesPlayed: (existingData.gamesPlayed || 0) + 1,
+              // Sync streak directly from localStorage (already calculated with protectors, etc.)
+              streak: localStats.currentStreak || 0,
+              // Max comparison for best heist
               bestSingleHeist: Math.max(
                 existingData.bestSingleHeist || 0,
                 isToday ? cash : 0,
@@ -6558,6 +6565,134 @@
               lastPlayed: Date.now(),
             });
           });
+        });
+      }
+
+      function checkAndResetStreakInFirebase() {
+        if (!db || userGroups.length === 0 || !userNick) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const yesterday = new Date(today);
+        yesterday.setDate(yesterday.getDate() - 1);
+
+        userGroups.forEach((group) => {
+          const careerRef = db.ref(`career/${group}/${userNick}`);
+          careerRef.once("value", (snapshot) => {
+            const existingData = snapshot.val() || {};
+            const localStats =
+              JSON.parse(localStorage.getItem("tumblerStats")) || {};
+
+            // FIREBASE WINS: If Firebase has a streak value, sync it to localStorage
+            if (
+              existingData.streak !== undefined &&
+              existingData.streak !== localStats.currentStreak
+            ) {
+              localStats.currentStreak = existingData.streak;
+              localStorage.setItem("tumblerStats", JSON.stringify(localStats));
+              console.log(
+                `Synced streak from Firebase: ${existingData.streak}`,
+              );
+
+              // Update the UI if streak indicator is visible
+              updateStreakIndicator();
+            } else if (existingData.streak === undefined) {
+              // Firebase doesn't have streak yet, initialize it from localStorage
+              careerRef.update({
+                streak: localStats.currentStreak || 0,
+              });
+            }
+          });
+        });
+      }
+
+      function syncAllStatsFromFirebase() {
+        if (!db || userGroups.length === 0 || !userNick) return;
+
+        // Only sync from the first group (or you can choose active group)
+        const group = userGroups[0];
+
+        const careerRef = db.ref(`career/${group}/${userNick}`);
+        careerRef.once("value", (snapshot) => {
+          const firebaseData = snapshot.val();
+
+          if (!firebaseData) {
+            console.log("No Firebase data yet, will be created on first play");
+            return;
+          }
+
+          const localStats =
+            JSON.parse(localStorage.getItem("tumblerStats")) || {};
+
+          let needsSync = false;
+
+          // Sync each stat from Firebase to localStorage
+          if (
+            firebaseData.totalCash !== undefined &&
+            firebaseData.totalCash !== localStats.totalCash
+          ) {
+            localStats.totalCash = firebaseData.totalCash;
+            localStats.gameplayCash = firebaseData.totalCash; // Keep gameplayCash in sync
+            needsSync = true;
+            console.log(
+              `Synced totalCash from Firebase: ${firebaseData.totalCash}`,
+            );
+          }
+
+          if (
+            firebaseData.wins !== undefined &&
+            firebaseData.wins !== localStats.won
+          ) {
+            localStats.won = firebaseData.wins;
+            needsSync = true;
+            console.log(`Synced wins from Firebase: ${firebaseData.wins}`);
+          }
+
+          if (
+            firebaseData.gamesPlayed !== undefined &&
+            firebaseData.gamesPlayed !== localStats.played
+          ) {
+            localStats.played = firebaseData.gamesPlayed;
+            needsSync = true;
+            console.log(
+              `Synced gamesPlayed from Firebase: ${firebaseData.gamesPlayed}`,
+            );
+          }
+
+          if (
+            firebaseData.bestSingleHeist !== undefined &&
+            firebaseData.bestSingleHeist !== localStats.bestSingleHeist
+          ) {
+            localStats.bestSingleHeist = firebaseData.bestSingleHeist;
+            needsSync = true;
+            console.log(
+              `Synced bestSingleHeist from Firebase: ${firebaseData.bestSingleHeist}`,
+            );
+          }
+
+          if (
+            firebaseData.streak !== undefined &&
+            firebaseData.streak !== localStats.currentStreak
+          ) {
+            localStats.currentStreak = firebaseData.streak;
+            needsSync = true;
+            console.log(`Synced streak from Firebase: ${firebaseData.streak}`);
+          }
+
+          // Save to localStorage if anything changed
+          if (needsSync) {
+            localStorage.setItem("tumblerStats", JSON.stringify(localStats));
+            console.log("Stats synced from Firebase to localStorage");
+
+            // Update UI
+            updateStreakIndicator();
+
+            // Refresh stats modal if it's open
+            const statsModal = document.getElementById("stats-modal");
+            if (statsModal && statsModal.classList.contains("active")) {
+              showStats();
+            }
+          }
         });
       }
 
@@ -6712,6 +6847,8 @@
       window.confirmRecoveryPurchase = confirmRecoveryPurchase;
       window.closeRecoveryModal = closeRecoveryModal;
       window.setupBadgeTooltips = setupBadgeTooltips;
+      window.checkAndResetStreakInFirebase = checkAndResetStreakInFirebase;
+      window.syncAllStatsFromFirebase = syncAllStatsFromFirebase;
     </script>
     <script>
       // Fix mobile keyboard touch issues
