@@ -3374,11 +3374,7 @@
     </div>
 
     <!-- Streak Alert Modal (shows when user missed a day) -->
-    <div
-      id="streak-alert-modal"
-      class="tutorial-modal"
-      style="display: none"
-    >
+    <div id="streak-alert-modal" class="tutorial-modal" style="display: none">
       <div class="tutorial-content" style="max-width: 420px">
         <h2 style="margin-top: 0; font-size: 1.6rem; color: var(--color-far)">
           ⚠️ Streak Broken!
@@ -3401,10 +3397,10 @@
               line-height: 1.6;
             "
           >
-            You missed yesterday's puzzle and your 
+            You missed yesterday's puzzle and your
             <strong style="color: var(--color-correct)">
               <span id="streak-alert-value">0</span>-day streak
-            </strong> 
+            </strong>
             has been broken.
           </div>
 
@@ -3416,20 +3412,33 @@
               margin-top: 15px;
             "
           >
-            <div style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 12px">
-              <strong style="color: var(--color-correct)">💡 Your Options:</strong>
+            <div
+              style="font-size: 0.95rem; color: #94a3b8; margin-bottom: 12px"
+            >
+              <strong style="color: var(--color-correct)"
+                >💡 Your Options:</strong
+              >
             </div>
-            
+
             <div style="margin-bottom: 10px; color: #cbd5e1; font-size: 0.9rem">
-              <strong style="color: var(--color-close)">🔄 Streak Recovery</strong> ($30,000)<br/>
-              <span style="margin-left: 20px; font-size: 0.85rem; color: #94a3b8">
-                Restore your streak to <span id="streak-alert-restore-value">0</span> days
+              <strong style="color: var(--color-close)"
+                >🔄 Streak Recovery</strong
+              >
+              ($30,000)<br />
+              <span
+                style="margin-left: 20px; font-size: 0.85rem; color: #94a3b8"
+              >
+                Restore your streak to
+                <span id="streak-alert-restore-value">0</span> days
               </span>
             </div>
 
             <div style="color: #cbd5e1; font-size: 0.9rem">
-              <strong style="color: #64748b">🎯 Start Fresh</strong> (Free)<br/>
-              <span style="margin-left: 20px; font-size: 0.85rem; color: #94a3b8">
+              <strong style="color: #64748b">🎯 Start Fresh</strong>
+              (Free)<br />
+              <span
+                style="margin-left: 20px; font-size: 0.85rem; color: #94a3b8"
+              >
                 Begin a new streak from 1 day
               </span>
             </div>
@@ -3445,7 +3454,8 @@
             "
           >
             <div style="font-size: 0.85rem; color: #fca5a5; line-height: 1.5">
-              ⏰ Recovery is only available <strong>right now</strong>, before you play today's puzzle!
+              ⏰ Recovery is only available <strong>right now</strong>, before
+              you play today's puzzle!
             </div>
           </div>
         </div>
@@ -3740,7 +3750,8 @@
       function confirmRecoveryPurchase() {
         stats.totalCash -= STREAK_RECOVERY_COST;
         // Restore to previous streak value (or 1 if somehow not set)
-        const restoredStreak = stats.previousStreak > 0 ? stats.previousStreak : 1;
+        const restoredStreak =
+          stats.previousStreak > 0 ? stats.previousStreak : 1;
         stats.currentStreak = restoredStreak;
         localStorage.setItem("tumblerStats", JSON.stringify(stats));
 
@@ -3749,7 +3760,7 @@
           userGroups.forEach((group) => {
             db.ref(`career/${group}/${userNick}`).update({
               streak: restoredStreak,
-              totalCash: stats.totalCash
+              totalCash: stats.totalCash,
             });
           });
         }
@@ -3795,9 +3806,12 @@
         }
 
         // Update the modal with previous streak value
-        const previousStreakElement = document.getElementById("previous-streak-value");
+        const previousStreakElement = document.getElementById(
+          "previous-streak-value",
+        );
         if (previousStreakElement) {
-          previousStreakElement.textContent = stats.previousStreak > 0 ? stats.previousStreak : 1;
+          previousStreakElement.textContent =
+            stats.previousStreak > 0 ? stats.previousStreak : 1;
         }
 
         // Show confirmation modal
@@ -3807,20 +3821,26 @@
 
       // Show streak alert when user missed a day
       function showStreakAlert() {
-        const previousStreak = stats.previousStreak > 0 ? stats.previousStreak : 1;
-        
+        const previousStreak =
+          stats.previousStreak > 0 ? stats.previousStreak : 1;
+
         // Update the modal with streak values
-        const streakValueElement = document.getElementById("streak-alert-value");
-        const restoreValueElement = document.getElementById("streak-alert-restore-value");
-        const recoveryBtn = document.getElementById("streak-alert-recovery-btn");
-        
+        const streakValueElement =
+          document.getElementById("streak-alert-value");
+        const restoreValueElement = document.getElementById(
+          "streak-alert-restore-value",
+        );
+        const recoveryBtn = document.getElementById(
+          "streak-alert-recovery-btn",
+        );
+
         if (streakValueElement) {
           streakValueElement.textContent = previousStreak;
         }
         if (restoreValueElement) {
           restoreValueElement.textContent = previousStreak;
         }
-        
+
         // Disable recovery button if not enough cash
         if (recoveryBtn) {
           if (stats.totalCash < STREAK_RECOVERY_COST) {
@@ -3835,7 +3855,7 @@
             recoveryBtn.innerHTML = "🔄 Buy Recovery ($30,000)";
           }
         }
-        
+
         // Show the modal
         document.getElementById("streak-alert-modal").style.display = "flex";
       }
@@ -4089,6 +4109,10 @@
       async function initGame() {
         try {
           await loadDictionaries();
+          // ADD THESE LINES:
+          if (db && userGroups.length > 0 && userNick) {
+            await syncAllStatsFromFirebase(); // ← Call the existing function!
+          }
           const layoutText = document.getElementById("keyboard-layout-text");
           if (layoutText) {
             layoutText.textContent = keyboardLayout.toUpperCase();
@@ -4102,7 +4126,11 @@
           }
 
           // CHECK AND BREAK STREAK ON PAGE LOAD IF NECESSARY
-          if (!hasPlayedToday() && !wasYesterdayPlayed() && stats.currentStreak > 0) {
+          if (
+            !hasPlayedToday() &&
+            !wasYesterdayPlayed() &&
+            stats.currentStreak > 0
+          ) {
             // Streak should be broken - user missed yesterday and hasn't played today yet
             if (stats.streakProtectors > 0) {
               // Don't break streak yet - protector will be used when they play
@@ -4113,14 +4141,16 @@
               // Break the streak now
               stats.currentStreak = 0;
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
-              console.log(`Streak broken due to missed day. Previous streak: ${stats.previousStreak}`);
-              
+              console.log(
+                `Streak broken due to missed day. Previous streak: ${stats.previousStreak}`,
+              );
+
               // Update Firebase if available
               if (db && userGroups.length > 0 && userNick) {
                 userGroups.forEach((group) => {
                   db.ref(`career/${group}/${userNick}`).update({
                     streak: 0,
-                    previousStreak: stats.previousStreak
+                    previousStreak: stats.previousStreak,
                   });
                 });
               }
