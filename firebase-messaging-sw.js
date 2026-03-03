@@ -13,11 +13,11 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 const CACHE_VERSION = "tumbler-v1";
 
 const CACHE_ASSETS = [
-  "/",
-  "/index.html",
-  "/manifest.json",
-  "/icons/icon-192.png",
-  "/icons/icon-512.png",
+  "/Tumbler/",
+  "/Tumbler/index.html",
+  "/Tumbler/manifest.json",
+  "/Tumbler/icons/icon-192.png",
+  "/Tumbler/icons/icon-512.png",
   "https://fonts.googleapis.com/css2?family=Chivo+Mono:wght@400;700&display=swap",
 ];
 

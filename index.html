@@ -9,14 +9,17 @@
     <meta name="HandheldFriendly" content="true" />
 
     <!-- ── PWA ── -->
-    <link rel="manifest" href="/manifest.json" />
+    <link rel="manifest" href="/Tumbler/manifest.json" />
     <meta name="theme-color" content="#121212" />
     <meta name="mobile-web-app-capable" content="yes" />
     <!-- iOS specific -->
     <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <meta name="apple-mobile-web-app-title" content="Tumbler" />
-    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+    <link rel="apple-touch-icon" href="/Tumbler/icons/icon-192.png" />
 
     <title>TUMBLER - The Lockpick Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -6126,13 +6129,14 @@
       // ==================== PUSH NOTIFICATIONS ====================
 
       // Your VAPID key from Firebase Console → Project Settings → Cloud Messaging
-      const VAPID_KEY = "BBfLtIF_PM63BJU-pWwfHSy5q8AfZ_Tjp1KFlM9P2b5v4gctfd4zlCRDjUIHIOfrtNKkRtSPihieZCbHwgcuc4k"; // ← Replace this in Firebase Console
+      const VAPID_KEY =
+        "BBfLtIF_PM63BJU-pWwfHSy5q8AfZ_Tjp1KFlM9P2b5v4gctfd4zlCRDjUIHIOfrtNKkRtSPihieZCbHwgcuc4k"; // ← Replace this in Firebase Console
 
       async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return null;
         try {
           const reg = await navigator.serviceWorker.register(
-            "/firebase-messaging-sw.js",
+            "/Tumbler/firebase-messaging-sw.js",
           );
           console.log("Service worker registered:", reg.scope);
           return reg;
@@ -7328,14 +7332,18 @@
         if (
           localStorage.getItem("tumblerPWAInstalled") === "true" ||
           localStorage.getItem("tumblerPWADismissed") === "true"
-        ) return;
+        )
+          return;
 
         // Show our custom banner after 8 seconds (let them play first)
         setTimeout(showInstallBanner, 8000);
       });
 
       // Detect if already running as installed PWA
-      if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true) {
+      if (
+        window.matchMedia("(display-mode: standalone)").matches ||
+        window.navigator.standalone === true
+      ) {
         localStorage.setItem("tumblerPWAInstalled", "true");
       }
 
@@ -7401,24 +7409,28 @@
 
         document.body.appendChild(banner);
 
-        document.getElementById("pwa-install-btn").addEventListener("click", async () => {
-          if (!deferredInstallPrompt) return;
-          deferredInstallPrompt.prompt();
-          const { outcome } = await deferredInstallPrompt.userChoice;
-          if (outcome === "accepted") {
-            localStorage.setItem("tumblerPWAInstalled", "true");
-            showMessage("🔒 Tumbler installed! Check your home screen.");
-          } else {
-            localStorage.setItem("tumblerPWADismissed", "true");
-          }
-          deferredInstallPrompt = null;
-          banner.remove();
-        });
+        document
+          .getElementById("pwa-install-btn")
+          .addEventListener("click", async () => {
+            if (!deferredInstallPrompt) return;
+            deferredInstallPrompt.prompt();
+            const { outcome } = await deferredInstallPrompt.userChoice;
+            if (outcome === "accepted") {
+              localStorage.setItem("tumblerPWAInstalled", "true");
+              showMessage("🔒 Tumbler installed! Check your home screen.");
+            } else {
+              localStorage.setItem("tumblerPWADismissed", "true");
+            }
+            deferredInstallPrompt = null;
+            banner.remove();
+          });
 
-        document.getElementById("pwa-dismiss-btn").addEventListener("click", () => {
-          localStorage.setItem("tumblerPWADismissed", "true");
-          banner.remove();
-        });
+        document
+          .getElementById("pwa-dismiss-btn")
+          .addEventListener("click", () => {
+            localStorage.setItem("tumblerPWADismissed", "true");
+            banner.remove();
+          });
       }
 
       // iOS doesn't support beforeinstallprompt — show manual instructions instead
@@ -7426,7 +7438,8 @@
         if (
           localStorage.getItem("tumblerPWAInstalled") === "true" ||
           localStorage.getItem("tumblerIOSHintShown") === "true"
-        ) return;
+        )
+          return;
 
         const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
         const isInStandaloneMode = window.navigator.standalone === true;
