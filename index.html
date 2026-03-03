@@ -6115,20 +6115,10 @@
           console.log("Firebase initialized successfully.");
 
           // Initialize FCM Messaging
-          (async () => {
-            if (firebase.messaging && firebase.messaging.isSupported()) {
-              try {
-                const registration = await navigator.serviceWorker.register(
-                  "/Tumbler/firebase-messaging-sw.js",
-                );
-                messaging = firebase.messaging();
-                messaging.useServiceWorker(registration);
-                console.log("Firebase Messaging initialized with custom SW.");
-              } catch (err) {
-                console.error("Service worker registration failed:", err);
-              }
-            }
-          })();
+          if (firebase.messaging && firebase.messaging.isSupported()) {
+            messaging = firebase.messaging();
+            console.log("Firebase Messaging initialized.");
+          }
         } else {
           console.error("Firebase library not loaded.");
         }
@@ -6237,7 +6227,20 @@
             return;
           }
 
-          const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+          // Register service worker with correct scope
+          await navigator.serviceWorker.register(
+            "/Tumbler/firebase-messaging-sw.js",
+            {
+              scope: "/Tumbler/",
+            },
+          );
+
+          // Wait for service worker to be ready, then get FCM token
+          const token = await messaging.getToken({
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: await navigator.serviceWorker.ready,
+          });
+
           if (token) {
             localStorage.setItem("tumblerFcmToken", token);
             await saveFcmTokenToFirebase(token);
