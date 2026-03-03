@@ -3647,6 +3647,7 @@
           stats.totalCash += bonus;
           stats.lastStreakMilestone = currentStreak;
           localStorage.setItem("tumblerStats", JSON.stringify(stats));
+          saveProfileToFirebase();
 
           return bonus;
         }
@@ -3749,6 +3750,7 @@
         stats.streakProtectors++;
         stats.lastProtectorPurchase = Date.now();
         localStorage.setItem("tumblerStats", JSON.stringify(stats));
+        saveProfileToFirebase();
 
         closeProtectorModal();
         showMessage("✅ Protector purchased!");
@@ -3768,6 +3770,7 @@
           stats.previousStreak > 0 ? stats.previousStreak : 1;
         stats.currentStreak = restoredStreak;
         localStorage.setItem("tumblerStats", JSON.stringify(stats));
+        saveProfileToFirebase();
 
         // Update Firebase if available
         if (db && userGroups.length > 0 && userNick) {
@@ -3944,6 +3947,7 @@
       if (typeof stats.gameplayCash !== "number") {
         stats.gameplayCash = stats.totalCash;
         localStorage.setItem("tumblerStats", JSON.stringify(stats));
+        saveProfileToFirebase();
       }
 
       if (typeof stats.previousStreak !== "number") {
@@ -4124,7 +4128,7 @@
         try {
           await loadDictionaries();
           // ADD THESE LINES:
-          if (db && userGroups.length > 0 && userNick) {
+          if (db && userNick) {
             await syncAllStatsFromFirebase(); // ← Call the existing function!
           }
           const layoutText = document.getElementById("keyboard-layout-text");
@@ -4155,6 +4159,7 @@
               // Break the streak now
               stats.currentStreak = 0;
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
+              saveProfileToFirebase();
               console.log(
                 `Streak broken due to missed day. Previous streak: ${stats.previousStreak}`,
               );
@@ -5375,6 +5380,7 @@
               );
               saveTodayGame(currentRow + 1, cashWon, solveTime);
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
+              saveProfileToFirebase();
 
               if (window.submitScoreToFirebase) {
                 window.submitScoreToFirebase(
@@ -5450,6 +5456,7 @@
                 }
                 stopTimer();
                 localStorage.setItem("tumblerStats", JSON.stringify(stats));
+                saveProfileToFirebase();
 
                 // ADD THIS LINE BELOW:
                 saveTodayGame(MAX_TRIES, 0, 0);
@@ -6611,6 +6618,8 @@
           syncAllStatsFromFirebase();
         }
 
+        saveProfileToFirebase();
+
         // Clear invite session and re-enable field
         sessionStorage.removeItem("inviteCrew");
         document.getElementById("group-id").disabled = false;
@@ -7039,6 +7048,7 @@
             ) {
               localStats.currentStreak = existingData.streak;
               localStorage.setItem("tumblerStats", JSON.stringify(localStats));
+              saveProfileToFirebase();
               console.log(
                 `Synced streak from Firebase: ${existingData.streak}`,
               );
@@ -7056,92 +7066,108 @@
       }
 
       function syncAllStatsFromFirebase() {
-        if (!db || userGroups.length === 0 || !userNick) return;
+        if (!db || !userNick) return;
 
-        // Only sync from the first group (or you can choose active group)
-        const group = userGroups[0];
+        db.ref(`userProfile/${userNick}`).once("value", (snapshot) => {
+          const profileData = snapshot.val();
 
-        const careerRef = db.ref(`career/${group}/${userNick}`);
-        careerRef.once("value", (snapshot) => {
-          const firebaseData = snapshot.val();
-
-          if (!firebaseData) {
-            console.log("No Firebase data yet, will be created on first play");
+          if (!profileData) {
+            // No profile yet — save current local state to Firebase
+            saveProfileToFirebase();
             return;
           }
 
           const localStats =
             JSON.parse(localStorage.getItem("tumblerStats")) || {};
-
           let needsSync = false;
 
-          // Sync each stat from Firebase to localStorage
-          if (
-            firebaseData.totalCash !== undefined &&
-            firebaseData.totalCash !== localStats.totalCash
-          ) {
-            localStats.totalCash = firebaseData.totalCash;
-            localStats.gameplayCash = firebaseData.totalCash; // Keep gameplayCash in sync
+          // Restore groups if PWA has none
+          if (profileData.groups && userGroups.length === 0) {
+            userGroups = profileData.groups;
+            localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+            if (!activeGroup && userGroups.length > 0) {
+              activeGroup = userGroups[0];
+              localStorage.setItem("tumblerActiveGroup", activeGroup);
+            }
             needsSync = true;
-            console.log(
-              `Synced totalCash from Firebase: ${firebaseData.totalCash}`,
+          }
+
+          // For each stat, take the higher/more recent value
+          const fieldsToSync = [
+            "totalCash",
+            "gameplayCash",
+            "currentStreak",
+            "maxStreak",
+            "played",
+            "won",
+            "archiveWon",
+            "streakProtectors",
+            "lastProtectorPurchase",
+            "lastStreakMilestone",
+            "bestSingleHeist",
+            "previousStreak",
+          ];
+
+          fieldsToSync.forEach((field) => {
+            if (
+              profileData[field] !== undefined &&
+              profileData[field] > (localStats[field] || 0)
+            ) {
+              localStats[field] = profileData[field];
+              needsSync = true;
+            }
+          });
+
+          // Restore guessDistribution — merge by taking max of each slot
+          if (profileData.guessDistribution) {
+            const localDist = localStats.guessDistribution || [
+              0, 0, 0, 0, 0, 0,
+            ];
+            const merged = profileData.guessDistribution.map((val, i) =>
+              Math.max(val, localDist[i] || 0),
             );
-          }
-
-          if (
-            firebaseData.wins !== undefined &&
-            firebaseData.wins !== localStats.won
-          ) {
-            localStats.won = firebaseData.wins;
+            localStats.guessDistribution = merged;
             needsSync = true;
-            console.log(`Synced wins from Firebase: ${firebaseData.wins}`);
           }
 
-          if (
-            firebaseData.gamesPlayed !== undefined &&
-            firebaseData.gamesPlayed !== localStats.played
-          ) {
-            localStats.played = firebaseData.gamesPlayed;
-            needsSync = true;
-            console.log(
-              `Synced gamesPlayed from Firebase: ${firebaseData.gamesPlayed}`,
-            );
-          }
-
-          if (
-            firebaseData.bestSingleHeist !== undefined &&
-            firebaseData.bestSingleHeist !== localStats.bestSingleHeist
-          ) {
-            localStats.bestSingleHeist = firebaseData.bestSingleHeist;
-            needsSync = true;
-            console.log(
-              `Synced bestSingleHeist from Firebase: ${firebaseData.bestSingleHeist}`,
-            );
-          }
-
-          if (
-            firebaseData.streak !== undefined &&
-            firebaseData.streak !== localStats.currentStreak
-          ) {
-            localStats.currentStreak = firebaseData.streak;
-            needsSync = true;
-            console.log(`Synced streak from Firebase: ${firebaseData.streak}`);
-          }
-
-          // Save to localStorage if anything changed
           if (needsSync) {
             localStorage.setItem("tumblerStats", JSON.stringify(localStats));
-            console.log("Stats synced from Firebase to localStorage");
-
-            // Update UI
+            stats = localStats; // Update in-memory stats object
+            console.log("Profile synced from Firebase to localStorage");
             updateStreakIndicator();
 
-            // Refresh stats modal if it's open
+            // Refresh stats modal if open
             const statsModal = document.getElementById("stats-modal");
-            if (statsModal && statsModal.classList.contains("active")) {
+            if (statsModal && statsModal.style.display === "flex") {
               showStats();
             }
           }
+        });
+      }
+
+      function saveProfileToFirebase() {
+        if (!db || !userNick) return;
+
+        const localStats =
+          JSON.parse(localStorage.getItem("tumblerStats")) || {};
+
+        db.ref(`userProfile/${userNick}`).update({
+          nick: userNick,
+          groups: userGroups,
+          totalCash: localStats.totalCash || 0,
+          gameplayCash: localStats.gameplayCash || 0,
+          currentStreak: localStats.currentStreak || 0,
+          maxStreak: localStats.maxStreak || 0,
+          played: localStats.played || 0,
+          won: localStats.won || 0,
+          archiveWon: localStats.archiveWon || 0,
+          guessDistribution: localStats.guessDistribution || [0, 0, 0, 0, 0, 0],
+          streakProtectors: localStats.streakProtectors || 0,
+          lastProtectorPurchase: localStats.lastProtectorPurchase || 0,
+          lastStreakMilestone: localStats.lastStreakMilestone || 0,
+          bestSingleHeist: localStats.bestSingleHeist || 0,
+          previousStreak: localStats.previousStreak || 0,
+          lastUpdated: Date.now(),
         });
       }
 
