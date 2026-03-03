@@ -1,0 +1,205 @@
+# .github/workflows/notify-evening.yml
+# 🌆 EVENING NOTIFICATION — 7:00 PM SGT daily
+# Fires at 11:00 UTC = 7:00 PM Singapore Time (UTC+8)
+#
+# ── SETUP ────────────────────────────────────────────────────────────────────
+# Same secrets as morning workflow — add once, used by both:
+#
+#   FIREBASE_DATABASE_URL  →  https://tumbler-51e42-default-rtdb.asia-southeast1.firebasedatabase.app
+#   FIREBASE_SERVICE_ACCOUNT_JSON  →  (paste full JSON from Firebase Console →
+#                                      Project Settings → Service Accounts →
+#                                      Generate new private key)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: 🌆 Evening Notification
+
+on:
+  schedule:
+    - cron: "0 11 * * *"  # 11:00 UTC = 7:00 PM SGT
+  workflow_dispatch:        # Also allows manual trigger from GitHub UI for testing
+
+jobs:
+  send-evening-notification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Send evening notifications
+        uses: actions/github-script@v7
+        env:
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        with:
+          script: |
+            const { GoogleAuth } = require('google-auth-library');
+
+            // ── HELPERS ──────────────────────────────────────────────────────
+
+            function getTodayKey() {
+              const now = new Date();
+              const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+              return `${sgt.getFullYear()}-${sgt.getMonth() + 1}-${sgt.getDate()}`;
+            }
+
+            function randomTaunt(arr) {
+              return arr[Math.floor(Math.random() * arr.length)];
+            }
+
+            async function getFirebaseAccessToken(serviceAccountJson) {
+              const auth = new GoogleAuth({
+                credentials: JSON.parse(serviceAccountJson),
+                scopes: [
+                  'https://www.googleapis.com/auth/firebase.messaging',
+                  'https://www.googleapis.com/auth/userinfo.email',
+                  'https://www.googleapis.com/auth/firebase.database',
+                  'https://www.googleapis.com/auth/cloud-platform',
+                ],
+              });
+              const client = await auth.getClient();
+              const tokenResponse = await client.getAccessToken();
+              return tokenResponse.token;
+            }
+
+            async function firebaseGet(path, dbUrl, accessToken) {
+              const url = `${dbUrl}/${path}.json`;
+              const res = await fetch(url, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              if (!res.ok) throw new Error(`Firebase GET ${path} failed: ${res.status}`);
+              return res.json();
+            }
+
+            async function sendToToken(projectId, accessToken, token, title, body, tag) {
+              const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  message: {
+                    token,
+                    notification: { title, body },
+                    webpush: {
+                      notification: {
+                        title,
+                        body,
+                        icon: '/icon-192.png',
+                        badge: '/badge-72.png',
+                        tag: tag || 'tumbler-evening',
+                        requireInteraction: false,
+                      },
+                      fcm_options: { link: '/' },
+                    },
+                  },
+                }),
+              });
+
+              if (!res.ok) {
+                const err = await res.json();
+                const code = err?.error?.details?.[0]?.errorCode || '';
+                if (code === 'UNREGISTERED' || code === 'INVALID_ARGUMENT') {
+                  console.log(`  ⚠️  Stale token (${code}): ${token.slice(0, 20)}...`);
+                  return false;
+                }
+                console.error(`  ✗ FCM error for token ${token.slice(0, 20)}:`, err);
+                return false;
+              }
+              return true;
+            }
+
+            // ── MAIN ─────────────────────────────────────────────────────────
+
+            const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+            const dbUrl = process.env.FIREBASE_DATABASE_URL;
+            const projectId = JSON.parse(serviceAccountJson).project_id;
+
+            console.log('🌆 Running evening notification job...');
+            console.log(`   Project: ${projectId}`);
+            console.log(`   Date key: ${getTodayKey()}`);
+
+            const accessToken = await getFirebaseAccessToken(serviceAccountJson);
+            const dateKey = getTodayKey();
+
+            const [allScores, allCrews] = await Promise.all([
+              firebaseGet('scores', dbUrl, accessToken),
+              firebaseGet('fcmTokens', dbUrl, accessToken),
+            ]);
+
+            if (!allCrews) {
+              console.log('No FCM tokens found — nobody has enabled notifications yet.');
+              return;
+            }
+
+            let totalSent = 0;
+
+            for (const [crewId, members] of Object.entries(allCrews)) {
+              const crewDayScores = allScores?.[crewId]?.[dateKey] || {};
+              const solvedMembers = Object.entries(crewDayScores)
+                .filter(([, s]) => s.cash > 0)
+                .map(([nick, s]) => ({ nick, ...s }));
+
+              const leader = solvedMembers.length > 0
+                ? solvedMembers.sort((a, b) => b.cash - a.cash)[0]
+                : null;
+
+              console.log(`\n👥 Crew: ${crewId} | Solvers today: ${solvedMembers.length} | Leader: ${leader?.nick || 'none'}`);
+
+              for (const [nick, data] of Object.entries(members)) {
+                const token = typeof data === 'string' ? data : data?.token;
+                if (!token) continue;
+
+                const hasPlayed = !!crewDayScores[nick] && crewDayScores[nick].cash > 0;
+                const isLeader = leader?.nick === nick;
+
+                let title, body;
+
+                if (hasPlayed && isLeader) {
+                  // 👑 They're leading
+                  title = "👑 You're leading the crew!";
+                  body = randomTaunt([
+                    `You're top of the crew with $${leader.cash.toLocaleString('en-US')}. Hold the crown. 👑`,
+                    `$${leader.cash.toLocaleString('en-US')} and sitting at #1. Will anyone beat you tonight?`,
+                  ]);
+
+                } else if (hasPlayed && leader) {
+                  // They played but aren't leading
+                  title = '📊 Crew Update';
+                  body = randomTaunt([
+                    `${leader.nick} is sitting at $${leader.cash.toLocaleString('en-US')} — you're not far behind!`,
+                    `The leaderboard is heating up. ${leader.nick} is ahead with $${leader.cash.toLocaleString('en-US')}.`,
+                  ]);
+
+                } else if (hasPlayed && !leader) {
+                  // Only person who played — no point pinging them
+                  console.log(`  → Skipping ${nick} (only player, no competition yet)`);
+                  continue;
+
+                } else if (!hasPlayed && leader) {
+                  // FOMO push — hasn't played, someone has
+                  title = '⏰ Vault closes at midnight';
+                  body = randomTaunt([
+                    `${leader.nick} cracked today's vault for $${leader.cash.toLocaleString('en-US')}. Don't miss out. ⏰`,
+                    `${leader.nick} is sitting at $${leader.cash.toLocaleString('en-US')} and your score is: $0. 👀`,
+                    `Your crew played. You didn't. ${leader.nick} leads with $${leader.cash.toLocaleString('en-US')}. Clock's ticking. ⏰`,
+                    `Last chance — ${leader.nick} cracked it for $${leader.cash.toLocaleString('en-US')}. Vault closes at midnight.`,
+                  ]);
+
+                } else {
+                  // Nobody played yet — gentle nudge
+                  title = "Tumbler — Don't miss today";
+                  body = randomTaunt([
+                    "🔐 Nobody's cracked today's vault yet. Be the first!",
+                    "💰 Today's heist is still unclaimed. The vault is wide open.",
+                  ]);
+                }
+
+                console.log(`  → ${nick} (played: ${hasPlayed}, leading: ${isLeader}): "${title}"`);
+
+                const ok = await sendToToken(projectId, accessToken, token, title, body, 'tumbler-evening');
+                if (ok) totalSent++;
+              }
+            }
+
+            console.log(`\n✅ Evening notifications complete. Sent: ${totalSent}`);

@@ -1,0 +1,188 @@
+# .github/workflows/notify-morning.yml
+# 🌅 MORNING NOTIFICATION — 10:00 AM SGT daily
+# Fires at 02:00 UTC = 10:00 AM Singapore Time (UTC+8)
+#
+# ── SETUP ────────────────────────────────────────────────────────────────────
+# Add these secrets to your GitHub repo:
+#   Settings → Secrets and variables → Actions → New repository secret
+#
+#   FIREBASE_DATABASE_URL  →  https://tumbler-51e42-default-rtdb.asia-southeast1.firebasedatabase.app
+#   FIREBASE_SERVICE_ACCOUNT_JSON  →  (paste full JSON from Firebase Console →
+#                                      Project Settings → Service Accounts →
+#                                      Generate new private key)
+# ─────────────────────────────────────────────────────────────────────────────
+
+name: 🌅 Morning Notification
+
+on:
+  schedule:
+    - cron: "0 2 * * *"   # 02:00 UTC = 10:00 AM SGT
+  workflow_dispatch:        # Also allows manual trigger from GitHub UI for testing
+
+jobs:
+  send-morning-notification:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Send morning notifications
+        uses: actions/github-script@v7
+        env:
+          FIREBASE_DATABASE_URL: ${{ secrets.FIREBASE_DATABASE_URL }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        with:
+          script: |
+            const { GoogleAuth } = require('google-auth-library');
+
+            // ── HELPERS ──────────────────────────────────────────────────────
+
+            function getTodayKey() {
+              const now = new Date();
+              // Use Singapore time
+              const sgt = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Singapore' }));
+              return `${sgt.getFullYear()}-${sgt.getMonth() + 1}-${sgt.getDate()}`;
+            }
+
+            function randomTaunt(arr) {
+              return arr[Math.floor(Math.random() * arr.length)];
+            }
+
+            // Get a Firebase access token via service account
+            async function getFirebaseAccessToken(serviceAccountJson) {
+              const auth = new GoogleAuth({
+                credentials: JSON.parse(serviceAccountJson),
+                scopes: [
+                  'https://www.googleapis.com/auth/firebase.messaging',
+                  'https://www.googleapis.com/auth/userinfo.email',
+                  'https://www.googleapis.com/auth/firebase.database',
+                  'https://www.googleapis.com/auth/cloud-platform',
+                ],
+              });
+              const client = await auth.getClient();
+              const tokenResponse = await client.getAccessToken();
+              return tokenResponse.token;
+            }
+
+            // Read from Firebase Realtime Database via REST
+            async function firebaseGet(path, dbUrl, accessToken) {
+              const url = `${dbUrl}/${path}.json`;
+              const res = await fetch(url, {
+                headers: { Authorization: `Bearer ${accessToken}` },
+              });
+              if (!res.ok) throw new Error(`Firebase GET ${path} failed: ${res.status}`);
+              return res.json();
+            }
+
+            // Send a single FCM push notification
+            async function sendToToken(projectId, accessToken, token, title, body, tag) {
+              const url = `https://fcm.googleapis.com/v1/projects/${projectId}/messages:send`;
+              const res = await fetch(url, {
+                method: 'POST',
+                headers: {
+                  Authorization: `Bearer ${accessToken}`,
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  message: {
+                    token,
+                    notification: { title, body },
+                    webpush: {
+                      notification: {
+                        title,
+                        body,
+                        icon: '/icon-192.png',
+                        badge: '/badge-72.png',
+                        tag: tag || 'tumbler-morning',
+                        requireInteraction: false,
+                      },
+                      fcm_options: { link: '/' },
+                    },
+                  },
+                }),
+              });
+
+              if (!res.ok) {
+                const err = await res.json();
+                const code = err?.error?.details?.[0]?.errorCode || '';
+                // Stale token — not a real error
+                if (code === 'UNREGISTERED' || code === 'INVALID_ARGUMENT') {
+                  console.log(`  ⚠️  Stale token (${code}): ${token.slice(0, 20)}...`);
+                  return false;
+                }
+                console.error(`  ✗ FCM error for token ${token.slice(0, 20)}:`, err);
+                return false;
+              }
+              return true;
+            }
+
+            // ── MAIN ─────────────────────────────────────────────────────────
+
+            const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
+            const dbUrl = process.env.FIREBASE_DATABASE_URL;
+            const projectId = JSON.parse(serviceAccountJson).project_id;
+
+            console.log('🌅 Running morning notification job...');
+            console.log(`   Project: ${projectId}`);
+            console.log(`   Date key: ${getTodayKey()}`);
+
+            const accessToken = await getFirebaseAccessToken(serviceAccountJson);
+            const dateKey = getTodayKey();
+
+            // Fetch all scores and all FCM tokens
+            const [allScores, allCrews] = await Promise.all([
+              firebaseGet('scores', dbUrl, accessToken),
+              firebaseGet('fcmTokens', dbUrl, accessToken),
+            ]);
+
+            if (!allCrews) {
+              console.log('No FCM tokens found — nobody has enabled notifications yet.');
+              return;
+            }
+
+            let totalSent = 0;
+
+            for (const [crewId, members] of Object.entries(allCrews)) {
+              const crewDayScores = allScores?.[crewId]?.[dateKey] || {};
+              const solvedMembers = Object.entries(crewDayScores)
+                .filter(([, s]) => s.cash > 0)
+                .map(([nick, s]) => ({ nick, ...s }));
+
+              let title, body;
+
+              if (solvedMembers.length === 0) {
+                // Nobody has played yet — generic hype
+                title = 'Tumbler — Daily Heist';
+                body = randomTaunt([
+                  "🔒 Today's vault is live. Who cracks it first?",
+                  "🔐 The daily heist just dropped. First in, first glory.",
+                  "💰 A new vault is waiting. Will your crew make the first move?",
+                ]);
+              } else {
+                // Someone already solved it — social proof
+                const leader = solvedMembers.sort((a, b) => b.cash - a.cash)[0];
+                title = `🔒 ${leader.nick} already cracked it`;
+                body = `They walked away with $${leader.cash.toLocaleString('en-US')}. ${randomTaunt([
+                  'Can you beat them?',
+                  'Think you can do better?',
+                  'Your move. 🎯',
+                  "The vault won't crack itself.",
+                  'Step up or fall behind.',
+                ])}`;
+              }
+
+              console.log(`\n👥 Crew: ${crewId} | Solvers so far: ${solvedMembers.length}`);
+              console.log(`   📢 "${title}" — ${body}`);
+
+              for (const [nick, data] of Object.entries(members)) {
+                const token = typeof data === 'string' ? data : data?.token;
+                if (!token) continue;
+
+                const ok = await sendToToken(projectId, accessToken, token, title, body, 'tumbler-morning');
+                if (ok) {
+                  console.log(`  ✓ Sent to ${nick}`);
+                  totalSent++;
+                }
+              }
+            }
+
+            console.log(`\n✅ Morning notifications complete. Sent: ${totalSent}`);

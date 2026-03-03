@@ -8,6 +8,16 @@
     />
     <meta name="HandheldFriendly" content="true" />
 
+    <!-- ── PWA ── -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#121212" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <!-- iOS specific -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Tumbler" />
+    <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+
     <title>TUMBLER - The Lockpick Game</title>
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -17,6 +27,7 @@
     />
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
 
     <style>
       :root {
@@ -6093,16 +6104,179 @@
 
       // Initialize Firebase (Standard Mode)
       let db = null;
+      let messaging = null;
       try {
         if (typeof firebase !== "undefined") {
           firebase.initializeApp(firebaseConfig);
           db = firebase.database();
           console.log("Firebase initialized successfully.");
+
+          // Initialize FCM Messaging
+          if (firebase.messaging && firebase.messaging.isSupported()) {
+            messaging = firebase.messaging();
+            console.log("Firebase Messaging initialized.");
+          }
         } else {
           console.error("Firebase library not loaded.");
         }
       } catch (e) {
         console.error("Firebase Error:", e);
+      }
+
+      // ==================== PUSH NOTIFICATIONS ====================
+
+      // Your VAPID key from Firebase Console → Project Settings → Cloud Messaging
+      const VAPID_KEY = "BBfLtIF_PM63BJU-pWwfHSy5q8AfZ_Tjp1KFlM9P2b5v4gctfd4zlCRDjUIHIOfrtNKkRtSPihieZCbHwgcuc4k"; // ← Replace this in Firebase Console
+
+      async function registerServiceWorker() {
+        if (!("serviceWorker" in navigator)) return null;
+        try {
+          const reg = await navigator.serviceWorker.register(
+            "/firebase-messaging-sw.js",
+          );
+          console.log("Service worker registered:", reg.scope);
+          return reg;
+        } catch (e) {
+          console.error("Service worker registration failed:", e);
+          return null;
+        }
+      }
+
+      async function requestNotificationPermission() {
+        if (!messaging || !userNick || userGroups.length === 0) return;
+
+        // Don't re-ask if already decided
+        if (Notification.permission === "denied") return;
+        if (localStorage.getItem("tumblerNotifDeclined") === "true") return;
+        if (localStorage.getItem("tumblerFcmToken")) {
+          // Token already saved — just make sure it's in Firebase
+          await saveFcmTokenToFirebase(localStorage.getItem("tumblerFcmToken"));
+          return;
+        }
+
+        // Show our custom prompt before the browser one
+        showNotificationPrompt();
+      }
+
+      function showNotificationPrompt() {
+        // Don't show if already showing
+        if (document.getElementById("notif-prompt")) return;
+
+        const prompt = document.createElement("div");
+        prompt.id = "notif-prompt";
+        prompt.style.cssText = `
+          position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+          background: #1e293b; border: 1px solid #334155;
+          border-radius: 14px; padding: 16px 20px; max-width: 340px; width: 90%;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999;
+          font-family: 'Chivo Mono', monospace; color: #f8fafc;
+          animation: slideUpPrompt 0.3s ease;
+        `;
+
+        // Add keyframe if not already present
+        if (!document.getElementById("notif-prompt-style")) {
+          const style = document.createElement("style");
+          style.id = "notif-prompt-style";
+          style.textContent = `
+            @keyframes slideUpPrompt {
+              from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+              to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        prompt.innerHTML = `
+          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+            <span style="font-size:1.4rem;">🔔</span>
+            <div>
+              <div style="font-weight:700; font-size:0.95rem;">Crew Notifications</div>
+              <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">
+                Get daily reminders & crew score alerts
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px; margin-top:12px;">
+            <button onclick="enableNotifications()" style="
+              flex:1; background:#6aaa64; color:#fff; border:none;
+              padding:9px 12px; border-radius:8px; cursor:pointer;
+              font-family:'Chivo Mono',monospace; font-weight:700; font-size:0.85rem;
+            ">✓ Enable</button>
+            <button onclick="declineNotifications()" style="
+              flex:1; background:#334155; color:#94a3b8; border:none;
+              padding:9px 12px; border-radius:8px; cursor:pointer;
+              font-family:'Chivo Mono',monospace; font-size:0.85rem;
+            ">Not Now</button>
+          </div>
+        `;
+        document.body.appendChild(prompt);
+      }
+
+      async function enableNotifications() {
+        const prompt = document.getElementById("notif-prompt");
+        if (prompt) prompt.remove();
+
+        try {
+          const permission = await Notification.requestPermission();
+          if (permission !== "granted") {
+            console.log("Notification permission denied.");
+            return;
+          }
+
+          await registerServiceWorker();
+
+          const token = await messaging.getToken({ vapidKey: VAPID_KEY });
+          if (token) {
+            localStorage.setItem("tumblerFcmToken", token);
+            await saveFcmTokenToFirebase(token);
+            showMessage("🔔 Crew notifications enabled!");
+            console.log("FCM Token:", token);
+          }
+        } catch (e) {
+          console.error("Error enabling notifications:", e);
+        }
+      }
+
+      function declineNotifications() {
+        const prompt = document.getElementById("notif-prompt");
+        if (prompt) prompt.remove();
+        localStorage.setItem("tumblerNotifDeclined", "true");
+      }
+
+      async function saveFcmTokenToFirebase(token) {
+        if (!db || !token || !userNick || userGroups.length === 0) return;
+        const updates = {};
+        userGroups.forEach((group) => {
+          // Store token under each crew the user belongs to
+          updates[`fcmTokens/${group}/${userNick}`] = {
+            token: token,
+            updatedAt: Date.now(),
+          };
+        });
+        try {
+          await db.ref().update(updates);
+          console.log("FCM token saved to Firebase for all crews.");
+        } catch (e) {
+          console.error("Error saving FCM token:", e);
+        }
+      }
+
+      // Handle foreground messages (app is open)
+      function setupForegroundMessaging() {
+        if (!messaging) return;
+        messaging.onMessage((payload) => {
+          console.log("Foreground message received:", payload);
+          const { title, body } = payload.notification || {};
+          if (title) showMessage(`🔔 ${body || title}`);
+        });
+      }
+
+      // Trigger notification prompt 3 seconds after joining a crew
+      // (called from joinGroup after successful join)
+      function maybePromptNotifications() {
+        setTimeout(() => {
+          requestNotificationPermission();
+        }, 3000);
       }
 
       // Weekly Badge Definitions
@@ -6431,6 +6605,9 @@
 
         // Hide the join form after successful join
         hideJoinNewCrew();
+
+        // 4. Prompt for push notifications (after a short delay)
+        maybePromptNotifications();
       }
 
       function logoutGroup() {
@@ -6528,8 +6705,8 @@
           path = `scores/${activeGroup}/${yesterday.getFullYear()}-${
             yesterday.getMonth() + 1
           }-${yesterday.getDate()}`;
-        } else if (currentTab === "week" || currentTab === "efficiency") {
-          path = `scores/${activeGroup}`; // Aggregate from daily scores to exclude streak bonuses & archive plays
+        } else if (currentTab === "week") {
+          path = `scores/${activeGroup}`; // ADD THIS - need all dates to aggregate
         } else {
           path = `career/${activeGroup}`;
         }
@@ -6556,57 +6733,58 @@
 
                 let sorted;
 
-                if (currentTab === "week" || currentTab === "efficiency") {
-                  // Aggregate from daily scores (excludes streak bonuses & archive plays)
-                  const allTimeTotals = {};
+                if (currentTab === "week") {
+                  // Aggregate THIS WEEK's scores (Monday to Sunday)
+                  const weeklyTotals = {};
                   const now = new Date();
+                  const currentDay = now.getDay();
+                  const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1;
 
-                  // For week tab: filter to current week only
-                  let weekStart = null;
-                  if (currentTab === "week") {
-                    const currentDay = now.getDay();
-                    const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1;
-                    weekStart = new Date(now);
-                    weekStart.setDate(now.getDate() - daysFromMonday);
-                    weekStart.setHours(0, 0, 0, 0);
-                  }
+                  const weekStart = new Date(now);
+                  weekStart.setDate(now.getDate() - daysFromMonday);
+                  weekStart.setHours(0, 0, 0, 0);
 
                   Object.entries(data).forEach(([dateKey, dayScores]) => {
                     const [year, month, day] = dateKey.split("-").map(Number);
                     const scoreDate = new Date(year, month - 1, day);
                     scoreDate.setHours(0, 0, 0, 0);
 
-                    // Week tab: only this week; efficiency tab: all time
-                    if (weekStart && (scoreDate < weekStart || scoreDate > now)) return;
-
-                    Object.entries(dayScores).forEach(([nick, score]) => {
-                      if (!allTimeTotals[nick]) {
-                        allTimeTotals[nick] = { cash: 0, wins: 0, bestTime: 999999 };
-                      }
-                      allTimeTotals[nick].cash += score.cash;
-                      allTimeTotals[nick].wins++;
-                      allTimeTotals[nick].bestTime = Math.min(
-                        allTimeTotals[nick].bestTime,
-                        score.time || 999999,
-                      );
-                    });
+                    // Only include scores from this week (Monday onwards)
+                    if (scoreDate >= weekStart && scoreDate <= now) {
+                      Object.entries(dayScores).forEach(([nick, score]) => {
+                        if (!weeklyTotals[nick]) {
+                          weeklyTotals[nick] = {
+                            cash: 0,
+                            wins: 0,
+                            bestTime: 999999,
+                          };
+                        }
+                        weeklyTotals[nick].cash += score.cash;
+                        weeklyTotals[nick].wins++;
+                        weeklyTotals[nick].bestTime = Math.min(
+                          weeklyTotals[nick].bestTime,
+                          score.time || 999999,
+                        );
+                      });
+                    }
                   });
 
-                  if (currentTab === "efficiency") {
-                    sorted = Object.entries(allTimeTotals).sort(
-                      ([, a], [, b]) =>
-                        (b.cash / Math.max(b.wins, 1)) - (a.cash / Math.max(a.wins, 1)),
-                    );
-                  } else {
-                    sorted = Object.entries(allTimeTotals).sort(
-                      ([, a], [, b]) => b.cash - a.cash,
-                    );
-                  }
+                  sorted = Object.entries(weeklyTotals).sort(
+                    ([, a], [, b]) => b.cash - a.cash,
+                  );
                 } else {
                   sorted = Object.entries(data).sort(([, a], [, b]) => {
                     if (currentTab === "daily" || currentTab === "yesterday") {
                       if (b.cash !== a.cash) return b.cash - a.cash;
                       return (a.time || 999999) - (b.time || 999999);
+                    } else if (currentTab === "efficiency") {
+                      const effA =
+                        (a.totalCash || 0) /
+                        Math.max(a.gamesPlayed || a.wins || 1, 1);
+                      const effB =
+                        (b.totalCash || 0) /
+                        Math.max(b.gamesPlayed || b.wins || 1, 1);
+                      return effB - effA;
                     } else if (currentTab === "best") {
                       return (
                         (b.bestSingleHeist || 0) - (a.bestSingleHeist || 0)
@@ -6666,8 +6844,8 @@
           if (type === "daily" || type === "yesterday") {
             currentScore = `${stats.cash}-${stats.time || 999999}`; // Cash and time for tiebreaker
           } else if (type === "efficiency") {
-            // Data comes from scores aggregation: stats.cash and stats.wins
-            currentScore = Math.floor((stats.cash || 0) / Math.max(stats.wins || 1, 1));
+            const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
+            currentScore = Math.floor((stats.totalCash || 0) / gamesPlayed);
           } else if (type === "best") {
             currentScore = stats.bestSingleHeist || 0;
           } else if (type === "week") {
@@ -6719,11 +6897,11 @@
               stats.intel ? "🔍" : ""
             }`;
           } else if (type === "efficiency") {
-            // Data comes from scores aggregation: stats.cash and stats.wins
-            const gamesWon = stats.wins || 1;
-            const efficiency = Math.floor((stats.cash || 0) / gamesWon);
+            const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
+            const totalCash = stats.totalCash || 0;
+            const efficiency = Math.floor(totalCash / gamesPlayed);
             scoreMain = `$${efficiency.toLocaleString()}/game`;
-            scoreSub = `${gamesWon} daily games`;
+            scoreSub = `${gamesPlayed} games played`;
           } else if (type === "best") {
             scoreMain = `$${(stats.bestSingleHeist || 0).toLocaleString()}`;
             scoreSub = `Best single heist`;
@@ -7105,6 +7283,18 @@
       window.setupBadgeTooltips = setupBadgeTooltips;
       window.checkAndResetStreakInFirebase = checkAndResetStreakInFirebase;
       window.syncAllStatsFromFirebase = syncAllStatsFromFirebase;
+      // Notification functions
+      window.enableNotifications = enableNotifications;
+      window.declineNotifications = declineNotifications;
+      window.maybePromptNotifications = maybePromptNotifications;
+
+      // Start foreground message listener
+      setupForegroundMessaging();
+
+      // If user is already in a crew, quietly check/refresh FCM token
+      if (userNick && userGroups.length > 0) {
+        setTimeout(() => requestNotificationPermission(), 4000);
+      }
     </script>
     <script>
       // Fix mobile keyboard touch issues
@@ -7118,6 +7308,174 @@
             { passive: false },
           );
         });
+      });
+    </script>
+
+    <script>
+      // ── PWA INSTALL PROMPT ──────────────────────────────────────────────
+      // Captures the browser's beforeinstallprompt event and shows our
+      // custom install banner instead of the default browser one.
+      // Only shown once — dismissed state saved to localStorage.
+
+      let deferredInstallPrompt = null;
+
+      window.addEventListener("beforeinstallprompt", (e) => {
+        // Prevent the mini-infobar from appearing on Android
+        e.preventDefault();
+        deferredInstallPrompt = e;
+
+        // Don't show if already installed or user already dismissed
+        if (
+          localStorage.getItem("tumblerPWAInstalled") === "true" ||
+          localStorage.getItem("tumblerPWADismissed") === "true"
+        ) return;
+
+        // Show our custom banner after 8 seconds (let them play first)
+        setTimeout(showInstallBanner, 8000);
+      });
+
+      // Detect if already running as installed PWA
+      if (window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true) {
+        localStorage.setItem("tumblerPWAInstalled", "true");
+      }
+
+      function showInstallBanner() {
+        if (document.getElementById("pwa-install-banner")) return;
+
+        const banner = document.createElement("div");
+        banner.id = "pwa-install-banner";
+        banner.style.cssText = `
+          position: fixed; bottom: 20px; left: 50%;
+          transform: translateX(-50%);
+          background: #1e293b;
+          border: 1px solid #334155;
+          border-radius: 16px;
+          padding: 16px 18px;
+          max-width: 340px; width: 90%;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+          z-index: 9998;
+          font-family: 'Chivo Mono', monospace;
+          color: #f8fafc;
+          animation: slideUpPWA 0.35s cubic-bezier(0.34, 1.56, 0.64, 1);
+        `;
+
+        if (!document.getElementById("pwa-banner-style")) {
+          const style = document.createElement("style");
+          style.id = "pwa-banner-style";
+          style.textContent = `
+            @keyframes slideUpPWA {
+              from { opacity: 0; transform: translateX(-50%) translateY(30px); }
+              to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+            }
+          `;
+          document.head.appendChild(style);
+        }
+
+        banner.innerHTML = `
+          <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
+            <img src="/icons/icon-192.png" width="44" height="44"
+                 style="border-radius:10px; flex-shrink:0;"
+                 onerror="this.style.display='none'">
+            <div>
+              <div style="font-weight:700; font-size:0.95rem; color:#f8fafc;">
+                Add Tumbler to Home Screen
+              </div>
+              <div style="font-size:0.75rem; color:#94a3b8; margin-top:3px; line-height:1.4;">
+                One tap to play. Works offline. Get crew notifications.
+              </div>
+            </div>
+          </div>
+          <div style="display:flex; gap:8px;">
+            <button id="pwa-install-btn" style="
+              flex:1; background:#6aaa64; color:#fff; border:none;
+              padding:10px 14px; border-radius:8px; cursor:pointer;
+              font-family:'Chivo Mono',monospace; font-weight:700; font-size:0.85rem;
+            ">🔒 Install App</button>
+            <button id="pwa-dismiss-btn" style="
+              flex:0 0 auto; background:#334155; color:#94a3b8; border:none;
+              padding:10px 14px; border-radius:8px; cursor:pointer;
+              font-family:'Chivo Mono',monospace; font-size:0.8rem;
+            ">Not Now</button>
+          </div>
+        `;
+
+        document.body.appendChild(banner);
+
+        document.getElementById("pwa-install-btn").addEventListener("click", async () => {
+          if (!deferredInstallPrompt) return;
+          deferredInstallPrompt.prompt();
+          const { outcome } = await deferredInstallPrompt.userChoice;
+          if (outcome === "accepted") {
+            localStorage.setItem("tumblerPWAInstalled", "true");
+            showMessage("🔒 Tumbler installed! Check your home screen.");
+          } else {
+            localStorage.setItem("tumblerPWADismissed", "true");
+          }
+          deferredInstallPrompt = null;
+          banner.remove();
+        });
+
+        document.getElementById("pwa-dismiss-btn").addEventListener("click", () => {
+          localStorage.setItem("tumblerPWADismissed", "true");
+          banner.remove();
+        });
+      }
+
+      // iOS doesn't support beforeinstallprompt — show manual instructions instead
+      function showiOSInstallHint() {
+        if (
+          localStorage.getItem("tumblerPWAInstalled") === "true" ||
+          localStorage.getItem("tumblerIOSHintShown") === "true"
+        ) return;
+
+        const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+        const isInStandaloneMode = window.navigator.standalone === true;
+        if (!isIOS || isInStandaloneMode) return;
+
+        localStorage.setItem("tumblerIOSHintShown", "true");
+
+        setTimeout(() => {
+          const hint = document.createElement("div");
+          hint.style.cssText = `
+            position: fixed; bottom: 20px; left: 50%;
+            transform: translateX(-50%);
+            background: #1e293b; border: 1px solid #334155;
+            border-radius: 16px; padding: 16px 18px;
+            max-width: 320px; width: 90%;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+            z-index: 9998; font-family: 'Chivo Mono', monospace; color: #f8fafc;
+            text-align: center;
+          `;
+          hint.innerHTML = `
+            <div style="font-size:1.6rem; margin-bottom:8px;">📲</div>
+            <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px;">
+              Add Tumbler to your Home Screen
+            </div>
+            <div style="font-size:0.78rem; color:#94a3b8; line-height:1.5; margin-bottom:12px;">
+              Tap the <strong style="color:#f8fafc;">Share</strong> button below
+              then <strong style="color:#f8fafc;">"Add to Home Screen"</strong>
+              to get notifications and play offline.
+            </div>
+            <button onclick="this.parentElement.remove()" style="
+              background:#334155; color:#94a3b8; border:none;
+              padding:8px 20px; border-radius:8px; cursor:pointer;
+              font-family:'Chivo Mono',monospace; font-size:0.8rem;
+            ">Got it</button>
+          `;
+          document.body.appendChild(hint);
+        }, 10000);
+      }
+
+      // Run iOS hint check on load
+      showiOSInstallHint();
+
+      // Listen for successful install
+      window.addEventListener("appinstalled", () => {
+        localStorage.setItem("tumblerPWAInstalled", "true");
+        deferredInstallPrompt = null;
+        const banner = document.getElementById("pwa-install-banner");
+        if (banner) banner.remove();
+        console.log("PWA installed successfully");
       });
     </script>
 
