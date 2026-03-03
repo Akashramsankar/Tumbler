@@ -4360,7 +4360,7 @@
           playDate: playDateMidnight.getTime(),
         };
 
-        sessionStorage.setItem(
+        localStorage.setItem(
           getActiveSessionKey(currentPlayDate),
           JSON.stringify(gameState),
         );
@@ -4368,7 +4368,7 @@
 
       function restoreGameState() {
         // CHANGE: Look for specific key based on date
-        const saved = sessionStorage.getItem(
+        const saved = localStorage.getItem(
           getActiveSessionKey(currentPlayDate),
         );
 
@@ -5366,7 +5366,7 @@
               }
               stats.maxStreak = Math.max(stats.maxStreak, stats.currentStreak);
               stats.guessDistribution[currentRow]++;
-              sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
+              localStorage.removeItem(getActiveSessionKey(currentPlayDate));
               stats.totalCash += cashWon;
               stats.gameplayCash += cashWon; // Track gameplay cash separately
               stats.bestSingleHeist = Math.max(
@@ -5455,7 +5455,7 @@
                 saveTodayGame(MAX_TRIES, 0, 0);
 
                 showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
-                sessionStorage.removeItem(getActiveSessionKey(currentPlayDate));
+                localStorage.removeItem(getActiveSessionKey(currentPlayDate));
                 isGameOver = true;
               }
             }
