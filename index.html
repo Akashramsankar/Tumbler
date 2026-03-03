@@ -6227,7 +6227,10 @@
             return;
           }
 
-          await registerServiceWorker();
+          const reg = await navigator.serviceWorker.register(
+            "/Tumbler/firebase-messaging-sw.js",
+          );
+          messaging.useServiceWorker(reg);
 
           const token = await messaging.getToken({ vapidKey: VAPID_KEY });
           if (token) {
