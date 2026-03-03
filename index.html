@@ -6115,19 +6115,20 @@
           console.log("Firebase initialized successfully.");
 
           // Initialize FCM Messaging
-          if (firebase.messaging && firebase.messaging.isSupported()) {
-            // Register service worker FIRST, before initializing messaging
-            navigator.serviceWorker
-              .register("/Tumbler/firebase-messaging-sw.js")
-              .then((registration) => {
+          (async () => {
+            if (firebase.messaging && firebase.messaging.isSupported()) {
+              try {
+                const registration = await navigator.serviceWorker.register(
+                  "/Tumbler/firebase-messaging-sw.js",
+                );
                 messaging = firebase.messaging();
                 messaging.useServiceWorker(registration);
                 console.log("Firebase Messaging initialized with custom SW.");
-              })
-              .catch((err) => {
+              } catch (err) {
                 console.error("Service worker registration failed:", err);
-              });
-          }
+              }
+            }
+          })();
         } else {
           console.error("Firebase library not loaded.");
         }
