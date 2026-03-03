@@ -6116,8 +6116,17 @@
 
           // Initialize FCM Messaging
           if (firebase.messaging && firebase.messaging.isSupported()) {
-            messaging = firebase.messaging();
-            console.log("Firebase Messaging initialized.");
+            // Register service worker FIRST, before initializing messaging
+            navigator.serviceWorker
+              .register("/Tumbler/firebase-messaging-sw.js")
+              .then((registration) => {
+                messaging = firebase.messaging();
+                messaging.useServiceWorker(registration);
+                console.log("Firebase Messaging initialized with custom SW.");
+              })
+              .catch((err) => {
+                console.error("Service worker registration failed:", err);
+              });
           }
         } else {
           console.error("Firebase library not loaded.");
@@ -6226,11 +6235,6 @@
             console.log("Notification permission denied.");
             return;
           }
-
-          const reg = await navigator.serviceWorker.register(
-            "/Tumbler/firebase-messaging-sw.js",
-          );
-          messaging.useServiceWorker(reg);
 
           const token = await messaging.getToken({ vapidKey: VAPID_KEY });
           if (token) {
