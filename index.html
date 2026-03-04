@@ -6849,12 +6849,8 @@
                       if (b.cash !== a.cash) return b.cash - a.cash;
                       return (a.time || 999999) - (b.time || 999999);
                     } else if (currentTab === "efficiency") {
-                      const effA =
-                        (a.totalCash || 0) /
-                        Math.max(a.gamesPlayed || a.wins || 1, 1);
-                      const effB =
-                        (b.totalCash || 0) /
-                        Math.max(b.gamesPlayed || b.wins || 1, 1);
+                      const effA = (a.cash || 0) / Math.max(a.wins, 1);
+                      const effB = (b.cash || 0) / Math.max(b.wins, 1);
                       return effB - effA;
                     } else if (currentTab === "best") {
                       return (
@@ -6915,8 +6911,9 @@
           if (type === "daily" || type === "yesterday") {
             currentScore = `${stats.cash}-${stats.time || 999999}`; // Cash and time for tiebreaker
           } else if (type === "efficiency") {
-            const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
-            currentScore = Math.floor((stats.totalCash || 0) / gamesPlayed);
+            currentScore = Math.floor(
+              (stats.cash || 0) / Math.max(stats.wins || 1, 1),
+            );
           } else if (type === "best") {
             currentScore = stats.bestSingleHeist || 0;
           } else if (type === "week") {
@@ -6968,11 +6965,10 @@
               stats.intel ? "🔍" : ""
             }`;
           } else if (type === "efficiency") {
-            const gamesPlayed = stats.gamesPlayed || stats.wins || 1;
-            const totalCash = stats.totalCash || 0;
-            const efficiency = Math.floor(totalCash / gamesPlayed);
+            const gamesWon = stats.wins || 1;
+            const efficiency = Math.floor((stats.cash || 0) / gamesWon);
             scoreMain = `$${efficiency.toLocaleString()}/game`;
-            scoreSub = `${gamesPlayed} games played`;
+            scoreSub = `${gamesWon} daily games`;
           } else if (type === "best") {
             scoreMain = `$${(stats.bestSingleHeist || 0).toLocaleString()}`;
             scoreSub = `Best single heist`;
