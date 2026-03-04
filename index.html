@@ -5461,6 +5461,9 @@
                 showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
                 localStorage.removeItem(getActiveSessionKey(currentPlayDate));
                 isGameOver = true;
+                setTimeout(() => {
+                  maybePromptNotifications();
+                }, 2000);
               }
             }
           },
@@ -5795,6 +5798,9 @@
 
       function closeWinModal() {
         document.getElementById("win-modal").style.display = "none";
+
+        // Prompt for notifications after they finish playing
+        maybePromptNotifications();
       }
       // ADD ALL THREE FUNCTIONS
       function confirmIntel() {
@@ -6628,9 +6634,6 @@
 
         // Hide the join form after successful join
         hideJoinNewCrew();
-
-        // 4. Prompt for push notifications (after a short delay)
-        maybePromptNotifications();
       }
 
       function logoutGroup() {
@@ -7472,8 +7475,6 @@
         const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
         const isInStandaloneMode = window.navigator.standalone === true;
         if (!isIOS || isInStandaloneMode) return;
-
-        
 
         setTimeout(() => {
           const hint = document.createElement("div");
