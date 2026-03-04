@@ -7091,6 +7091,8 @@
               localStorage.setItem("tumblerActiveGroup", activeGroup);
             }
             needsSync = true;
+            // Refresh the crew dropdown UI to show all crews
+            showLeaderboardView();
           }
 
           // For each stat, take the higher/more recent value
