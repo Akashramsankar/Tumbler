@@ -7083,7 +7083,7 @@
           let needsSync = false;
 
           // Restore groups if PWA has none
-          if (profileData.groups && userGroups.length === 0) {
+          if (profileData.groups && profileData.groups.length > 0) {
             userGroups = profileData.groups;
             localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
             if (!activeGroup && userGroups.length > 0) {
