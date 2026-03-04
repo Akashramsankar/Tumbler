@@ -6776,8 +6776,8 @@
           path = `scores/${activeGroup}/${yesterday.getFullYear()}-${
             yesterday.getMonth() + 1
           }-${yesterday.getDate()}`;
-        } else if (currentTab === "week") {
-          path = `scores/${activeGroup}`; // ADD THIS - need all dates to aggregate
+        } else if (currentTab === "week" || currentTab === "efficiency") {
+          path = `scores/${activeGroup}`;
         } else {
           path = `career/${activeGroup}`;
         }
@@ -6804,45 +6804,59 @@
 
                 let sorted;
 
-                if (currentTab === "week") {
-                  // Aggregate THIS WEEK's scores (Monday to Sunday)
-                  const weeklyTotals = {};
+                if (currentTab === "week" || currentTab === "efficiency") {
+                  // Aggregate from daily scores
+                  const allTimeTotals = {};
                   const now = new Date();
-                  const currentDay = now.getDay();
-                  const daysFromMonday = currentDay === 0 ? 6 : currentDay - 1;
 
-                  const weekStart = new Date(now);
-                  weekStart.setDate(now.getDate() - daysFromMonday);
-                  weekStart.setHours(0, 0, 0, 0);
+                  // For week tab: filter to current week only
+                  let weekStart = null;
+                  if (currentTab === "week") {
+                    const currentDay = now.getDay();
+                    const daysFromMonday =
+                      currentDay === 0 ? 6 : currentDay - 1;
+                    weekStart = new Date(now);
+                    weekStart.setDate(now.getDate() - daysFromMonday);
+                    weekStart.setHours(0, 0, 0, 0);
+                  }
 
                   Object.entries(data).forEach(([dateKey, dayScores]) => {
                     const [year, month, day] = dateKey.split("-").map(Number);
                     const scoreDate = new Date(year, month - 1, day);
                     scoreDate.setHours(0, 0, 0, 0);
 
-                    // Only include scores from this week (Monday onwards)
-                    if (scoreDate >= weekStart && scoreDate <= now) {
-                      Object.entries(dayScores).forEach(([nick, score]) => {
-                        if (!weeklyTotals[nick]) {
-                          weeklyTotals[nick] = {
-                            cash: 0,
-                            wins: 0,
-                            bestTime: 999999,
-                          };
-                        }
-                        weeklyTotals[nick].cash += score.cash;
-                        weeklyTotals[nick].wins++;
-                        weeklyTotals[nick].bestTime = Math.min(
-                          weeklyTotals[nick].bestTime,
-                          score.time || 999999,
-                        );
-                      });
-                    }
+                    // Week tab: only this week; efficiency tab: all time
+                    if (weekStart && (scoreDate < weekStart || scoreDate > now))
+                      return;
+
+                    Object.entries(dayScores).forEach(([nick, score]) => {
+                      if (!allTimeTotals[nick]) {
+                        allTimeTotals[nick] = {
+                          cash: 0,
+                          wins: 0,
+                          bestTime: 999999,
+                        };
+                      }
+                      allTimeTotals[nick].cash += score.cash;
+                      allTimeTotals[nick].wins++;
+                      allTimeTotals[nick].bestTime = Math.min(
+                        allTimeTotals[nick].bestTime,
+                        score.time || 999999,
+                      );
+                    });
                   });
 
-                  sorted = Object.entries(weeklyTotals).sort(
-                    ([, a], [, b]) => b.cash - a.cash,
-                  );
+                  if (currentTab === "efficiency") {
+                    sorted = Object.entries(allTimeTotals).sort(
+                      ([, a], [, b]) =>
+                        b.cash / Math.max(b.wins, 1) -
+                        a.cash / Math.max(a.wins, 1),
+                    );
+                  } else {
+                    sorted = Object.entries(allTimeTotals).sort(
+                      ([, a], [, b]) => b.cash - a.cash,
+                    );
+                  }
                 } else {
                   sorted = Object.entries(data).sort(([, a], [, b]) => {
                     if (currentTab === "daily" || currentTab === "yesterday") {
