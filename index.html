@@ -4127,10 +4127,7 @@
       async function initGame() {
         try {
           await loadDictionaries();
-          // ADD THESE LINES:
-          if (db && userNick) {
-            await syncAllStatsFromFirebase(); // ← Call the existing function!
-          }
+
           const layoutText = document.getElementById("keyboard-layout-text");
           if (layoutText) {
             layoutText.textContent = keyboardLayout.toUpperCase();
@@ -6125,6 +6122,10 @@
           if (firebase.messaging && firebase.messaging.isSupported()) {
             messaging = firebase.messaging();
             console.log("Firebase Messaging initialized.");
+          }
+
+          if (userNick) {
+            syncAllStatsFromFirebase();
           }
         } else {
           console.error("Firebase library not loaded.");
