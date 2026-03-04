@@ -90,8 +90,8 @@ jobs:
                       notification: {
                         title,
                         body,
-                        icon: '/icon-192.png',
-                        badge: '/badge-72.png',
+                        icon: '/Tumbler/icons/icon-192.png',
+                        badge: '/Tumbler/badge-72.png',
                         tag: tag || 'tumbler-evening',
                         requireInteraction: false,
                       },
