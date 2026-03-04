@@ -6159,7 +6159,6 @@
 
         // Don't re-ask if already decided
         if (Notification.permission === "denied") return;
-        if (localStorage.getItem("tumblerNotifDeclined") === "true") return;
         if (localStorage.getItem("tumblerFcmToken")) {
           // Token already saved — just make sure it's in Firebase
           await saveFcmTokenToFirebase(localStorage.getItem("tumblerFcmToken"));
@@ -6263,7 +6262,6 @@
       function declineNotifications() {
         const prompt = document.getElementById("notif-prompt");
         if (prompt) prompt.remove();
-        localStorage.setItem("tumblerNotifDeclined", "true");
       }
 
       async function saveFcmTokenToFirebase(token) {
@@ -7369,11 +7367,7 @@
         deferredInstallPrompt = e;
 
         // Don't show if already installed or user already dismissed
-        if (
-          localStorage.getItem("tumblerPWAInstalled") === "true" ||
-          localStorage.getItem("tumblerPWADismissed") === "true"
-        )
-          return;
+        if (localStorage.getItem("tumblerPWAInstalled") === "true") return;
 
         // Show our custom banner after 8 seconds (let them play first)
         setTimeout(showInstallBanner, 8000);
@@ -7459,7 +7453,6 @@
               localStorage.setItem("tumblerPWAInstalled", "true");
               showMessage("🔒 Tumbler installed! Check your home screen.");
             } else {
-              localStorage.setItem("tumblerPWADismissed", "true");
             }
             deferredInstallPrompt = null;
             banner.remove();
@@ -7468,24 +7461,19 @@
         document
           .getElementById("pwa-dismiss-btn")
           .addEventListener("click", () => {
-            localStorage.setItem("tumblerPWADismissed", "true");
             banner.remove();
           });
       }
 
       // iOS doesn't support beforeinstallprompt — show manual instructions instead
       function showiOSInstallHint() {
-        if (
-          localStorage.getItem("tumblerPWAInstalled") === "true" ||
-          localStorage.getItem("tumblerIOSHintShown") === "true"
-        )
-          return;
+        if (localStorage.getItem("tumblerPWAInstalled") === "true") return;
 
         const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
         const isInStandaloneMode = window.navigator.standalone === true;
         if (!isIOS || isInStandaloneMode) return;
 
-        localStorage.setItem("tumblerIOSHintShown", "true");
+        
 
         setTimeout(() => {
           const hint = document.createElement("div");
