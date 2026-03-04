@@ -3794,7 +3794,7 @@
           "none";
       }
 
-      function buyRecovery() {
+      async function buyRecovery() {
         // Check if streak is actually broken
         if (stats.currentStreak > 0) {
           showMessage("❌ Only available when streak is broken!");
@@ -3809,7 +3809,7 @@
         }
 
         // Check if recovery is still available (haven't played today yet)
-        if (hasPlayedToday()) {
+        if (await hasPlayedToday()) {
           showMessage("❌ Already played today! Recovery no longer available.");
           playSound("error");
           return;
@@ -4135,14 +4135,14 @@
           TARGET_WORD = getDailyWord();
 
           // Check if already played today
-          if (hasPlayedToday()) {
+          if (await hasPlayedToday()) {
             loadCompletedGame();
             return;
           }
 
           // CHECK AND BREAK STREAK ON PAGE LOAD IF NECESSARY
           if (
-            !hasPlayedToday() &&
+            !(await hasPlayedToday()) &&
             !wasYesterdayPlayed() &&
             stats.currentStreak > 0
           ) {
@@ -4293,11 +4293,11 @@
         btn.style.display = "block"; // Ensure it's visible
         btn.disabled = false;
         btn.innerHTML = `
-                     🔍 VIEW INTEL
-                     <span style="display:block;font-size:0.75rem;opacity:0.8;margin-top:3px;">
-                       Costs $1,000
-                     </span>
-                   `;
+                           🔍 VIEW INTEL
+                           <span style="display:block;font-size:0.75rem;opacity:0.8;margin-top:3px;">
+                             Costs $1,000
+                           </span>
+                         `;
         btn.style.opacity = "1";
         btn.style.cursor = "pointer";
       }
@@ -4466,13 +4466,55 @@
       }
 
       // Check if already played today
-      function hasPlayedToday() {
+      async function hasPlayedToday() {
+        // First check localStorage (fast, local)
         const saved = localStorage.getItem(getStorageKey(currentPlayDate));
-        if (!saved) return false;
-        // We don't need to check puzzleNumber anymore since the Key is the date
-        return true;
+        if (saved) return true;
+
+        // If not in localStorage, check Firebase (authoritative source)
+        if (!db || !userNick || userGroups.length === 0) return false;
+
+        try {
+          const dateKey = getDateKey(currentPlayDate);
+
+          // Check all crews this user belongs to
+          for (const crewId of userGroups) {
+            const snapshot = await db
+              .ref(`scores/${crewId}/${dateKey}/${userNick}`)
+              .once("value");
+            const scoreData = snapshot.val();
+
+            // If found a score for today in any crew, they already played
+            if (scoreData && scoreData.cash > 0) {
+              // Sync this to localStorage so we don't check again
+              const gameData = {
+                attempts: scoreData.attempts || 6,
+                cash: scoreData.cash,
+                time: scoreData.time || 0,
+                intel: scoreData.intel || false,
+                timestamp: scoreData.timestamp,
+              };
+              localStorage.setItem(
+                getStorageKey(currentPlayDate),
+                JSON.stringify(gameData),
+              );
+              return true;
+            }
+          }
+
+          return false;
+        } catch (error) {
+          console.error("Error checking Firebase for today's play:", error);
+          // If Firebase check fails, fall back to localStorage only
+          return false;
+        }
       }
       window.hasPlayedToday = hasPlayedToday;
+
+      function getDateKey(date) {
+        const d = new Date(date);
+        return `${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`;
+      }
 
       function loadCompletedGame() {
         const key = getStorageKey(currentPlayDate);
@@ -4628,22 +4670,25 @@
           "width: 100%; display: flex; justify-content: center; margin-bottom: 15px;";
 
         countdownContainer.innerHTML = `
-                    <div class="countdown-display">
-                      <div class="countdown-label">✅ Tumbler #${puzzleNum} Cracked!</div>
-                      <div style="font-size: 1.2rem; color: var(--color-cash); margin: 10px 0;">
-                        💰 $${cashString} Stolen
-                      </div>
-                      <div class="countdown-label" style="margin-top: 15px;">Next Heist Available In</div>
-                      <div class="countdown-timer" id="live-countdown">
-                        ${String(hours).padStart(2, "0")}:${String(
-                          minutes,
-                        ).padStart(2, "0")}:${String(seconds).padStart(2, "0")}
-                      </div>
-                      <div class="streak-badge">
-                        🔥 ${stats.currentStreak} Day Streak
-                      </div>
-                    </div>
-                  `;
+                          <div class="countdown-display">
+                            <div class="countdown-label">✅ Tumbler #${puzzleNum} Cracked!</div>
+                            <div style="font-size: 1.2rem; color: var(--color-cash); margin: 10px 0;">
+                              💰 $${cashString} Stolen
+                            </div>
+                            <div class="countdown-label" style="margin-top: 15px;">Next Heist Available In</div>
+                            <div class="countdown-timer" id="live-countdown">
+                              ${String(hours).padStart(2, "0")}:${String(
+                                minutes,
+                              ).padStart(
+                                2,
+                                "0",
+                              )}:${String(seconds).padStart(2, "0")}
+                            </div>
+                            <div class="streak-badge">
+                              🔥 ${stats.currentStreak} Day Streak
+                            </div>
+                          </div>
+                        `;
 
         // Insert BEFORE the game board
         const gameBoard = document.getElementById("game-board");
@@ -5676,23 +5721,23 @@
 
           milestoneDiv.innerHTML = isMobile
             ? `
-  <div style="font-size: 1.2rem;">🎉</div>
-  <div style="font-size: 0.85rem; font-weight: 700; color: white; margin: 3px 0;">
-    ${currentStreak}-DAY MILESTONE!
-  </div>
-  <div style="font-size: 1rem; font-weight: 700; color: var(--color-cash);">
-    +$${bonus.toLocaleString()}
-  </div>
-`
+        <div style="font-size: 1.2rem;">🎉</div>
+        <div style="font-size: 0.85rem; font-weight: 700; color: white; margin: 3px 0;">
+          ${currentStreak}-DAY MILESTONE!
+        </div>
+        <div style="font-size: 1rem; font-weight: 700; color: var(--color-cash);">
+          +$${bonus.toLocaleString()}
+        </div>
+      `
             : `
-  <div style="font-size: 1.8rem;">🎉</div>
-  <div style="font-size: 1.1rem; font-weight: 700; color: white; margin: 5px 0;">
-    ${currentStreak}-DAY MILESTONE!
-  </div>
-  <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
-    +$${bonus.toLocaleString()} BONUS
-  </div>
-`;
+        <div style="font-size: 1.8rem;">🎉</div>
+        <div style="font-size: 1.1rem; font-weight: 700; color: white; margin: 5px 0;">
+          ${currentStreak}-DAY MILESTONE!
+        </div>
+        <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
+          +$${bonus.toLocaleString()} BONUS
+        </div>
+      `;
 
           stashDisplay.parentNode.insertBefore(
             milestoneDiv,
@@ -5711,14 +5756,14 @@
             const width = Math.max(percentage, 10);
             const isCurrent = idx === attempts - 1;
             return `
-        <div class="distribution-row">
-          <div class="distribution-label">${idx + 1}</div>
-          <div class="distribution-bar ${isCurrent ? "current" : ""}"
-               style="width: ${width}%">
-            ${count}
-          </div>
-        </div>
-      `;
+              <div class="distribution-row">
+                <div class="distribution-label">${idx + 1}</div>
+                <div class="distribution-bar ${isCurrent ? "current" : ""}"
+                     style="width: ${width}%">
+                  ${count}
+                </div>
+              </div>
+            `;
           })
           .join("");
 
@@ -5731,55 +5776,55 @@
 
         const content = modal.querySelector(".tutorial-content");
         content.innerHTML = `
-    <div class="mission-header">
-      <h2 class="mission-title">🎉 First Heist Complete!</h2>
-      <div class="mission-subtitle">$${cashWon.toLocaleString()} STOLEN IN ${attempts} ATTEMPTS</div>
-    </div>
-
-    <div style="background: var(--safe-inset); padding: 20px; border-radius: 12px; 
-                margin: 20px 0; border: 1px solid var(--safe-border);">
-      <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-color); 
-                  text-align: center; margin-bottom: 15px;">
-        Playing Solo vs. With a Crew
-      </div>
-      
-      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
-        <div style="text-align: center; opacity: 0.6;">
-          <div style="font-size: 2rem; margin-bottom: 5px;">🧑</div>
-          <div style="font-size: 0.85rem; color: #94a3b8;">Solo Mode</div>
-          <div style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">
-            Track your own stats
+          <div class="mission-header">
+            <h2 class="mission-title">🎉 First Heist Complete!</h2>
+            <div class="mission-subtitle">$${cashWon.toLocaleString()} STOLEN IN ${attempts} ATTEMPTS</div>
           </div>
-        </div>
-        
-        <div style="text-align: center;">
-          <div style="font-size: 2rem; margin-bottom: 5px;">👥</div>
-          <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700;">
-            Crew Mode
-          </div>
-          <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 5px;">
-            Daily leaderboards<br>
-            Weekly badges<br>
-            Friend competition
-          </div>
-        </div>
-      </div>
-    </div>
 
-    <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; 
-                text-align: center; margin-bottom: 20px;">
-      Create a crew with friends or join an existing one to see who's the best lockpick!
-    </div>
+          <div style="background: var(--safe-inset); padding: 20px; border-radius: 12px;
+                      margin: 20px 0; border: 1px solid var(--safe-border);">
+            <div style="font-size: 1.1rem; font-weight: 700; color: var(--text-color);
+                        text-align: center; margin-bottom: 15px;">
+              Playing Solo vs. With a Crew
+            </div>
 
-    <button class="tutorial-btn" onclick="startCrewSetup()" style="margin-bottom: 10px;">
-      👥 Create/Join Crew
-    </button>
-    
-    <button class="close-stats" onclick="skipCrewIntro(${attempts}, ${cashWon}, ${solveTime})" 
-            style="margin-top: 0;">
-      Skip for Now
-    </button>
-  `;
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div style="text-align: center; opacity: 0.6;">
+                <div style="font-size: 2rem; margin-bottom: 5px;">🧑</div>
+                <div style="font-size: 0.85rem; color: #94a3b8;">Solo Mode</div>
+                <div style="font-size: 0.75rem; color: #64748b; margin-top: 5px;">
+                  Track your own stats
+                </div>
+              </div>
+
+              <div style="text-align: center;">
+                <div style="font-size: 2rem; margin-bottom: 5px;">👥</div>
+                <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700;">
+                  Crew Mode
+                </div>
+                <div style="font-size: 0.75rem; color: #cbd5e1; margin-top: 5px;">
+                  Daily leaderboards<br>
+                  Weekly badges<br>
+                  Friend competition
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5;
+                      text-align: center; margin-bottom: 20px;">
+            Create a crew with friends or join an existing one to see who's the best lockpick!
+          </div>
+
+          <button class="tutorial-btn" onclick="startCrewSetup()" style="margin-bottom: 10px;">
+            👥 Create/Join Crew
+          </button>
+
+          <button class="close-stats" onclick="skipCrewIntro(${attempts}, ${cashWon}, ${solveTime})"
+                  style="margin-top: 0;">
+            Skip for Now
+          </button>
+        `;
       }
 
       function startCrewSetup() {
@@ -5812,33 +5857,33 @@
         modal.style.display = "flex";
 
         modal.innerHTML = `
-                     <div class="tutorial-content" style="max-width: 360px;">
-                       <h2 style="margin-top: 0; font-size: 1.5rem;">🔍 Purchase Intel?</h2>
+                           <div class="tutorial-content" style="max-width: 360px;">
+                             <h2 style="margin-top: 0; font-size: 1.5rem;">🔍 Purchase Intel?</h2>
 
-                       <div style="background: var(--safe-inset); padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid var(--safe-border);">
-                         <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px;">
-                           Reveals code sum to help crack the vault
-                         </div>
-                         <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-far);">
-                           Cost: $1,000
-                         </div>
-                       </div>
+                             <div style="background: var(--safe-inset); padding: 15px; border-radius: 10px; margin: 20px 0; border: 1px solid var(--safe-border);">
+                               <div style="font-size: 0.9rem; color: #94a3b8; margin-bottom: 8px;">
+                                 Reveals code sum to help crack the vault
+                               </div>
+                               <div style="font-size: 1.8rem; font-weight: 700; color: var(--color-far);">
+                                 Cost: $1,000
+                               </div>
+                             </div>
 
-                       <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">
-                         The intel will show you the sum of all letter values (A=1, B=2...Z=26).
-                         This will be deducted from your final heist reward.
-                       </div>
+                             <div style="font-size: 0.85rem; color: #cbd5e1; line-height: 1.5; margin-bottom: 20px;">
+                               The intel will show you the sum of all letter values (A=1, B=2...Z=26).
+                               This will be deducted from your final heist reward.
+                             </div>
 
-                       <div style="display: flex; gap: 10px;">
-                         <button class="tutorial-btn" onclick="useIntel()" style="flex: 1;">
-                           ✓ Use Intel
-                         </button>
-                         <button class="close-stats" onclick="closeIntelModal()" style="flex: 1; margin-top: 0;">
-                           Cancel
-                         </button>
-                       </div>
-                     </div>
-                   `;
+                             <div style="display: flex; gap: 10px;">
+                               <button class="tutorial-btn" onclick="useIntel()" style="flex: 1;">
+                                 ✓ Use Intel
+                               </button>
+                               <button class="close-stats" onclick="closeIntelModal()" style="flex: 1; margin-top: 0;">
+                                 Cancel
+                               </button>
+                             </div>
+                           </div>
+                         `;
 
         document.body.appendChild(modal);
         modal.addEventListener("click", (e) => {
@@ -6002,7 +6047,7 @@
         // 5. Re-Init Game
         TARGET_WORD = getDailyWord(currentPlayDate);
 
-        if (hasPlayedToday()) {
+        if (await hasPlayedToday()) {
           loadCompletedGame();
         }
         // 6. CHANGE: Remove "isReturningToToday" check here.
@@ -6182,50 +6227,50 @@
         const prompt = document.createElement("div");
         prompt.id = "notif-prompt";
         prompt.style.cssText = `
-          position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-          background: #1e293b; border: 1px solid #334155;
-          border-radius: 14px; padding: 16px 20px; max-width: 340px; width: 90%;
-          box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999;
-          font-family: 'Chivo Mono', monospace; color: #f8fafc;
-          animation: slideUpPrompt 0.3s ease;
-        `;
+                position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+                background: #1e293b; border: 1px solid #334155;
+                border-radius: 14px; padding: 16px 20px; max-width: 340px; width: 90%;
+                box-shadow: 0 8px 32px rgba(0,0,0,0.6); z-index: 9999;
+                font-family: 'Chivo Mono', monospace; color: #f8fafc;
+                animation: slideUpPrompt 0.3s ease;
+              `;
 
         // Add keyframe if not already present
         if (!document.getElementById("notif-prompt-style")) {
           const style = document.createElement("style");
           style.id = "notif-prompt-style";
           style.textContent = `
-            @keyframes slideUpPrompt {
-              from { opacity: 0; transform: translateX(-50%) translateY(20px); }
-              to   { opacity: 1; transform: translateX(-50%) translateY(0); }
-            }
-          `;
+                  @keyframes slideUpPrompt {
+                    from { opacity: 0; transform: translateX(-50%) translateY(20px); }
+                    to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+                  }
+                `;
           document.head.appendChild(style);
         }
 
         prompt.innerHTML = `
-          <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
-            <span style="font-size:1.4rem;">🔔</span>
-            <div>
-              <div style="font-weight:700; font-size:0.95rem;">Crew Notifications</div>
-              <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">
-                Get daily reminders & crew score alerts
-              </div>
-            </div>
-          </div>
-          <div style="display:flex; gap:8px; margin-top:12px;">
-            <button onclick="enableNotifications()" style="
-              flex:1; background:#6aaa64; color:#fff; border:none;
-              padding:9px 12px; border-radius:8px; cursor:pointer;
-              font-family:'Chivo Mono',monospace; font-weight:700; font-size:0.85rem;
-            ">✓ Enable</button>
-            <button onclick="declineNotifications()" style="
-              flex:1; background:#334155; color:#94a3b8; border:none;
-              padding:9px 12px; border-radius:8px; cursor:pointer;
-              font-family:'Chivo Mono',monospace; font-size:0.85rem;
-            ">Not Now</button>
-          </div>
-        `;
+                <div style="display:flex; align-items:center; gap:10px; margin-bottom:10px;">
+                  <span style="font-size:1.4rem;">🔔</span>
+                  <div>
+                    <div style="font-weight:700; font-size:0.95rem;">Crew Notifications</div>
+                    <div style="font-size:0.75rem; color:#94a3b8; margin-top:2px;">
+                      Get daily reminders & crew score alerts
+                    </div>
+                  </div>
+                </div>
+                <div style="display:flex; gap:8px; margin-top:12px;">
+                  <button onclick="enableNotifications()" style="
+                    flex:1; background:#6aaa64; color:#fff; border:none;
+                    padding:9px 12px; border-radius:8px; cursor:pointer;
+                    font-family:'Chivo Mono',monospace; font-weight:700; font-size:0.85rem;
+                  ">✓ Enable</button>
+                  <button onclick="declineNotifications()" style="
+                    flex:1; background:#334155; color:#94a3b8; border:none;
+                    padding:9px 12px; border-radius:8px; cursor:pointer;
+                    font-family:'Chivo Mono',monospace; font-size:0.85rem;
+                  ">Not Now</button>
+                </div>
+              `;
         document.body.appendChild(prompt);
       }
 
@@ -6430,11 +6475,11 @@
         container.innerHTML = badges
           .map(
             (badge, index) => `
-    <div class="user-badge-item" data-badge-index="${index}" data-badge-desc="${badge.desc}" title="${badge.desc}">
-      <span class="user-badge-icon">${badge.icon}</span>
-      <span class="user-badge-name">${badge.name}</span>
-    </div>
-  `,
+          <div class="user-badge-item" data-badge-index="${index}" data-badge-desc="${badge.desc}" title="${badge.desc}">
+            <span class="user-badge-icon">${badge.icon}</span>
+            <span class="user-badge-name">${badge.name}</span>
+          </div>
+        `,
           )
           .join("");
 
@@ -6824,19 +6869,19 @@
                 // Add info header for weekly tab
                 if (currentTab === "week") {
                   list.innerHTML = `
-    <div style="background: var(--safe-inset); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--safe-border);">
-      <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700; margin-bottom: 8px; text-align: center;">
-        ðŸ† Weekly Badge Race
-      </div>
-      <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.4; text-align: center;">
-        Top 3 by total cash earn badges on Monday reset<br>
-        <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King</span>
-      </div>
-      <div style="text-align: center; margin-top: 8px; font-size: 0.75rem; color: var(--color-close);">
-        â° ${getTimeUntilMonday()}
-      </div>
-    </div>
-  `;
+          <div style="background: var(--safe-inset); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--safe-border);">
+            <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700; margin-bottom: 8px; text-align: center;">
+              ðŸ† Weekly Badge Race
+            </div>
+            <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.4; text-align: center;">
+              Top 3 by total cash earn badges on Monday reset<br>
+              <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King</span>
+            </div>
+            <div style="text-align: center; margin-top: 8px; font-size: 0.75rem; color: var(--color-close);">
+              â° ${getTimeUntilMonday()}
+            </div>
+          </div>
+        `;
                 }
 
                 renderList(sorted, currentTab, weeklyBadges);
@@ -6955,19 +7000,19 @@
           }
 
           const html = `
-      <div class="lb-row" style="${
-        isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
-      }">
-          <div class="lb-rank ${rankClass}">${currentRank}</div>
-          <div class="lb-user">${nick} ${badgeHTML}${provisionalBadge} ${
-            isMe ? "(You)" : ""
-          }</div>
-          <div class="lb-score">
-              <div class="lb-score-main">${scoreMain}</div>
-              <div class="lb-score-sub">${scoreSub}</div>
-          </div>
-      </div>
-    `;
+            <div class="lb-row" style="${
+              isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
+            }">
+                <div class="lb-rank ${rankClass}">${currentRank}</div>
+                <div class="lb-user">${nick} ${badgeHTML}${provisionalBadge} ${
+                  isMe ? "(You)" : ""
+                }</div>
+                <div class="lb-score">
+                    <div class="lb-score-main">${scoreMain}</div>
+                    <div class="lb-score-sub">${scoreSub}</div>
+                </div>
+            </div>
+          `;
           list.insertAdjacentHTML("beforeend", html);
         });
       }
