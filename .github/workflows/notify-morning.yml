@@ -180,6 +180,12 @@ jobs:
                 const token = typeof data === 'string' ? data : data?.token;
                 if (!token) continue;
 
+                // Skip if already solved today
+                if (crewDayScores[nick] && crewDayScores[nick].cash > 0) {
+                  console.log(`  → Skipping ${nick} (already solved today)`);
+                  continue;
+                }
+
                 const ok = await sendToToken(projectId, accessToken, token, title, body, 'tumbler-morning');
                 if (ok) {
                   console.log(`  ✓ Sent to ${nick}`);

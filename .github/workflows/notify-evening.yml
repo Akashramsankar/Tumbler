@@ -156,32 +156,16 @@ jobs:
                 if (!token) continue;
 
                 const hasPlayed = !!crewDayScores[nick] && crewDayScores[nick].cash > 0;
-                const isLeader = leader?.nick === nick;
+
+                // Skip if already solved today
+                if (hasPlayed) {
+                  console.log(`  → Skipping ${nick} (already solved today)`);
+                  continue;
+                }
 
                 let title, body;
 
-                if (hasPlayed && isLeader) {
-                  // 👑 They're leading
-                  title = "👑 You're leading the crew!";
-                  body = randomTaunt([
-                    `You're top of the crew with $${leader.cash.toLocaleString('en-US')}. Hold the crown. 👑`,
-                    `$${leader.cash.toLocaleString('en-US')} and sitting at #1. Will anyone beat you tonight?`,
-                  ]);
-
-                } else if (hasPlayed && leader) {
-                  // They played but aren't leading
-                  title = '📊 Crew Update';
-                  body = randomTaunt([
-                    `${leader.nick} is sitting at $${leader.cash.toLocaleString('en-US')} — you're not far behind!`,
-                    `The leaderboard is heating up. ${leader.nick} is ahead with $${leader.cash.toLocaleString('en-US')}.`,
-                  ]);
-
-                } else if (hasPlayed && !leader) {
-                  // Only person who played — no point pinging them
-                  console.log(`  → Skipping ${nick} (only player, no competition yet)`);
-                  continue;
-
-                } else if (!hasPlayed && leader) {
+                if (leader) {
                   // FOMO push — hasn't played, someone has
                   title = '⏰ Vault closes at midnight';
                   body = randomTaunt([
@@ -190,7 +174,6 @@ jobs:
                     `Your crew played. You didn't. ${leader.nick} leads with $${leader.cash.toLocaleString('en-US')}. Clock's ticking. ⏰`,
                     `Last chance — ${leader.nick} cracked it for $${leader.cash.toLocaleString('en-US')}. Vault closes at midnight.`,
                   ]);
-
                 } else {
                   // Nobody played yet — gentle nudge
                   title = "Tumbler — Don't miss today";
@@ -200,7 +183,7 @@ jobs:
                   ]);
                 }
 
-                console.log(`  → ${nick} (played: ${hasPlayed}, leading: ${isLeader}): "${title}"`);
+                console.log(`  → ${nick} (played: ${hasPlayed}): "${title}"`);
 
                 const ok = await sendToToken(projectId, accessToken, token, title, body, 'tumbler-evening');
                 if (ok) totalSent++;
