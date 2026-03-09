@@ -115,8 +115,8 @@ messaging.onBackgroundMessage((payload) => {
 
   self.registration.showNotification(title || "Tumbler", {
     body: body || "Check your crew leaderboard!",
-    icon: icon || "/icons/icon-192.png",
-    badge: "/icons/icon-72.png",
+    icon: icon || "/Tumbler/icons/icon-192.png",
+    badge: "/Tumbler/icons/icon-72.png",
     tag: payload.data?.tag || "tumbler-notif",
     data: payload.data || {},
     requireInteraction: false,
@@ -125,7 +125,7 @@ messaging.onBackgroundMessage((payload) => {
 
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const targetUrl = event.notification.data?.url || "/";
+  const targetUrl = event.notification.data?.url || "https://akashramsankar.github.io/Tumbler/";
 
   event.waitUntil(
     clients
