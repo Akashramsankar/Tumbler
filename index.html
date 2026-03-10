@@ -3769,6 +3769,7 @@
         const restoredStreak =
           stats.previousStreak > 0 ? stats.previousStreak : 1;
         stats.currentStreak = restoredStreak;
+        localStorage.setItem("tumblerStreakRecovered", "true");
         localStorage.setItem("tumblerStats", JSON.stringify(stats));
         saveProfileToFirebase();
 
@@ -5391,6 +5392,11 @@
                     stats.streakProtectors--;
                     stats.currentStreak++;
                     showMessage("🛡️ Streak Protector Used!");
+                  } else if (
+                    localStorage.getItem("tumblerStreakRecovered") === "true"
+                  ) {
+                    localStorage.removeItem("tumblerStreakRecovered");
+                    stats.currentStreak++;
                   } else {
                     stats.currentStreak = 1;
                   }
