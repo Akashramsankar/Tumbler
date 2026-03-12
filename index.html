@@ -3752,10 +3752,24 @@
         localStorage.setItem("tumblerStats", JSON.stringify(stats));
         saveProfileToFirebase();
 
+        // ✅ Sync deduction to career node for all groups
+        if (db && userGroups.length > 0 && userNick) {
+          userGroups.forEach((group) => {
+            const careerRef = db.ref(`career/${group}/${userNick}`);
+            careerRef.once("value", (snapshot) => {
+              const existingData = snapshot.val() || {};
+              careerRef.update({
+                totalCash:
+                  (existingData.totalCash || 0) - STREAK_PROTECTOR_COST,
+              });
+            });
+          });
+        }
+
         closeProtectorModal();
         showMessage("✅ Protector purchased!");
         playSound("correct");
-        showStats(); // Refresh the stats modal
+        showStats();
       }
 
       function closeProtectorModal() {
@@ -3774,11 +3788,16 @@
         saveProfileToFirebase();
 
         // Update Firebase if available
+
         if (db && userGroups.length > 0 && userNick) {
           userGroups.forEach((group) => {
-            db.ref(`career/${group}/${userNick}`).update({
-              streak: restoredStreak,
-              totalCash: stats.totalCash,
+            const careerRef = db.ref(`career/${group}/${userNick}`);
+            careerRef.once("value", (snapshot) => {
+              const existingData = snapshot.val() || {};
+              careerRef.update({
+                streak: restoredStreak,
+                totalCash: (existingData.totalCash || 0) - STREAK_RECOVERY_COST, // ✅ Firebase-relative deduction
+              });
             });
           });
         }
@@ -5436,6 +5455,7 @@
                   cashWon,
                   solveTime,
                   intelUsed,
+                  milestoneBonus, // ✅ pass streak bonus through
                 );
               }
 
@@ -7035,7 +7055,13 @@
 
       // --- SUBMISSION HELPERS ---
 
-      function submitScoreToFirebase(attempts, cash, time, intelUsed) {
+      function submitScoreToFirebase(
+        attempts,
+        cash,
+        time,
+        intelUsed,
+        streakBonus = 0,
+      ) {
         if (!db || userGroups.length === 0 || !userNick) return;
 
         const today = new Date();
@@ -7071,14 +7097,15 @@
 
             careerRef.update({
               // Use Firebase value as base, add today's cash
-              totalCash: (existingData.totalCash || 0) + cash,
+              totalCash: (existingData.totalCash || 0) + cash + streakBonus,
               // Use Firebase value as base, add today's win
-              wins: (existingData.wins || 0) + wonThisGame,
-              // Use Firebase value as base, add today's game
-              gamesPlayed: (existingData.gamesPlayed || 0) + 1,
-              // Sync streak directly from localStorage (already calculated with protectors, etc.)
+              wins: isToday
+                ? (existingData.wins || 0) + wonThisGame
+                : existingData.wins || 0, // ✅ only count today's games
+              gamesPlayed: isToday
+                ? (existingData.gamesPlayed || 0) + 1
+                : existingData.gamesPlayed || 0, // ✅ only count today's games
               streak: localStats.currentStreak || 0,
-              // Max comparison for best heist
               bestSingleHeist: Math.max(
                 existingData.bestSingleHeist || 0,
                 isToday ? cash : 0,
