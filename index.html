@@ -5401,6 +5401,7 @@
               const isToday =
                 new Date().setHours(0, 0, 0, 0) ===
                 currentPlayDate.setHours(0, 0, 0, 0);
+                let milestoneBonus = 0;
               if (isToday) {
                 stats.played++;
                 stats.won++;
