@@ -7174,17 +7174,18 @@
 
           // Restore groups if PWA has none
           if (profileData.groups && profileData.groups.length > 0) {
-            // Merge Firebase groups with local groups, don't overwrite
+            // MERGE Firebase groups with local groups — never overwrite
             const merged = [...new Set([...userGroups, ...profileData.groups])];
-            userGroups = merged;
-            localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+            if (merged.length !== userGroups.length) {
+              userGroups = merged;
+              localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+              needsSync = true;
+            }
             if (!activeGroup && userGroups.length > 0) {
               activeGroup = userGroups[0];
               localStorage.setItem("tumblerActiveGroup", activeGroup);
             }
-            needsSync = true;
-            // Refresh the crew dropdown UI to show all crews
-            showLeaderboardView();
+            if (needsSync) showLeaderboardView();
           }
 
           // For each stat, take the higher/more recent value
