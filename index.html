@@ -5401,7 +5401,7 @@
               const isToday =
                 new Date().setHours(0, 0, 0, 0) ===
                 currentPlayDate.setHours(0, 0, 0, 0);
-                let milestoneBonus = 0;
+              let milestoneBonus = 0;
               if (isToday) {
                 stats.played++;
                 stats.won++;
@@ -7174,7 +7174,9 @@
 
           // Restore groups if PWA has none
           if (profileData.groups && profileData.groups.length > 0) {
-            userGroups = profileData.groups;
+            // Merge Firebase groups with local groups, don't overwrite
+            const merged = [...new Set([...userGroups, ...profileData.groups])];
+            userGroups = merged;
             localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
             if (!activeGroup && userGroups.length > 0) {
               activeGroup = userGroups[0];
