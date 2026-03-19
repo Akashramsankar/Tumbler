@@ -2550,6 +2550,18 @@
           </div>
         </div>
 
+        <div class="rule-line">
+          <div class="icon-box">🏆</div>
+          <div>
+            <strong>Master Thief Badges:</strong> Permanent badges earned by
+            your career stash.<br />
+            <span style="font-size: 0.8rem; color: #94a3b8">
+              🔓 Bronze ($1M+) &nbsp;•&nbsp; 🔐 Silver ($5M+) &nbsp;•&nbsp; 🗝️
+              Gold ($10M+)
+            </span>
+          </div>
+        </div>
+
         <button class="tutorial-btn" onclick="closeTutorial()">
           START CRACKING
         </button>
@@ -6395,6 +6407,27 @@
         },
       };
 
+      const MASTER_THIEF_BADGES = [
+        {
+          threshold: 10_000_000,
+          icon: "🗝️",
+          name: "Gold Master Thief",
+          desc: "Career Stash: $10M+",
+        },
+        {
+          threshold: 5_000_000,
+          icon: "🔐",
+          name: "Silver Master Thief",
+          desc: "Career Stash: $5M+",
+        },
+        {
+          threshold: 1_000_000,
+          icon: "🔓",
+          name: "Bronze Master Thief",
+          desc: "Career Stash: $1M+",
+        },
+      ];
+
       // --- 2. STATE ---
       let userNick = localStorage.getItem("tumblerNick") || "";
       let userGroups = JSON.parse(
@@ -6519,6 +6552,13 @@
         }
 
         showcase.style.display = "block";
+      }
+
+      function getMasterThiefBadge(totalCash) {
+        for (const badge of MASTER_THIEF_BADGES) {
+          if (totalCash >= badge.threshold) return badge;
+        }
+        return null;
       }
 
       function setupBadgeTooltips() {
@@ -6810,133 +6850,135 @@
         }
 
         // --- NEW: Fetch Weekly Badges First ---
-        const weekKey = getWeekKey();
-        db.ref(`weeklyBadges/${weekKey}/${activeGroup}`).once(
-          "value",
-          (badgeSnap) => {
-            const weeklyBadges = badgeSnap.val() || {};
+        db.ref(`career/${activeGroup}`).once("value", (careerSnap) => {
+          const careerData = careerSnap.val() || {};
 
-            // --- Now Fetch Scores ---
-            db.ref(path).once(
-              "value",
-              (snapshot) => {
-                clearTimeout(timeout);
-                const data = snapshot.val();
+          const weekKey = getWeekKey();
+          db.ref(`weeklyBadges/${weekKey}/${activeGroup}`).once(
+            "value",
+            (badgeSnap) => {
+              const weeklyBadges = badgeSnap.val() || {};
 
-                if (!data) {
-                  list.innerHTML =
-                    '<div style="text-align:center; padding:20px; color:#64748b;">No data found yet.<br>Be the first to score!</div>';
-                  return;
-                }
+              db.ref(path).once(
+                "value",
+                (snapshot) => {
+                  clearTimeout(timeout);
+                  const data = snapshot.val();
 
-                let sorted;
-
-                if (currentTab === "week" || currentTab === "efficiency") {
-                  // Aggregate from daily scores
-                  const allTimeTotals = {};
-                  const now = new Date();
-
-                  // For week tab: filter to current week only
-                  let weekStart = null;
-                  if (currentTab === "week") {
-                    const currentDay = now.getDay();
-                    const daysFromMonday =
-                      currentDay === 0 ? 6 : currentDay - 1;
-                    weekStart = new Date(now);
-                    weekStart.setDate(now.getDate() - daysFromMonday);
-                    weekStart.setHours(0, 0, 0, 0);
+                  if (!data) {
+                    list.innerHTML =
+                      '<div style="text-align:center; padding:20px; color:#64748b;">No data found yet.<br>Be the first to score!</div>';
+                    return;
                   }
 
-                  Object.entries(data).forEach(([dateKey, dayScores]) => {
-                    const [year, month, day] = dateKey.split("-").map(Number);
-                    const scoreDate = new Date(year, month - 1, day);
-                    scoreDate.setHours(0, 0, 0, 0);
+                  let sorted;
 
-                    // Week tab: only this week; efficiency tab: all time
-                    if (weekStart && (scoreDate < weekStart || scoreDate > now))
-                      return;
+                  if (currentTab === "week" || currentTab === "efficiency") {
+                    const allTimeTotals = {};
+                    const now = new Date();
 
-                    Object.entries(dayScores).forEach(([nick, score]) => {
-                      if (!allTimeTotals[nick]) {
-                        allTimeTotals[nick] = {
-                          cash: 0,
-                          wins: 0,
-                          bestTime: 999999,
-                        };
-                      }
-                      allTimeTotals[nick].cash += score.cash;
-                      allTimeTotals[nick].wins++;
-                      allTimeTotals[nick].bestTime = Math.min(
-                        allTimeTotals[nick].bestTime,
-                        score.time || 999999,
-                      );
+                    let weekStart = null;
+                    if (currentTab === "week") {
+                      const currentDay = now.getDay();
+                      const daysFromMonday =
+                        currentDay === 0 ? 6 : currentDay - 1;
+                      weekStart = new Date(now);
+                      weekStart.setDate(now.getDate() - daysFromMonday);
+                      weekStart.setHours(0, 0, 0, 0);
+                    }
+
+                    Object.entries(data).forEach(([dateKey, dayScores]) => {
+                      const [year, month, day] = dateKey.split("-").map(Number);
+                      const scoreDate = new Date(year, month - 1, day);
+                      scoreDate.setHours(0, 0, 0, 0);
+
+                      if (
+                        weekStart &&
+                        (scoreDate < weekStart || scoreDate > now)
+                      )
+                        return;
+
+                      Object.entries(dayScores).forEach(([nick, score]) => {
+                        if (!allTimeTotals[nick]) {
+                          allTimeTotals[nick] = {
+                            cash: 0,
+                            wins: 0,
+                            bestTime: 999999,
+                          };
+                        }
+                        allTimeTotals[nick].cash += score.cash;
+                        allTimeTotals[nick].wins++;
+                        allTimeTotals[nick].bestTime = Math.min(
+                          allTimeTotals[nick].bestTime,
+                          score.time || 999999,
+                        );
+                      });
                     });
-                  });
 
-                  if (currentTab === "efficiency") {
-                    sorted = Object.entries(allTimeTotals).sort(
-                      ([, a], [, b]) =>
-                        b.cash / Math.max(b.wins, 1) -
-                        a.cash / Math.max(a.wins, 1),
-                    );
-                  } else {
-                    sorted = Object.entries(allTimeTotals).sort(
-                      ([, a], [, b]) => b.cash - a.cash,
-                    );
-                  }
-                } else {
-                  sorted = Object.entries(data).sort(([, a], [, b]) => {
-                    if (currentTab === "daily" || currentTab === "yesterday") {
-                      if (b.cash !== a.cash) return b.cash - a.cash;
-                      return (a.time || 999999) - (b.time || 999999);
-                    } else if (currentTab === "efficiency") {
-                      const effA = (a.cash || 0) / Math.max(a.wins, 1);
-                      const effB = (b.cash || 0) / Math.max(b.wins, 1);
-                      return effB - effA;
-                    } else if (currentTab === "best") {
-                      return (
-                        (b.bestSingleHeist || 0) - (a.bestSingleHeist || 0)
+                    if (currentTab === "efficiency") {
+                      sorted = Object.entries(allTimeTotals).sort(
+                        ([, a], [, b]) =>
+                          b.cash / Math.max(b.wins, 1) -
+                          a.cash / Math.max(a.wins, 1),
                       );
                     } else {
-                      return (b.totalCash || 0) - (a.totalCash || 0);
+                      sorted = Object.entries(allTimeTotals).sort(
+                        ([, a], [, b]) => b.cash - a.cash,
+                      );
                     }
-                  });
-                }
+                  } else {
+                    sorted = Object.entries(data).sort(([, a], [, b]) => {
+                      if (
+                        currentTab === "daily" ||
+                        currentTab === "yesterday"
+                      ) {
+                        if (b.cash !== a.cash) return b.cash - a.cash;
+                        return (a.time || 999999) - (b.time || 999999);
+                      } else if (currentTab === "efficiency") {
+                        const effA = (a.cash || 0) / Math.max(a.wins, 1);
+                        const effB = (b.cash || 0) / Math.max(b.wins, 1);
+                        return effB - effA;
+                      } else if (currentTab === "best") {
+                        return (
+                          (b.bestSingleHeist || 0) - (a.bestSingleHeist || 0)
+                        );
+                      } else {
+                        return (b.totalCash || 0) - (a.totalCash || 0);
+                      }
+                    });
+                  }
 
-                // Add info header for weekly tab
-                if (currentTab === "week") {
-                  list.innerHTML = `
+                  if (currentTab === "week") {
+                    list.innerHTML = `
           <div style="background: var(--safe-inset); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--safe-border);">
             <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700; margin-bottom: 8px; text-align: center;">
-              ðŸ† Weekly Badge Race
+              🏆 Weekly Badge Race
             </div>
             <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.4; text-align: center;">
               Top 3 by total cash earn badges on Monday reset<br>
               <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King</span>
             </div>
             <div style="text-align: center; margin-top: 8px; font-size: 0.75rem; color: var(--color-close);">
-              â° ${getTimeUntilMonday()}
+              ⏰ ${getTimeUntilMonday()}
             </div>
           </div>
         `;
-                }
+                  }
 
-                renderList(sorted, currentTab, weeklyBadges);
-
-                // Pass weeklyBadges to renderList
-                renderList(sorted, currentTab, weeklyBadges);
-              },
-              (error) => {
-                clearTimeout(timeout);
-                console.error("Firebase Read Error:", error);
-                list.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Permission Denied.<br>Check Firebase Rules.</div>`;
-              },
-            );
-          },
-        );
+                  renderList(sorted, currentTab, weeklyBadges, careerData);
+                },
+                (error) => {
+                  clearTimeout(timeout);
+                  console.error("Firebase Read Error:", error);
+                  list.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Permission Denied.<br>Check Firebase Rules.</div>`;
+                },
+              );
+            },
+          );
+        });
       }
 
-      function renderList(data, type, weeklyBadges = {}) {
+      function renderList(data, type, weeklyBadges = {}, careerData = {}) {
         const list = document.getElementById("lb-list");
         list.innerHTML = "";
 
@@ -7052,6 +7094,15 @@
           `;
           list.insertAdjacentHTML("beforeend", html);
         });
+
+        // Master Thief permanent badge
+        const playerCareerCash = careerData[nick]
+          ? careerData[nick].totalCash || 0
+          : 0;
+        const masterBadge = getMasterThiefBadge(playerCareerCash);
+        if (masterBadge) {
+          badgeHTML += `<span class="badge" title="${masterBadge.name} – ${masterBadge.desc}" style="font-size:0.85em;">${masterBadge.icon}</span>`;
+        }
       }
 
       // --- SUBMISSION HELPERS ---
@@ -7388,6 +7439,37 @@
           }
         }
       }
+
+      function maybeShowBadgeIntroPopup() {
+        if (localStorage.getItem("tumblerBadgeIntroSeen") === "true") return;
+
+        const popup = document.createElement("div");
+        popup.style.cssText = `
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: #1e293b; border: 1px solid #334155;
+    border-radius: 16px; padding: 18px 20px;
+    max-width: 340px; width: 90%;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+    z-index: 9997; font-family: 'Chivo Mono', monospace; color: #f8fafc;
+  `;
+        popup.innerHTML = `
+    <div style="font-weight:700; font-size:1rem; margin-bottom:8px;">🏆 New: Master Thief Badges!</div>
+    <div style="font-size:0.8rem; color:#94a3b8; line-height:1.6; margin-bottom:14px;">
+      Permanent badges based on your <strong style="color:#f8fafc;">Career Stash</strong> — visible next to your name across all crews.<br><br>
+      🔓 Bronze Master Thief — $1M+<br>
+      🔐 Silver Master Thief — $5M+<br>
+      🗝️ Gold Master Thief — $10M+
+    </div>
+    <button onclick="this.parentElement.remove(); localStorage.setItem('tumblerBadgeIntroSeen','true');" style="
+      width:100%; background:#6aaa64; color:#fff; border:none;
+      padding:10px; border-radius:8px; cursor:pointer;
+      font-family:'Chivo Mono',monospace; font-weight:700; font-size:0.85rem;
+    ">Got it!</button>
+  `;
+        document.body.appendChild(popup);
+      }
+
+      setTimeout(maybeShowBadgeIntroPopup, 1500);
 
       // Expose to window (Safety)
       window.openGroupModal = openGroupModal;
