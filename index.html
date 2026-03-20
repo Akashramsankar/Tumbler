@@ -7506,6 +7506,8 @@
       window.enableNotifications = enableNotifications;
       window.declineNotifications = declineNotifications;
       window.maybePromptNotifications = maybePromptNotifications;
+      window.showCalendar = showCalendar;
+      window.closeCalendar = closeCalendar;
 
       // Start foreground message listener
       setupForegroundMessaging();
@@ -7703,6 +7705,8 @@
         document.addEventListener(
           "touchend",
           function (event) {
+            // Don't block taps on buttons or interactive elements
+            if (event.target.closest("button, a, input, [onclick]")) return;
             const now = Date.now();
             if (now - lastTouchEnd <= 300) {
               event.preventDefault();
@@ -7711,7 +7715,6 @@
           },
           { passive: false },
         );
-
         // Specifically target the game board area
         const gameBoard = document.getElementById("game-board");
         if (gameBoard) {
