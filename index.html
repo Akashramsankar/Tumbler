@@ -5545,9 +5545,6 @@
                 showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
                 localStorage.removeItem(getActiveSessionKey(currentPlayDate));
                 isGameOver = true;
-                setTimeout(() => {
-                  maybePromptNotifications();
-                }, 2000);
               }
             }
           },
@@ -5883,8 +5880,16 @@
       function closeWinModal() {
         document.getElementById("win-modal").style.display = "none";
 
-        // Prompt for notifications after they finish playing
-        maybePromptNotifications();
+        // Show PWA install prompt (Android or iOS) after winning
+        setTimeout(() => {
+          showInstallBanner();
+          showiOSInstallHint();
+        }, 1000);
+
+        // Show notifications prompt after winning (staggered so it doesn't overlap PWA banner)
+        setTimeout(() => {
+          maybePromptNotifications();
+        }, 5000);
       }
       // ADD ALL THREE FUNCTIONS
       function confirmIntel() {
@@ -7544,12 +7549,6 @@
         // Prevent the mini-infobar from appearing on Android
         e.preventDefault();
         deferredInstallPrompt = e;
-
-        // Don't show if already installed or user already dismissed
-        if (localStorage.getItem("tumblerPWAInstalled") === "true") return;
-
-        // Show our custom banner after 8 seconds (let them play first)
-        setTimeout(showInstallBanner, 8000);
       });
 
       // Detect if already running as installed PWA
@@ -7652,40 +7651,35 @@
         const isInStandaloneMode = window.navigator.standalone === true;
         if (!isIOS || isInStandaloneMode) return;
 
-        setTimeout(() => {
-          const hint = document.createElement("div");
-          hint.style.cssText = `
-            position: fixed; bottom: 20px; left: 50%;
-            transform: translateX(-50%);
-            background: #1e293b; border: 1px solid #334155;
-            border-radius: 16px; padding: 16px 18px;
-            max-width: 320px; width: 90%;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-            z-index: 9998; font-family: 'Chivo Mono', monospace; color: #f8fafc;
-            text-align: center;
-          `;
-          hint.innerHTML = `
-            <div style="font-size:1.6rem; margin-bottom:8px;">📲</div>
-            <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px;">
-              Add Tumbler to your Home Screen
-            </div>
-            <div style="font-size:0.78rem; color:#94a3b8; line-height:1.5; margin-bottom:12px;">
-              Tap the <strong style="color:#f8fafc;">Share</strong> button below
-              then <strong style="color:#f8fafc;">"Add to Home Screen"</strong>
-              to get notifications and play offline.
-            </div>
-            <button onclick="this.parentElement.remove()" style="
-              background:#334155; color:#94a3b8; border:none;
-              padding:8px 20px; border-radius:8px; cursor:pointer;
-              font-family:'Chivo Mono',monospace; font-size:0.8rem;
-            ">Got it</button>
-          `;
-          document.body.appendChild(hint);
-        }, 10000);
+        const hint = document.createElement("div");
+        hint.style.cssText = `
+          position: fixed; bottom: 20px; left: 50%;
+          transform: translateX(-50%);
+          background: #1e293b; border: 1px solid #334155;
+          border-radius: 16px; padding: 16px 18px;
+          max-width: 320px; width: 90%;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.7);
+          z-index: 9998; font-family: 'Chivo Mono', monospace; color: #f8fafc;
+          text-align: center;
+        `;
+        hint.innerHTML = `
+          <div style="font-size:1.6rem; margin-bottom:8px;">📲</div>
+          <div style="font-weight:700; font-size:0.9rem; margin-bottom:6px;">
+            Add Tumbler to your Home Screen
+          </div>
+          <div style="font-size:0.78rem; color:#94a3b8; line-height:1.5; margin-bottom:12px;">
+            Tap the <strong style="color:#f8fafc;">Share</strong> button below
+            then <strong style="color:#f8fafc;">"Add to Home Screen"</strong>
+            to get notifications and play offline.
+          </div>
+          <button onclick="this.parentElement.remove()" style="
+            background:#334155; color:#94a3b8; border:none;
+            padding:8px 20px; border-radius:8px; cursor:pointer;
+            font-family:'Chivo Mono',monospace; font-size:0.8rem;
+          ">Got it</button>
+        `;
+        document.body.appendChild(hint);
       }
-
-      // Run iOS hint check on load
-      showiOSInstallHint();
 
       // Listen for successful install
       window.addEventListener("appinstalled", () => {
