@@ -7560,6 +7560,8 @@
       }
 
       function showInstallBanner() {
+        if (localStorage.getItem("tumblerPWAInstalled") === "true") return;
+        if (!deferredInstallPrompt) return;
         if (document.getElementById("pwa-install-banner")) return;
 
         const banner = document.createElement("div");
