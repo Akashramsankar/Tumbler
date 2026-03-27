@@ -4335,6 +4335,23 @@
       }
 
       // Save today's game state
+      // Store played-today date in IndexedDB so the service worker can suppress notifications
+      function markPlayedInIDB() {
+        const today = new Date().toISOString().slice(0, 10);
+        const req = indexedDB.open("tumblerState", 1);
+        req.onupgradeneeded = (e) => {
+          const db = e.target.result;
+          if (!db.objectStoreNames.contains("flags")) {
+            db.createObjectStore("flags");
+          }
+        };
+        req.onsuccess = (e) => {
+          const db = e.target.result;
+          const tx = db.transaction("flags", "readwrite");
+          tx.objectStore("flags").put(today, "lastPlayedDate");
+        };
+      }
+
       function saveTodayGame(attempts, cashWon, solveTime) {
         const puzzleNum = getPuzzleNumber(currentPlayDate);
 
@@ -4374,6 +4391,8 @@
           getStorageKey(currentPlayDate),
           JSON.stringify(gameData),
         );
+        // Mark in IndexedDB so service worker can suppress notifications
+        markPlayedInIDB();
       }
 
       function saveCurrentGameState() {
@@ -6260,6 +6279,12 @@
           return;
         }
 
+        // If permission already granted (e.g. token lost from localStorage), silently re-enable
+        if (Notification.permission === "granted") {
+          await enableNotifications();
+          return;
+        }
+
         // Show our custom prompt before the browser one
         showNotificationPrompt();
       }
@@ -6380,8 +6405,11 @@
       // Handle foreground messages (app is open)
       function setupForegroundMessaging() {
         if (!messaging) return;
-        messaging.onMessage((payload) => {
+        messaging.onMessage(async (payload) => {
           console.log("Foreground message received:", payload);
+          // Don't show play-reminder notifications if user already played today
+          const alreadyPlayed = await hasPlayedToday();
+          if (alreadyPlayed) return;
           const { title, body } = payload.notification || {};
           if (title) showMessage(`🔔 ${body || title}`);
         });
@@ -7548,6 +7576,13 @@
       window.addEventListener("beforeinstallprompt", (e) => {
         // Prevent the mini-infobar from appearing on Android
         e.preventDefault();
+        // Don't capture the prompt if already running as installed PWA
+        if (
+          window.matchMedia("(display-mode: standalone)").matches ||
+          window.navigator.standalone === true
+        ) {
+          return;
+        }
         deferredInstallPrompt = e;
       });
 
@@ -7560,7 +7595,15 @@
       }
 
       function showInstallBanner() {
+        // Don't show if already installed or running as PWA
         if (localStorage.getItem("tumblerPWAInstalled") === "true") return;
+        if (
+          window.matchMedia("(display-mode: standalone)").matches ||
+          window.navigator.standalone === true
+        ) {
+          localStorage.setItem("tumblerPWAInstalled", "true");
+          return;
+        }
         if (!deferredInstallPrompt) return;
         if (document.getElementById("pwa-install-banner")) return;
 
@@ -7650,8 +7693,14 @@
         if (localStorage.getItem("tumblerPWAInstalled") === "true") return;
 
         const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-        const isInStandaloneMode = window.navigator.standalone === true;
-        if (!isIOS || isInStandaloneMode) return;
+        const isInStandaloneMode =
+          window.navigator.standalone === true ||
+          window.matchMedia("(display-mode: standalone)").matches;
+        if (!isIOS || isInStandaloneMode) {
+          if (isInStandaloneMode)
+            localStorage.setItem("tumblerPWAInstalled", "true");
+          return;
+        }
 
         const hint = document.createElement("div");
         hint.style.cssText = `

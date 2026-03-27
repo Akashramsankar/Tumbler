@@ -109,8 +109,44 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
-messaging.onBackgroundMessage((payload) => {
+// Check IndexedDB to see if user already played today
+function hasPlayedTodayIDB() {
+  return new Promise((resolve) => {
+    try {
+      const req = indexedDB.open("tumblerState", 1);
+      req.onupgradeneeded = (e) => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains("flags")) {
+          db.createObjectStore("flags");
+        }
+      };
+      req.onsuccess = (e) => {
+        const db = e.target.result;
+        const tx = db.transaction("flags", "readonly");
+        const getReq = tx.objectStore("flags").get("lastPlayedDate");
+        getReq.onsuccess = () => {
+          const today = new Date().toISOString().slice(0, 10);
+          resolve(getReq.result === today);
+        };
+        getReq.onerror = () => resolve(false);
+      };
+      req.onerror = () => resolve(false);
+    } catch (e) {
+      resolve(false);
+    }
+  });
+}
+
+messaging.onBackgroundMessage(async (payload) => {
   console.log("[SW] Background message received:", payload);
+
+  // Don't show play-reminder notifications if user already played today
+  const alreadyPlayed = await hasPlayedTodayIDB();
+  if (alreadyPlayed) {
+    console.log("[SW] User already played today, suppressing notification");
+    return;
+  }
+
   const { title, body, icon } = payload.notification || {};
 
   self.registration.showNotification(title || "Tumbler", {
