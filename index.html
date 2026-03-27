@@ -7584,6 +7584,42 @@
       if (userNick && userGroups.length > 0) {
         setTimeout(() => requestNotificationPermission(), 4000);
       }
+
+      // ── ONE-TIME MIGRATION: ATM → AATM ──────────────────────────────
+      (async function migrateATMtoAATM() {
+        if (!db || localStorage.getItem("tumblerMigration_ATM_AATM")) return;
+        const oldName = "ATM", newName = "AATM";
+        try {
+          const groups = (await db.ref("groups").once("value")).val() || {};
+          const updates = {};
+
+          for (const crewId of Object.keys(groups)) {
+            const scores = (await db.ref(`scores/${crewId}`).once("value")).val() || {};
+            for (const [dateKey, day] of Object.entries(scores)) {
+              if (day[oldName]) {
+                updates[`scores/${crewId}/${dateKey}/${newName}`] = day[oldName];
+                updates[`scores/${crewId}/${dateKey}/${oldName}`] = null;
+              }
+            }
+            const career = (await db.ref(`career/${crewId}/${oldName}`).once("value")).val();
+            if (career) {
+              updates[`career/${crewId}/${newName}`] = career;
+              updates[`career/${crewId}/${oldName}`] = null;
+            }
+            updates[`fcmTokens/${crewId}/${oldName}`] = null;
+            updates[`groups/${crewId}/members/${oldName}`] = null;
+          }
+          updates[`userProfile/${oldName}`] = null;
+
+          if (Object.keys(updates).length > 0) {
+            await db.ref().update(updates);
+            console.log("Migration ATM → AATM complete.");
+          }
+        } catch (e) {
+          console.error("Migration failed:", e);
+        }
+        localStorage.setItem("tumblerMigration_ATM_AATM", "done");
+      })();
     </script>
     <script>
       // Fix mobile keyboard touch issues
