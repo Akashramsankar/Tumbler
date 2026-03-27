@@ -4101,24 +4101,26 @@
 
         // Update Firebase for all crews
         if (db && userGroups.length > 0) {
-          const today = new Date();
-          const dateKey = `${today.getFullYear()}-${
-            today.getMonth() + 1
-          }-${today.getDate()}`;
-
           for (const group of userGroups) {
-            // 1. Copy today's score to new name (if exists)
+            // 1. Migrate ALL scores under old name to new name (not just today)
             if (oldName) {
               try {
-                const oldScoreRef = db.ref(
-                  `scores/${group}/${dateKey}/${oldName}`,
-                );
-                const snapshot = await oldScoreRef.once("value");
-                if (snapshot.exists()) {
-                  await db
-                    .ref(`scores/${group}/${dateKey}/${newName}`)
-                    .set(snapshot.val());
-                  await oldScoreRef.remove();
+                const allScoresSnap = await db
+                  .ref(`scores/${group}`)
+                  .once("value");
+                const allScores = allScoresSnap.val() || {};
+                const updates = {};
+
+                for (const [dateKey, dayScores] of Object.entries(allScores)) {
+                  if (dayScores[oldName]) {
+                    updates[`scores/${group}/${dateKey}/${newName}`] =
+                      dayScores[oldName];
+                    updates[`scores/${group}/${dateKey}/${oldName}`] = null;
+                  }
+                }
+
+                if (Object.keys(updates).length > 0) {
+                  await db.ref().update(updates);
                 }
 
                 // 2. Copy career stats to new name
@@ -4149,10 +4151,43 @@
               console.log("Offline mode: Name change saved locally");
             }
           }
+
+          // 4. Migrate userProfile to new name
+          try {
+            const oldProfileRef = db.ref(`userProfile/${oldName}`);
+            const profileSnapshot = await oldProfileRef.once("value");
+            if (profileSnapshot.exists()) {
+              const profileData = profileSnapshot.val();
+              profileData.nick = newName;
+              await db.ref(`userProfile/${newName}`).set(profileData);
+              await oldProfileRef.remove();
+            }
+          } catch (e) {
+            console.log("Offline mode: Profile migration saved locally");
+          }
+
+          // 5. Migrate FCM tokens to new name
+          const fcmToken = localStorage.getItem("tumblerFcmToken");
+          if (fcmToken) {
+            try {
+              for (const group of userGroups) {
+                await db.ref(`fcmTokens/${group}/${newName}`).set({
+                  token: fcmToken,
+                  updatedAt: Date.now(),
+                });
+                if (oldName) {
+                  await db.ref(`fcmTokens/${group}/${oldName}`).remove();
+                }
+              }
+            } catch (e) {
+              console.log("Offline mode: FCM token migration saved locally");
+            }
+          }
         }
 
         showMessage(`✅ Name changed to ${newName}!`);
         cancelNameEdit();
+        saveProfileToFirebase(); // Save profile under new name
         loadLeaderboardData(); // Refresh leaderboard
       }
 
