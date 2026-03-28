@@ -2755,7 +2755,17 @@
             <div class="stat-label">Streak 🔥</div>
           </div>
         </div>
+        <button class="group-action-btn secondary" onclick="showTrends()" style="margin: 0 0 10px 0; padding: 10px; font-size: 0.85rem; width: 100%;">📈 View Performance Trends</button>
         <button class="close-stats" onclick="closeStats()">Close</button>
+      </div>
+    </div>
+
+    <!-- Trends Modal -->
+    <div id="trends-modal" class="stats-modal" style="display:none;">
+      <div class="stats-content" style="max-height: 85vh; overflow-y: auto;">
+        <h2 style="margin-top: 0; text-align: center;">📈 Performance Trends</h2>
+        <div id="trends-content" style="font-size: 0.85rem; color: #cbd5e1;"></div>
+        <button class="close-stats" onclick="closeTrends()">Close</button>
       </div>
     </div>
 
@@ -6207,6 +6217,183 @@
         document.getElementById("stats-modal").style.display = "none";
       }
 
+      function closeTrends() {
+        document.getElementById("trends-modal").style.display = "none";
+      }
+
+      function collectGameHistory() {
+        const history = [];
+        const epoch = new Date(GAME_EPOCH);
+        epoch.setHours(0, 0, 0, 0);
+        const today = new Date();
+        today.setHours(23, 59, 59, 999);
+
+        const d = new Date(epoch);
+        while (d <= today) {
+          const key = getStorageKey(d);
+          const raw = localStorage.getItem(key);
+          if (raw) {
+            try {
+              const game = JSON.parse(raw);
+              history.push({
+                date: new Date(d),
+                attempts: game.attempts || 0,
+                cashWon: game.cashWon || 0,
+                solveTime: game.solveTime || 0,
+                intelUsed: !!game.intelUsed,
+                won: (game.cashWon || 0) > 0,
+              });
+            } catch (e) {}
+          }
+          d.setDate(d.getDate() + 1);
+        }
+        return history;
+      }
+
+      function getMonday(date) {
+        const d = new Date(date);
+        const day = d.getDay();
+        const diff = day === 0 ? 6 : day - 1;
+        d.setDate(d.getDate() - diff);
+        d.setHours(0, 0, 0, 0);
+        return d;
+      }
+
+      function groupByWeek(history) {
+        const weeks = {};
+        history.forEach((g) => {
+          const mon = getMonday(g.date);
+          const key = `${mon.getFullYear()}-${mon.getMonth() + 1}-${mon.getDate()}`;
+          if (!weeks[key]) weeks[key] = { start: mon, games: [] };
+          weeks[key].games.push(g);
+        });
+        return Object.values(weeks).sort((a, b) => a.start - b.start);
+      }
+
+      function showTrends() {
+        const container = document.getElementById("trends-content");
+        const history = collectGameHistory();
+
+        if (history.length < 2) {
+          container.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Play a few more games to see your trends!</div>';
+          document.getElementById("trends-modal").style.display = "flex";
+          return;
+        }
+
+        const weeks = groupByWeek(history);
+        const recent = weeks.slice(-8); // Last 8 weeks
+
+        // Compute weekly stats
+        const weeklyStats = recent.map((w) => {
+          const games = w.games;
+          const wins = games.filter((g) => g.won);
+          return {
+            label: `${w.start.getDate()}/${w.start.getMonth() + 1}`,
+            totalCash: games.reduce((s, g) => s + g.cashWon, 0),
+            avgTime: wins.length > 0 ? Math.round(wins.reduce((s, g) => s + g.solveTime, 0) / wins.length) : 0,
+            avgAttempts: wins.length > 0 ? (wins.reduce((s, g) => s + g.attempts, 0) / wins.length).toFixed(1) : 0,
+            intelRate: games.length > 0 ? Math.round((games.filter((g) => g.intelUsed).length / games.length) * 100) : 0,
+            winRate: games.length > 0 ? Math.round((wins.length / games.length) * 100) : 0,
+            games: games.length,
+          };
+        });
+
+        // Improvement comparison: this week vs last week
+        let improvementHTML = "";
+        if (weeklyStats.length >= 2) {
+          const curr = weeklyStats[weeklyStats.length - 1];
+          const prev = weeklyStats[weeklyStats.length - 2];
+          const parts = [];
+
+          if (prev.avgTime > 0 && curr.avgTime > 0) {
+            const timeDiff = Math.round(((prev.avgTime - curr.avgTime) / prev.avgTime) * 100);
+            if (timeDiff > 0) parts.push(`⚡ <strong>${timeDiff}% faster</strong> this week`);
+            else if (timeDiff < 0) parts.push(`🐌 ${Math.abs(timeDiff)}% slower this week`);
+          }
+          if (prev.totalCash > 0 && curr.totalCash > 0) {
+            const cashDiff = Math.round(((curr.totalCash - prev.totalCash) / prev.totalCash) * 100);
+            if (cashDiff > 0) parts.push(`💰 Earning <strong>${cashDiff}% more</strong> cash`);
+            else if (cashDiff < 0) parts.push(`📉 Earning ${Math.abs(cashDiff)}% less cash`);
+          }
+          if (Number(prev.avgAttempts) > 0 && Number(curr.avgAttempts) > 0) {
+            const attDiff = (Number(prev.avgAttempts) - Number(curr.avgAttempts)).toFixed(1);
+            if (attDiff > 0.2) parts.push(`🎯 Solving in <strong>${attDiff} fewer</strong> attempts`);
+            else if (attDiff < -0.2) parts.push(`🔓 Using ${Math.abs(attDiff)} more attempts`);
+          }
+
+          if (parts.length > 0) {
+            improvementHTML = `
+              <div style="background: rgba(106,170,100,0.1); border: 1px solid var(--color-correct); border-radius: 8px; padding: 12px; margin-bottom: 16px; line-height: 1.8; text-align: center; font-size: 0.8rem;">
+                <div style="font-weight:700; color:var(--color-correct); margin-bottom:6px;">This Week vs Last</div>
+                ${parts.join("<br>")}
+              </div>`;
+          }
+        }
+
+        // Build bar charts
+        function barChart(data, valueKey, color, label, unit, lowerIsBetter) {
+          const values = data.map((d) => d[valueKey]);
+          const maxVal = Math.max(...values, 1);
+          const bars = data
+            .map((d) => {
+              const val = d[valueKey];
+              const pct = (val / maxVal) * 100;
+              const displayVal = unit === "$" ? `$${(val / 1000).toFixed(0)}k` : `${val}${unit}`;
+              return `
+              <div style="flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;">
+                <div style="font-size:0.55rem; color:#94a3b8;">${val > 0 ? displayVal : ""}</div>
+                <div style="width:100%; background:var(--safe-inset); border-radius:3px; height:70px; display:flex; align-items:flex-end;">
+                  <div style="width:100%; background:${color}; border-radius:3px; height:${Math.max(pct, 4)}%; opacity:${val > 0 ? 0.85 : 0.2};"></div>
+                </div>
+                <div style="font-size:0.55rem; color:#64748b;">${d.label}</div>
+              </div>`;
+            })
+            .join("");
+          return `
+            <div style="margin-bottom: 18px;">
+              <div style="font-size:0.75rem; color:#94a3b8; margin-bottom:8px; font-weight:600;">${label}</div>
+              <div style="display:flex; gap:4px; align-items:flex-end;">${bars}</div>
+            </div>`;
+        }
+
+        // All-time stats summary
+        const totalGames = history.length;
+        const totalWins = history.filter((g) => g.won).length;
+        const avgCash = totalWins > 0 ? Math.round(history.filter((g) => g.won).reduce((s, g) => s + g.cashWon, 0) / totalWins) : 0;
+        const avgTime = totalWins > 0 ? Math.round(history.filter((g) => g.won).reduce((s, g) => s + g.solveTime, 0) / totalWins) : 0;
+        const intelPct = totalGames > 0 ? Math.round((history.filter((g) => g.intelUsed).length / totalGames) * 100) : 0;
+
+        container.innerHTML = `
+          ${improvementHTML}
+
+          <div style="display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; text-align:center;">
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--color-cash);">$${avgCash.toLocaleString()}</div>
+              <div style="font-size:0.6rem; color:#64748b;">Avg Cash/Win</div>
+            </div>
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--color-close);">${avgTime}s</div>
+              <div style="font-size:0.6rem; color:#64748b;">Avg Time</div>
+            </div>
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:#ef4444;">${intelPct}%</div>
+              <div style="font-size:0.6rem; color:#64748b;">Intel Rate</div>
+            </div>
+            <div>
+              <div style="font-size:1.1rem; font-weight:700; color:var(--color-correct);">${totalGames}</div>
+              <div style="font-size:0.6rem; color:#64748b;">Games</div>
+            </div>
+          </div>
+
+          ${barChart(weeklyStats, "totalCash", "var(--color-correct)", "💰 Weekly Cash", "$")}
+          ${barChart(weeklyStats, "avgTime", "var(--color-close)", "⏱️ Avg Solve Time (s)", "s")}
+          ${barChart(weeklyStats, "avgAttempts", "#ef4444", "🎯 Avg Attempts", "")}
+          ${barChart(weeklyStats, "intelRate", "#8b5cf6", "🔍 Intel Usage (%)", "%")}
+        `;
+
+        document.getElementById("trends-modal").style.display = "flex";
+      }
+
       function showTutorial() {
         document.getElementById("tutorial-modal").style.display = "flex";
       }
@@ -6257,6 +6444,10 @@
 
       document.getElementById("stats-modal").addEventListener("click", (e) => {
         if (e.target.id === "stats-modal") closeStats();
+      });
+
+      document.getElementById("trends-modal").addEventListener("click", (e) => {
+        if (e.target.id === "trends-modal") closeTrends();
       });
 
       document.getElementById("win-modal").addEventListener("click", (e) => {
@@ -7679,6 +7870,8 @@
       window.toggleKeyboardLayout = toggleKeyboardLayout;
       window.calculateWeeklyBadges = calculateWeeklyBadges;
       window.displayUserBadges = displayUserBadges;
+      window.showTrends = showTrends;
+      window.closeTrends = closeTrends;
       window.buyProtector = buyProtector;
       window.confirmProtectorPurchase = confirmProtectorPurchase;
       window.closeProtectorModal = closeProtectorModal;
