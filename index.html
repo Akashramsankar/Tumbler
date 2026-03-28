@@ -2629,6 +2629,18 @@
         </div>
 
         <div
+          id="ready-crew-status"
+          style="
+            font-size: 0.85rem;
+            color: #cbd5e1;
+            line-height: 1.5;
+            margin-bottom: 12px;
+            text-align: center;
+            min-height: 1.2em;
+          "
+        ></div>
+
+        <div
           style="
             font-size: 0.85rem;
             color: #cbd5e1;
@@ -3211,6 +3223,8 @@
             </button>
           </div>
 
+          <div id="lb-crew-stats" style="display:none; background: var(--safe-inset); border: 1px solid var(--safe-border); border-radius: 8px; padding: 12px; margin-bottom: 12px; display: none;"></div>
+
           <div id="lb-list" style="min-height: 200px">
             <div style="text-align: center; padding: 20px; color: #64748b">
               Loading data...
@@ -3660,6 +3674,18 @@
           stats.lastStreakMilestone = currentStreak;
           localStorage.setItem("tumblerStats", JSON.stringify(stats));
           saveProfileToFirebase();
+
+          // Broadcast milestone to all crews
+          if (db && userNick && userGroups.length > 0) {
+            userGroups.forEach((group) => {
+              db.ref(`crewEvents/${group}`).push({
+                type: "streakMilestone",
+                nick: userNick,
+                streak: currentStreak,
+                timestamp: Date.now(),
+              });
+            });
+          }
 
           return bonus;
         }
@@ -4805,11 +4831,16 @@
       }
 
       function generateShareText(attempts, cashWon) {
-        const puzzleNum = getPuzzleNumber();
+        const puzzleNum = getPuzzleNumber(currentPlayDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const playDay = new Date(currentPlayDate);
+        playDay.setHours(0, 0, 0, 0);
+        const isArchive = playDay.getTime() !== today.getTime();
         const totalCash = stats.totalCash || 0;
         const safeCashWon = cashWon || 0;
 
-        let shareText = `Tumbler #${puzzleNum} 🔓\n`;
+        let shareText = `Tumbler #${puzzleNum}${isArchive ? " [Archive]" : ""} 🔓\n`;
         shareText += `💰 Stole: $${new Intl.NumberFormat("en-US").format(
           safeCashWon,
         )}\n`;
@@ -5745,7 +5776,7 @@
 
         const shareBtn = document.getElementById("share-result-btn");
         if (shareBtn) {
-          shareBtn.style.display = isToday ? "block" : "none";
+          shareBtn.style.display = cashWon > 0 ? "block" : "none";
         }
 
         // Calculate breakdown components
@@ -6198,6 +6229,23 @@
           stats.currentStreak;
         document.getElementById("ready-cash").textContent =
           `$${new Intl.NumberFormat("en-US").format(stats.totalCash || 0)}`;
+
+        // Crew context: show how many crew members already solved today
+        const crewStatusEl = document.getElementById("ready-crew-status");
+        crewStatusEl.textContent = "";
+        const today = new Date();
+        const dateKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+        if (db && activeGroup) {
+          db.ref(`scores/${activeGroup}/${dateKey}`).once("value", (snap) => {
+            const data = snap.val() || {};
+            const solvers = Object.keys(data).filter((n) => n !== userNick);
+            if (solvers.length === 1) {
+              crewStatusEl.textContent = `👀 ${solvers[0]} already cracked it`;
+            } else if (solvers.length > 1) {
+              crewStatusEl.textContent = `👀 ${solvers.length} crew members already cracked it`;
+            }
+          });
+        }
 
         modal.style.display = "flex";
       }
@@ -6933,6 +6981,37 @@
         db.ref(`career/${activeGroup}`).once("value", (careerSnap) => {
           const careerData = careerSnap.val() || {};
 
+          // Crew stats banner
+          const crewStatsEl = document.getElementById("lb-crew-stats");
+          const members = Object.values(careerData);
+          if (members.length > 0) {
+            const totalStash = members.reduce((s, d) => s + (d.totalCash || 0), 0);
+            const bestHeist = Math.max(...members.map((d) => d.bestSingleHeist || 0));
+            const todayStart = new Date();
+            todayStart.setHours(0, 0, 0, 0);
+            const playedToday = members.filter(
+              (d) => (d.lastPlayed || 0) >= todayStart.getTime(),
+            ).length;
+            crewStatsEl.innerHTML = `
+              <div style="display:flex; justify-content:space-around; text-align:center;">
+                <div>
+                  <div style="font-size:1rem; font-weight:700; color:var(--color-cash);">$${(totalStash / 1000000).toFixed(1)}M</div>
+                  <div style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">Crew Stash</div>
+                </div>
+                <div>
+                  <div style="font-size:1rem; font-weight:700; color:var(--color-correct);">${playedToday}/${members.length}</div>
+                  <div style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">Played Today</div>
+                </div>
+                <div>
+                  <div style="font-size:1rem; font-weight:700; color:var(--color-close);">$${bestHeist.toLocaleString()}</div>
+                  <div style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">Best Heist</div>
+                </div>
+              </div>`;
+            crewStatsEl.style.display = "block";
+          } else {
+            crewStatsEl.style.display = "none";
+          }
+
           const weekKey = getWeekKey();
           db.ref(`weeklyBadges/${weekKey}/${activeGroup}`).once(
             "value",
@@ -7046,6 +7125,32 @@
                   }
 
                   renderList(sorted, currentTab, weeklyBadges, careerData);
+
+                  // Crew events banner: streak milestones in last 24h
+                  const cutoff = Date.now() - 24 * 60 * 60 * 1000;
+                  db.ref(`crewEvents/${activeGroup}`)
+                    .orderByChild("timestamp")
+                    .startAt(cutoff)
+                    .limitToLast(5)
+                    .once("value", (eventsSnap) => {
+                      const events = eventsSnap.val();
+                      if (!events) return;
+                      const recent = Object.values(events).filter(
+                        (e) => e.timestamp > cutoff,
+                      );
+                      if (!recent.length) return;
+                      const lines = recent
+                        .sort((a, b) => b.timestamp - a.timestamp)
+                        .map(
+                          (e) =>
+                            `🔥 <strong>${e.nick}</strong> hit a ${e.streak}-day streak!`,
+                        )
+                        .join("<br>");
+                      list.insertAdjacentHTML(
+                        "afterbegin",
+                        `<div style="background: var(--safe-inset); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--safe-border); font-size: 0.8rem; color: #cbd5e1; line-height: 1.8; text-align: center;">${lines}</div>`,
+                      );
+                    });
                 },
                 (error) => {
                   clearTimeout(timeout);
@@ -7140,7 +7245,8 @@
             scoreSub = `${stats.wins} wins this week`;
           } else {
             scoreMain = `$${(stats.totalCash || 0).toLocaleString()}`;
-            scoreSub = `${stats.wins || 0} Wins`;
+            const careerStreak = careerData[nick]?.streak || 0;
+            scoreSub = `${stats.wins || 0} Wins${careerStreak >= 3 ? ` • 🔥 ${careerStreak} days` : ""}`;
           }
 
           // Weekly Badges Logic
