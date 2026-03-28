@@ -6570,6 +6570,18 @@
               }
             });
           }
+
+          // Check Master Thief permanent badges (based on career cash)
+          const userCareerSnapshot = await db
+            .ref(`career/${activeGroup}/${userNick}`)
+            .once("value");
+          const userCareerData = userCareerSnapshot.val();
+          if (userCareerData) {
+            const masterBadge = getMasterThiefBadge(userCareerData.totalCash || 0);
+            if (masterBadge) {
+              badges.push({ ...masterBadge, id: "masterThief", type: "career" });
+            }
+          }
         } catch (e) {
           console.log("Could not fetch badges:", e);
         }
