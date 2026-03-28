@@ -7146,6 +7146,15 @@
             badgeHTML += `<span class="badge" title="Speed King - Fastest Time This Week">⚡</span>`;
           }
 
+          // Master Thief permanent badge
+          const playerCareerCash = careerData[nick]
+            ? careerData[nick].totalCash || 0
+            : 0;
+          const masterBadge = getMasterThiefBadge(playerCareerCash);
+          if (masterBadge) {
+            badgeHTML += `<span class="badge" title="${masterBadge.name} – ${masterBadge.desc}" style="font-size:0.85em;">${masterBadge.icon}</span>`;
+          }
+
           const html = `
             <div class="lb-row" style="${
               isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
@@ -7162,15 +7171,6 @@
           `;
           list.insertAdjacentHTML("beforeend", html);
         });
-
-        // Master Thief permanent badge
-        const playerCareerCash = careerData[nick]
-          ? careerData[nick].totalCash || 0
-          : 0;
-        const masterBadge = getMasterThiefBadge(playerCareerCash);
-        if (masterBadge) {
-          badgeHTML += `<span class="badge" title="${masterBadge.name} – ${masterBadge.desc}" style="font-size:0.85em;">${masterBadge.icon}</span>`;
-        }
       }
 
       // --- SUBMISSION HELPERS ---
