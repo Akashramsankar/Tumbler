@@ -6995,7 +6995,7 @@
             crewStatsEl.innerHTML = `
               <div style="display:flex; justify-content:space-around; text-align:center;">
                 <div>
-                  <div style="font-size:1rem; font-weight:700; color:var(--color-cash);">$${(totalStash / 1000000).toFixed(1)}M</div>
+                  <div style="font-size:1rem; font-weight:700; color:var(--color-cash);">${totalStash >= 1000000 ? `$${(totalStash / 1000000).toFixed(1)}M` : `$${(totalStash / 1000).toFixed(0)}k`}</div>
                   <div style="font-size:0.65rem; color:#94a3b8; margin-top:2px;">Crew Stash</div>
                 </div>
                 <div>
