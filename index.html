@@ -22,6 +22,25 @@
     <link rel="apple-touch-icon" href="/Tumbler/icons/icon-192.png" />
 
     <title>TUMBLER - The Lockpick Game</title>
+
+    <!-- ── SEO & Social Sharing ── -->
+    <meta name="description" content="Crack the daily 4-letter code in 6 attempts. Follow the arrows, outsmart the vault, and compete with your crew. Free daily puzzle." />
+    <link rel="icon" type="image/png" sizes="192x192" href="/Tumbler/icons/icon-192.png" />
+
+    <!-- Open Graph (Facebook, iMessage, WhatsApp, Discord) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="TUMBLER - The Lockpick Game" />
+    <meta property="og:description" content="Crack the daily 4-letter code and compete with your crew. Free daily puzzle with leaderboards." />
+    <meta property="og:image" content="https://akashramsankar.github.io/Tumbler/icons/icon-512.png" />
+    <meta property="og:url" content="https://akashramsankar.github.io/Tumbler/" />
+    <meta property="og:site_name" content="Tumbler" />
+
+    <!-- Twitter / X -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="TUMBLER - The Lockpick Game" />
+    <meta name="twitter:description" content="Crack the daily 4-letter code and compete with your crew." />
+    <meta name="twitter:image" content="https://akashramsankar.github.io/Tumbler/icons/icon-512.png" />
+
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -4203,6 +4222,7 @@
       let isGameOver = false;
       let startTime = null;
       let timerInterval = null;
+      let countdownInterval = null;
       let intelUsed = false;
 
       let dictionary = new Set();
@@ -4402,7 +4422,6 @@
                   await oldCareerRef.remove();
                 }
               } catch (e) {
-                console.log("Offline mode: Name change saved locally");
               }
             }
 
@@ -4417,7 +4436,6 @@
                 await db.ref(`groups/${group}/members/${oldName}`).remove();
               }
             } catch (e) {
-              console.log("Offline mode: Name change saved locally");
             }
           }
 
@@ -4432,7 +4450,6 @@
               await oldProfileRef.remove();
             }
           } catch (e) {
-            console.log("Offline mode: Profile migration saved locally");
           }
 
           // 5. Migrate FCM tokens to new name
@@ -4449,7 +4466,6 @@
                 }
               }
             } catch (e) {
-              console.log("Offline mode: FCM token migration saved locally");
             }
           }
         }
@@ -4485,7 +4501,6 @@
             // Streak should be broken - user missed yesterday and hasn't played today yet
             if (stats.streakProtectors > 0) {
               // Don't break streak yet - protector will be used when they play
-              console.log("Streak will be protected when you play today");
             } else {
               // Save the previous streak value before breaking it
               stats.previousStreak = stats.currentStreak;
@@ -4493,9 +4508,6 @@
               stats.currentStreak = 0;
               localStorage.setItem("tumblerStats", JSON.stringify(stats));
               saveProfileToFirebase();
-              console.log(
-                `Streak broken due to missed day. Previous streak: ${stats.previousStreak}`,
-              );
 
               // Update Firebase if available
               if (db && userGroups.length > 0 && userNick) {
@@ -4517,6 +4529,7 @@
 
           if (restoreGameState()) {
             createKeyboard(); // Add keyboard after restoring
+            document.removeEventListener("keydown", handleKeydown);
             document.addEventListener("keydown", handleKeydown);
             return; // Resume from saved state
           }
@@ -4528,6 +4541,7 @@
           intelUsed = false;
           createBoard();
           createKeyboard();
+          document.removeEventListener("keydown", handleKeydown);
           document.addEventListener("keydown", handleKeydown);
           updateActiveRow();
           updateKeyboardVisuals();
@@ -4540,7 +4554,6 @@
             showReadyModal(); // Returning users: ready modal → timer starts when clicked
           }
         } catch (error) {
-          console.error("Game Initialization Error:", error);
           showMessage("Error loading word lists. Please refresh.");
         }
       }
@@ -4859,7 +4872,6 @@
 
           return false;
         } catch (error) {
-          console.error("Error checking Firebase for today's play:", error);
           // If Firebase check fails, fall back to localStorage only
           return false;
         }
@@ -5049,8 +5061,9 @@
         const gameBoard = document.getElementById("game-board");
         gameBoard.parentNode.insertBefore(countdownContainer, gameBoard);
 
-        // Update countdown every second
-        setInterval(() => {
+        // Update countdown every second (clear previous if any)
+        if (countdownInterval) clearInterval(countdownInterval);
+        countdownInterval = setInterval(() => {
           const now = new Date();
           const tomorrow = new Date(now);
           tomorrow.setDate(tomorrow.getDate() + 1);
@@ -5201,7 +5214,6 @@
             showMessage("❌ Failed to copy");
           }
         } catch (err) {
-          console.error("Fallback copy failed:", err);
           showMessage("❌ Failed to copy");
         }
 
@@ -5679,6 +5691,10 @@
         }
 
         currentSumEl.textContent = sum;
+      }
+
+      function escapeHTML(str) {
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
       }
 
       function showMessage(msg) {
@@ -6575,6 +6591,7 @@
         // Now it tries to restore progress for Archive dates too!
         else if (restoreGameState()) {
           createKeyboard();
+          document.removeEventListener("keydown", handleKeydown);
           document.addEventListener("keydown", handleKeydown);
         } else {
           // New game or archive (fresh start)
@@ -6583,6 +6600,7 @@
           resetSlotConstraints();
           updateActiveRow();
           updateKeyboardVisuals();
+          document.removeEventListener("keydown", handleKeydown);
           document.addEventListener("keydown", handleKeydown);
           startTimer();
 
@@ -6927,22 +6945,18 @@
         if (typeof firebase !== "undefined") {
           firebase.initializeApp(firebaseConfig);
           db = firebase.database();
-          console.log("Firebase initialized successfully.");
 
           // Initialize FCM Messaging
           if (firebase.messaging && firebase.messaging.isSupported()) {
             messaging = firebase.messaging();
-            console.log("Firebase Messaging initialized.");
           }
 
           if (userNick) {
             syncAllStatsFromFirebase();
           }
         } else {
-          console.error("Firebase library not loaded.");
         }
       } catch (e) {
-        console.error("Firebase Error:", e);
       }
 
       // ==================== PUSH NOTIFICATIONS ====================
@@ -6957,10 +6971,8 @@
           const reg = await navigator.serviceWorker.register(
             "/Tumbler/firebase-messaging-sw.js",
           );
-          console.log("Service worker registered:", reg.scope);
           return reg;
         } catch (e) {
-          console.error("Service worker registration failed:", e);
           return null;
         }
       }
@@ -7047,7 +7059,6 @@
         try {
           const permission = await Notification.requestPermission();
           if (permission !== "granted") {
-            console.log("Notification permission denied.");
             return;
           }
 
@@ -7069,10 +7080,8 @@
             localStorage.setItem("tumblerFcmToken", token);
             await saveFcmTokenToFirebase(token);
             showMessage("🔔 Crew notifications enabled!");
-            console.log("FCM Token:", token);
           }
         } catch (e) {
-          console.error("Error enabling notifications:", e);
         }
       }
 
@@ -7093,9 +7102,7 @@
         });
         try {
           await db.ref().update(updates);
-          console.log("FCM token saved to Firebase for all crews.");
         } catch (e) {
-          console.error("Error saving FCM token:", e);
         }
       }
 
@@ -7103,7 +7110,6 @@
       function setupForegroundMessaging() {
         if (!messaging) return;
         messaging.onMessage(async (payload) => {
-          console.log("Foreground message received:", payload);
           // Don't show play-reminder notifications if user already played today
           const alreadyPlayed = await hasPlayedToday();
           if (alreadyPlayed) return;
@@ -7245,7 +7251,6 @@
             }
           }
         } catch (e) {
-          console.log("Could not fetch badges:", e);
         }
 
         return badges;
@@ -7468,7 +7473,7 @@
               joined: Date.now(),
               lastActive: Date.now(),
             })
-            .catch((e) => console.log("Offline mode: Saved locally only"));
+            .catch(() => {});
 
           // Sync score if played today
           if (hasPlayedTodayCheck()) {
@@ -7749,7 +7754,7 @@
                         .sort((a, b) => b.timestamp - a.timestamp)
                         .map(
                           (e) =>
-                            `🔥 <strong>${e.nick}</strong> hit a ${e.streak}-day streak!`,
+                            `🔥 <strong>${escapeHTML(e.nick)}</strong> hit a ${e.streak}-day streak!`,
                         )
                         .join("<br>");
                       list.insertAdjacentHTML(
@@ -7760,7 +7765,6 @@
                 },
                 (error) => {
                   clearTimeout(timeout);
-                  console.error("Firebase Read Error:", error);
                   list.innerHTML = `<div style="text-align:center; padding:20px; color:red;">Permission Denied.<br>Check Firebase Rules.</div>`;
                 },
               );
@@ -7885,7 +7889,7 @@
               isMe ? "background:rgba(106, 170, 100, 0.1);" : ""
             }">
                 <div class="lb-rank ${rankClass}">${currentRank}</div>
-                <div class="lb-user">${nick} ${badgeHTML}${provisionalBadge} ${
+                <div class="lb-user">${escapeHTML(nick)} ${badgeHTML}${provisionalBadge} ${
                   isMe ? "(You)" : ""
                 }</div>
                 <div class="lb-score">
@@ -7984,9 +7988,6 @@
               localStats.currentStreak = existingData.streak;
               localStorage.setItem("tumblerStats", JSON.stringify(localStats));
               saveProfileToFirebase();
-              console.log(
-                `Synced streak from Firebase: ${existingData.streak}`,
-              );
 
               // Update the UI if streak indicator is visible
               updateStreakIndicator();
@@ -8073,7 +8074,6 @@
           if (needsSync) {
             localStorage.setItem("tumblerStats", JSON.stringify(localStats));
             stats = localStats; // Update in-memory stats object
-            console.log("Profile synced from Firebase to localStorage");
             updateStreakIndicator();
 
             // Refresh stats modal if open
@@ -8126,7 +8126,6 @@
         const badgeSnap = await badgeRef.once("value");
 
         if (badgeSnap.exists()) {
-          console.log("Badges already locked in for this week.");
           return;
         }
         // --- END ADDITION ---
@@ -8201,13 +8200,7 @@
 
           // Save to Firebase
           await db.ref(`weeklyBadges/${weekKey}/${crewId}`).set(badges);
-
-          console.log(
-            `Badges awarded for ${crewId} (Week ${weekKey} using Last Week's Data):`,
-            badges,
-          );
         } catch (e) {
-          console.error("Error calculating badges:", e);
         }
       }
 
@@ -8339,10 +8332,8 @@
 
           if (Object.keys(updates).length > 0) {
             await db.ref().update(updates);
-            console.log("Migration ATM → AATM complete.");
           }
         } catch (e) {
-          console.error("Migration failed:", e);
         }
         localStorage.setItem("tumblerMigration_ATM_AATM", "done");
       })();
@@ -8535,7 +8526,6 @@
         deferredInstallPrompt = null;
         const banner = document.getElementById("pwa-install-banner");
         if (banner) banner.remove();
-        console.log("PWA installed successfully");
       });
     </script>
 

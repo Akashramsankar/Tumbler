@@ -12,7 +12,7 @@
   "categories": ["games", "entertainment"],
   "icons": [
     {
-      "src": " /Tumbler/icons/icon-72.png",
+      "src": "/Tumbler/icons/icon-72.png",
       "sizes": "72x72",
       "type": "image/png",
       "purpose": "any"
