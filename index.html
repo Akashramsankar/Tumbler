@@ -6766,7 +6766,7 @@
         champion: { icon: "🥇", name: "Champion", desc: "#1 This Week" },
         runnerUp: { icon: "🥈", name: "Runner Up", desc: "#2 This Week" },
         bronze: { icon: "🥉", name: "Bronze", desc: "#3 This Week" },
-        speedKing: { icon: "⚡", name: "Speed King", desc: "Fastest Time" },
+        speedKing: { icon: "⚡", name: "Speed King", desc: "Best Avg Time" },
       };
 
       const CAREER_BADGES = {
@@ -7168,14 +7168,10 @@
           `Crew: ${activeGroup}`;
         document.getElementById("player-nick").value = userNick;
         document.getElementById("group-id").value = activeGroup;
-        loadLeaderboardData();
 
         // Show crew selector if multiple crews
         const selector = document.getElementById("crew-selector");
         const dropdown = document.getElementById("crew-dropdown");
-
-        console.log("User groups:", userGroups); // Debug line
-        console.log("Active group:", activeGroup); // Debug line
 
         if (userGroups && userGroups.length > 1) {
           selector.style.display = "block";
@@ -7191,7 +7187,6 @@
           selector.style.display = "none";
         }
 
-        // Force reload leaderboard data
         loadLeaderboardData();
         displayUserBadges();
       }
@@ -7317,15 +7312,12 @@
                           allTimeTotals[nick] = {
                             cash: 0,
                             wins: 0,
-                            bestTime: 999999,
+                            totalTime: 0,
                           };
                         }
                         allTimeTotals[nick].cash += score.cash;
                         allTimeTotals[nick].wins++;
-                        allTimeTotals[nick].bestTime = Math.min(
-                          allTimeTotals[nick].bestTime,
-                          score.time || 999999,
-                        );
+                        allTimeTotals[nick].totalTime += score.time || 0;
                       });
                     });
 
@@ -7370,7 +7362,7 @@
             </div>
             <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.4; text-align: center;">
               Top 3 by total cash earn badges on Monday reset<br>
-              <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King</span>
+              <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King (Avg)</span>
             </div>
             <div style="text-align: center; margin-top: 8px; font-size: 0.75rem; color: var(--color-close);">
               ⏰ ${getTimeUntilMonday()}
@@ -7470,12 +7462,13 @@
               provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Bronze badge">🥉</span>`;
             }
 
-            // Speed King indicator (check if this person has best time)
-            if (stats.bestTime && stats.bestTime < 999999) {
-              const allTimes = data.map(([, s]) => s.bestTime || 999999);
-              const fastestTime = Math.min(...allTimes);
-              if (stats.bestTime === fastestTime) {
-                provisionalBadge += `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Speed King badge">⚡</span>`;
+            // Speed King indicator (check if this person has best avg time)
+            if (stats.wins > 0 && stats.totalTime > 0) {
+              const avgTime = stats.totalTime / stats.wins;
+              const allAvgTimes = data.map(([, s]) => s.wins > 0 ? s.totalTime / s.wins : 999999);
+              const fastestAvg = Math.min(...allAvgTimes);
+              if (avgTime <= fastestAvg) {
+                provisionalBadge += `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Speed King badge (avg ${Math.round(avgTime)}s)">⚡</span>`;
               }
             }
           }
@@ -7516,7 +7509,7 @@
             badgeHTML += `<span class="badge" title="Bronze - #3 This Week">🥉</span>`;
           }
           if (weeklyBadges.speedKing === nick) {
-            badgeHTML += `<span class="badge" title="Speed King - Fastest Time This Week">⚡</span>`;
+            badgeHTML += `<span class="badge" title="Speed King - Best Avg Time This Week">⚡</span>`;
           }
 
           // Master Thief permanent badge
@@ -7817,15 +7810,12 @@
               if (!weeklyTotals[nick]) {
                 weeklyTotals[nick] = {
                   totalCash: 0,
-                  bestTime: 999999,
+                  totalTime: 0,
                   plays: 0,
                 };
               }
               weeklyTotals[nick].totalCash += score.cash;
-              weeklyTotals[nick].bestTime = Math.min(
-                weeklyTotals[nick].bestTime,
-                score.time,
-              );
+              weeklyTotals[nick].totalTime += score.time || 0;
               weeklyTotals[nick].plays++;
             });
           });
@@ -7835,10 +7825,12 @@
             ([, a], [, b]) => b.totalCash - a.totalCash,
           );
 
-          // Find speed king
-          const speedKing = Object.entries(weeklyTotals).sort(
-            ([, a], [, b]) => a.bestTime - b.bestTime,
-          )[0];
+          // Find speed king (best average solve time)
+          const speedKing = Object.entries(weeklyTotals)
+            .filter(([, d]) => d.plays > 0)
+            .sort(
+              ([, a], [, b]) => (a.totalTime / a.plays) - (b.totalTime / b.plays),
+            )[0];
 
           // Award badges
           const badges = {
