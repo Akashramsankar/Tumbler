@@ -151,7 +151,7 @@
 
       .stats-content {
         background: var(--safe-body);
-        padding: 30px;
+        padding: 20px;
         border-radius: 16px;
         max-width: 400px;
         width: 90%;
@@ -162,9 +162,9 @@
       /* NEW: Stash Display */
       .stash-display {
         background: var(--safe-inset);
-        padding: 15px;
+        padding: 12px;
         border-radius: 10px;
-        margin-bottom: 20px;
+        margin-bottom: 12px;
         border: 1px solid var(--safe-border);
       }
 
@@ -204,9 +204,9 @@
       .stats-grid {
         display: grid;
         grid-template-columns: repeat(3, 1fr);
-        gap: 15px;
-        margin: 20px 0;
-        padding-top: 15px;
+        gap: 10px;
+        margin: 10px 0;
+        padding-top: 10px;
         border-top: 1px solid var(--safe-border);
       }
 
@@ -432,6 +432,16 @@
         font-size: 0.95rem;
         padding: 12px;
         margin-top: 20px;
+      }
+
+      #win-modal .tutorial-content {
+        padding: 16px;
+      }
+
+      #win-modal .tutorial-btn,
+      #win-modal .close-stats {
+        margin-top: 0;
+        padding: 10px 16px;
       }
 
       /* Better Hover: Brightens slightly, no color swap */
@@ -816,7 +826,8 @@
       .distribution-row {
         display: flex;
         align-items: center;
-        gap: 8px;
+        gap: 6px;
+        margin-bottom: 2px;
       }
 
       .distribution-label {
@@ -828,13 +839,13 @@
 
       .distribution-bar {
         background: var(--safe-inset);
-        height: 24px;
-        min-width: 24px;
+        height: 20px;
+        min-width: 20px;
         border-radius: 4px;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-size: 0.8rem;
+        font-size: 0.75rem;
         font-weight: 700;
         transition: width 0.3s ease;
       }
@@ -1923,8 +1934,8 @@
         }
 
         /* Reduce distribution section margin */
-        #win-modal .stats-content > div[style*="margin: 20px 0"] {
-          margin: 12px 0 !important;
+        #win-modal .stats-content > div[style*="margin: 10px 0"] {
+          margin: 6px 0 !important;
         }
       }
 
@@ -1988,8 +1999,20 @@
         }
 
         /* Further reduce margins */
-        #win-modal .stats-content > div[style*="margin"] {
-          margin: 8px 0 !important;
+        #win-modal .tutorial-content > div[style*="margin"] {
+          margin: 5px 0 !important;
+        }
+
+        #win-crew-context {
+          padding: 4px 8px !important;
+          margin-bottom: 4px !important;
+          font-size: 0.65rem !important;
+        }
+
+        #win-trend-insight {
+          padding: 4px 8px !important;
+          margin-bottom: 4px !important;
+          font-size: 0.68rem !important;
         }
       }
 
@@ -2113,73 +2136,11 @@
         }
       }
 
-      /* MOBILE: Further compress win modal when milestone is present */
+      /* MOBILE: Further compress win modal */
       @media (max-height: 750px) and (max-width: 600px) {
-        #win-modal .stats-content {
+        #win-modal .tutorial-content {
           padding: 10px !important;
-          max-height: 90vh;
-        }
-
-        #win-modal h2 {
-          font-size: 1.2rem !important;
-          margin-bottom: 8px !important;
-        }
-
-        #win-modal .stash-display {
-          padding: 8px !important;
-          margin-bottom: 8px !important;
-        }
-
-        #win-modal .stash-label {
-          font-size: 0.7rem !important;
-        }
-
-        #win-modal .stash-display > div {
-          font-size: 0.7rem !important;
-          gap: 3px !important;
-          margin: 6px 0 !important;
-        }
-
-        #win-modal .stats-grid {
-          margin: 8px 0 !important;
-          gap: 6px !important;
-          padding-top: 6px !important;
-        }
-
-        #win-modal .stat-value {
-          font-size: 1.1rem !important;
-        }
-
-        #win-modal .stat-label {
-          font-size: 0.6rem !important;
-        }
-
-        #win-modal .distribution-bars {
-          gap: 2px !important;
-        }
-
-        #win-modal .distribution-bar {
-          height: 14px !important;
-          font-size: 0.6rem !important;
-        }
-
-        #win-modal .tutorial-btn,
-        #win-modal .close-stats {
-          padding: 7px 10px !important;
-          font-size: 0.8rem !important;
-          margin-top: 6px !important;
-        }
-
-        /* Compress distribution section margin */
-        #win-modal .stats-content > div[style*="margin"] {
-          margin: 6px 0 !important;
-        }
-      }
-
-      /* Extra small mobile screens */
-      @media (max-height: 670px) and (max-width: 600px) {
-        #win-modal .stats-content {
-          padding: 8px !important;
+          max-height: 92vh;
         }
 
         #win-modal h2 {
@@ -2192,25 +2153,131 @@
           margin-bottom: 6px !important;
         }
 
-        #win-modal .stash-display > div {
+        #win-modal .stash-label {
           font-size: 0.65rem !important;
+        }
+
+        #win-modal .stash-display > div {
+          font-size: 0.68rem !important;
+          gap: 2px !important;
           margin: 4px 0 !important;
         }
 
         #win-modal .stats-grid {
           margin: 6px 0 !important;
           gap: 4px !important;
+          padding-top: 6px !important;
         }
 
         #win-modal .stat-value {
           font-size: 1rem !important;
         }
 
+        #win-modal .stat-label {
+          font-size: 0.55rem !important;
+        }
+
+        #win-modal .distribution-row {
+          margin-bottom: 1px !important;
+        }
+
+        #win-modal .distribution-bar {
+          height: 13px !important;
+          font-size: 0.55rem !important;
+        }
+
+        #win-modal .tutorial-btn,
+        #win-modal .close-stats {
+          padding: 7px 10px !important;
+          font-size: 0.8rem !important;
+        }
+
+        #win-crew-context {
+          padding: 4px 8px !important;
+          margin-bottom: 4px !important;
+          font-size: 0.65rem !important;
+        }
+
+        #win-trend-insight {
+          padding: 4px 8px !important;
+          margin-bottom: 4px !important;
+          font-size: 0.65rem !important;
+        }
+
+        /* Compress distribution section margin */
+        #win-modal .tutorial-content > div[style*="margin"] {
+          margin: 4px 0 !important;
+        }
+      }
+
+      /* Extra small mobile screens */
+      @media (max-height: 670px) and (max-width: 600px) {
+        #win-modal .tutorial-content {
+          padding: 6px !important;
+        }
+
+        #win-modal h2 {
+          font-size: 1rem !important;
+          margin-bottom: 4px !important;
+        }
+
+        #win-modal .stash-display {
+          padding: 5px !important;
+          margin-bottom: 4px !important;
+        }
+
+        #win-modal .stash-display > div {
+          font-size: 0.62rem !important;
+          margin: 3px 0 !important;
+          gap: 1px !important;
+        }
+
+        #win-modal .stats-grid {
+          margin: 4px 0 !important;
+          gap: 3px !important;
+          padding-top: 4px !important;
+        }
+
+        #win-modal .stat-value {
+          font-size: 0.9rem !important;
+        }
+
+        #win-modal .stat-label {
+          font-size: 0.5rem !important;
+        }
+
+        #win-modal .distribution-row {
+          margin-bottom: 0 !important;
+        }
+
+        #win-modal .distribution-bar {
+          height: 11px !important;
+          font-size: 0.5rem !important;
+          min-width: 16px !important;
+        }
+
         #win-modal .tutorial-btn,
         #win-modal .close-stats {
           padding: 6px 8px !important;
           font-size: 0.75rem !important;
-          margin-top: 4px !important;
+        }
+
+        #win-crew-context {
+          padding: 3px 6px !important;
+          margin-bottom: 3px !important;
+          font-size: 0.6rem !important;
+          line-height: 1.3 !important;
+        }
+
+        #win-trend-insight {
+          padding: 3px 6px !important;
+          margin-bottom: 3px !important;
+          font-size: 0.6rem !important;
+          line-height: 1.2 !important;
+        }
+
+        #win-modal .tutorial-content > div[style*="margin"] {
+          margin: 3px 0 !important;
         }
       }
       /* ==================== WIN ANIMATIONS ==================== */
@@ -2780,9 +2847,9 @@
             style="
               display: flex;
               flex-direction: column;
-              gap: 8px;
-              margin: 15px 0;
-              font-size: 0.9rem;
+              gap: 5px;
+              margin: 10px 0;
+              font-size: 0.85rem;
             "
           >
             <div
@@ -2831,14 +2898,14 @@
             </div>
 
             <div
-              style="height: 1px; background: var(--safe-border); margin: 5px 0"
+              style="height: 1px; background: var(--safe-border); margin: 3px 0"
             ></div>
 
             <div
               style="
                 display: flex;
                 justify-content: space-between;
-                font-size: 1.1rem;
+                font-size: 1rem;
                 color: var(--color-cash);
               "
             >
@@ -2863,25 +2930,28 @@
           </div>
         </div>
 
-        <div id="win-crew-context" style="display:none; text-align:center; padding:8px 12px; margin-bottom:12px; background:var(--safe-inset); border:1px solid var(--safe-border); border-radius:8px; font-size:0.78rem; color:#cbd5e1; line-height:1.5;"></div>
+        <div id="win-crew-context" style="display:none; text-align:center; padding:6px 10px; margin-bottom:8px; background:var(--safe-inset); border:1px solid var(--safe-border); border-radius:8px; font-size:0.72rem; color:#cbd5e1; line-height:1.4;"></div>
 
-        <div style="margin: 20px 0; text-align: center">
-          <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px">
+        <div style="margin: 10px 0; text-align: center">
+          <div style="font-size: 0.75rem; color: #94a3b8; margin-bottom: 6px">
             GUESS DISTRIBUTION
           </div>
           <div id="distribution-bars"></div>
         </div>
 
-        <div id="win-trend-insight" onclick="closeWinModal(); showTrends();" style="display:none; cursor:pointer; text-align:center; padding:10px; margin-bottom:12px; background:rgba(106,170,100,0.08); border:1px solid rgba(106,170,100,0.25); border-radius:8px; font-size:0.8rem; color:#cbd5e1; line-height:1.4;"></div>
+        <div id="win-trend-insight" onclick="closeWinModal(); showTrends();" style="display:none; cursor:pointer; text-align:center; padding:6px 10px; margin-bottom:8px; background:rgba(106,170,100,0.08); border:1px solid rgba(106,170,100,0.25); border-radius:8px; font-size:0.75rem; color:#cbd5e1; line-height:1.3;"></div>
 
-        <button
-          class="tutorial-btn"
-          id="share-result-btn"
-          onclick="shareResult()"
-        >
-          📤 Share Result
-        </button>
-        <button class="close-stats" onclick="closeWinModal()">Close</button>
+        <div style="display:flex; gap:8px; margin-top:8px;">
+          <button
+            class="tutorial-btn"
+            id="share-result-btn"
+            onclick="shareResult()"
+            style="flex:1; margin:0;"
+          >
+            📤 Share
+          </button>
+          <button class="close-stats" onclick="closeWinModal()" style="flex:1; margin:0;">Close</button>
+        </div>
       </div>
     </div>
 
@@ -5851,26 +5921,18 @@
           const isMobile = window.innerWidth <= 600;
 
           milestoneDiv.style.cssText = isMobile
-            ? "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 8px; border-radius: 8px; margin-top: 10px; text-align: center; border: 1px solid var(--color-correct); box-shadow: 0 0 15px rgba(106, 170, 100, 0.3);"
-            : "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 12px; border-radius: 10px; margin-top: 15px; text-align: center; border: 2px solid var(--color-correct); box-shadow: 0 0 20px rgba(106, 170, 100, 0.4);";
+            ? "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 6px; border-radius: 8px; margin-top: 6px; text-align: center; border: 1px solid var(--color-correct); box-shadow: 0 0 10px rgba(106, 170, 100, 0.3);"
+            : "background: linear-gradient(135deg, #6aaa64, #538d4e); padding: 8px; border-radius: 10px; margin-top: 8px; text-align: center; border: 1px solid var(--color-correct); box-shadow: 0 0 15px rgba(106, 170, 100, 0.3);";
 
           milestoneDiv.innerHTML = isMobile
             ? `
-        <div style="font-size: 1.2rem;">🎉</div>
-        <div style="font-size: 0.85rem; font-weight: 700; color: white; margin: 3px 0;">
-          ${currentStreak}-DAY MILESTONE!
-        </div>
-        <div style="font-size: 1rem; font-weight: 700; color: var(--color-cash);">
-          +$${bonus.toLocaleString()}
+        <div style="font-size: 0.85rem; font-weight: 700; color: white;">
+          🎉 ${currentStreak}-DAY MILESTONE! <span style="color: var(--color-cash);">+$${bonus.toLocaleString()}</span>
         </div>
       `
             : `
-        <div style="font-size: 1.8rem;">🎉</div>
-        <div style="font-size: 1.1rem; font-weight: 700; color: white; margin: 5px 0;">
-          ${currentStreak}-DAY MILESTONE!
-        </div>
-        <div style="font-size: 1.3rem; font-weight: 700; color: var(--color-cash);">
-          +$${bonus.toLocaleString()} BONUS
+        <div style="font-size: 1rem; font-weight: 700; color: white;">
+          🎉 ${currentStreak}-DAY MILESTONE! <span style="color: var(--color-cash);">+$${bonus.toLocaleString()}</span>
         </div>
       `;
 
