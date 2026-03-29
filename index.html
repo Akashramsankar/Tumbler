@@ -2771,10 +2771,7 @@
 
     <div id="win-modal" class="tutorial-modal">
       <div class="tutorial-content">
-        <div style="position:relative;">
-          <h2 style="margin-right:40px;">🎉 VAULT BREACHED!</h2>
-          <button onclick="closeWinModal(); showTrends();" title="View Performance Trends" style="position:absolute; top:0; right:0; background:none; border:1px solid var(--safe-border); border-radius:8px; padding:6px 8px; cursor:pointer; font-size:1rem; color:#94a3b8; line-height:1;">📈</button>
-        </div>
+        <h2>🎉 VAULT BREACHED!</h2>
 
         <div class="stash-display">
           <div class="stash-label">Heist Breakdown</div>
@@ -2872,6 +2869,8 @@
           </div>
           <div id="distribution-bars"></div>
         </div>
+
+        <div id="win-trend-insight" onclick="closeWinModal(); showTrends();" style="display:none; cursor:pointer; text-align:center; padding:10px; margin-bottom:12px; background:rgba(106,170,100,0.08); border:1px solid rgba(106,170,100,0.25); border-radius:8px; font-size:0.8rem; color:#cbd5e1; line-height:1.4;"></div>
 
         <button
           class="tutorial-btn"
@@ -5902,6 +5901,68 @@
           .join("");
 
         document.getElementById("distribution-bars").innerHTML = barsHTML;
+
+        // Generate trend insight
+        const insightEl = document.getElementById("win-trend-insight");
+        insightEl.style.display = "none";
+        try {
+          const history = collectGameHistory();
+          if (history.length >= 5) {
+            const weeks = groupByWeek(history);
+            if (weeks.length >= 2) {
+              const curr = weeks[weeks.length - 1];
+              const prev = weeks[weeks.length - 2];
+              const currWins = curr.games.filter((g) => g.won);
+              const prevWins = prev.games.filter((g) => g.won);
+
+              const insights = [];
+
+              // Speed comparison
+              if (currWins.length > 0 && prevWins.length > 0) {
+                const currAvgTime = Math.round(currWins.reduce((s, g) => s + g.solveTime, 0) / currWins.length);
+                const prevAvgTime = Math.round(prevWins.reduce((s, g) => s + g.solveTime, 0) / prevWins.length);
+                const timeDiff = Math.round(((prevAvgTime - currAvgTime) / prevAvgTime) * 100);
+                if (timeDiff > 5) insights.push(`⚡ You're <strong>${timeDiff}% faster</strong> than last week`);
+              }
+
+              // Cash comparison
+              if (curr.games.length > 0 && prev.games.length > 0) {
+                const currCash = curr.games.reduce((s, g) => s + g.cashWon, 0);
+                const prevCash = prev.games.reduce((s, g) => s + g.cashWon, 0);
+                const cashDiff = Math.round(((currCash - prevCash) / prevCash) * 100);
+                if (cashDiff > 10) insights.push(`💰 Earning <strong>${cashDiff}% more</strong> than last week`);
+              }
+
+              // Attempts comparison
+              if (currWins.length > 0 && prevWins.length > 0) {
+                const currAvg = currWins.reduce((s, g) => s + g.attempts, 0) / currWins.length;
+                const prevAvg = prevWins.reduce((s, g) => s + g.attempts, 0) / prevWins.length;
+                if (prevAvg - currAvg > 0.3) insights.push(`🎯 Solving in <strong>fewer attempts</strong> than last week`);
+              }
+
+              // Personal best check
+              if (cashWon >= (stats.bestSingleHeist || 0) && cashWon > 0) {
+                insights.unshift(`🏆 <strong>New personal best!</strong> $${cashWon.toLocaleString()}`);
+              }
+
+              // Streak milestone approaching
+              const { daysUntil, nextMilestone } = checkStreakMilestone();
+              if (daysUntil > 0 && daysUntil <= 3) {
+                insights.push(`🔥 <strong>${daysUntil} day${daysUntil === 1 ? "" : "s"}</strong> until ${nextMilestone}-day milestone`);
+              }
+
+              // Fallback: games played
+              if (insights.length === 0 && history.length > 0) {
+                insights.push(`📈 <strong>${history.length} games</strong> played — tap to see your trends`);
+              }
+
+              if (insights.length > 0) {
+                insightEl.innerHTML = `${insights[0]}<div style="font-size:0.65rem; color:#64748b; margin-top:4px;">Tap to see full trends →</div>`;
+                insightEl.style.display = "block";
+              }
+            }
+          }
+        } catch (e) {}
       }
 
       function showCrewIntroModal(attempts, cashWon, solveTime) {
