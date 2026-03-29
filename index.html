@@ -2863,6 +2863,8 @@
           </div>
         </div>
 
+        <div id="win-crew-context" style="display:none; text-align:center; padding:8px 12px; margin-bottom:12px; background:var(--safe-inset); border:1px solid var(--safe-border); border-radius:8px; font-size:0.78rem; color:#cbd5e1; line-height:1.5;"></div>
+
         <div style="margin: 20px 0; text-align: center">
           <div style="font-size: 0.8rem; color: #94a3b8; margin-bottom: 10px">
             GUESS DISTRIBUTION
@@ -5901,6 +5903,55 @@
           .join("");
 
         document.getElementById("distribution-bars").innerHTML = barsHTML;
+
+        // Crew context: compare your performance to crew
+        const crewCtxEl = document.getElementById("win-crew-context");
+        crewCtxEl.style.display = "none";
+        crewCtxEl.textContent = "";
+        if (db && activeGroup && cashWon > 0) {
+          try {
+            const today = new Date();
+            const dateKey = `${today.getFullYear()}-${today.getMonth() + 1}-${today.getDate()}`;
+            db.ref(`scores/${activeGroup}/${dateKey}`).once("value", (snap) => {
+              const data = snap.val();
+              if (!data) return;
+              const others = Object.entries(data).filter(([n]) => n !== userNick);
+              if (others.length === 0) {
+                crewCtxEl.innerHTML = `🥊 <strong>First to crack it!</strong> Let's see if your crew can keep up.`;
+                crewCtxEl.style.display = "block";
+                return;
+              }
+
+              const allScores = Object.values(data);
+              const avgAttempts = allScores.reduce((s, d) => s + (d.attempts || 0), 0) / allScores.length;
+              const avgTime = allScores.reduce((s, d) => s + (d.time || 0), 0) / allScores.length;
+
+              const lines = [];
+
+              // Attempts comparison
+              if (attempts < avgAttempts - 0.3) {
+                lines.push(`Crew avg: <strong>${avgAttempts.toFixed(1)} attempts</strong> — you beat it in ${attempts}`);
+              } else if (attempts > avgAttempts + 0.3) {
+                lines.push(`Crew avg: <strong>${avgAttempts.toFixed(1)} attempts</strong> — a tough one for you`);
+              } else {
+                lines.push(`Crew avg: <strong>${avgAttempts.toFixed(1)} attempts</strong> — right on pace`);
+              }
+
+              // Speed comparison
+              const fastestTime = Math.min(...allScores.map(d => d.time || 999));
+              if (solveTime === fastestTime) {
+                lines.push(`⚡ Fastest in crew today at <strong>${solveTime}s</strong>`);
+              } else if (solveTime < avgTime) {
+                lines.push(`⚡ Faster than crew avg of <strong>${Math.round(avgTime)}s</strong>`);
+              }
+
+              if (lines.length > 0) {
+                crewCtxEl.innerHTML = lines.join("<br>");
+                crewCtxEl.style.display = "block";
+              }
+            });
+          } catch (e) {}
+        }
 
         // Generate trend insight
         const insightEl = document.getElementById("win-trend-insight");
