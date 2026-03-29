@@ -326,6 +326,7 @@
         );
       }
 
+      /* Shared modal header styles (used by ready-modal, win-modal, etc.) */
       .mission-header {
         text-align: center;
         margin-bottom: 20px;
@@ -342,7 +343,7 @@
       }
 
       .mission-subtitle {
-        color: var(--color-correct); /* Green */
+        color: var(--color-correct);
         font-size: 0.7rem;
         text-transform: uppercase;
         letter-spacing: 3px;
@@ -351,59 +352,217 @@
         margin-top: 5px;
       }
 
-      /* Recessed panel for examples */
-      .example-set {
-        display: flex;
-        justify-content: center;
-        gap: 15px;
-        margin-bottom: 20px;
-        padding: 15px 10px;
-        background: rgba(0, 0, 0, 0.3); /* Darker recess */
-        border-radius: 12px;
-        border: 1px solid rgba(255, 255, 255, 0.05);
-        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.4);
+      /* === Tutorial Carousel === */
+      .tutorial-slide {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 16px;
+        flex: 1;
+        animation: slideFadeIn 0.3s ease;
       }
 
-      .example-item {
+      .tutorial-slide.active {
+        display: flex;
+      }
+
+      @keyframes slideFadeIn {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
+      }
+
+      .slide-icon {
+        font-size: 2.5rem;
+        line-height: 1;
+      }
+
+      .slide-title {
+        color: #fff;
+        font-family: serif;
+        font-size: 1.6rem;
+        letter-spacing: 0.5px;
+        margin: 0;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+      }
+
+      .slide-desc {
+        color: #94a3b8;
+        font-size: 0.9rem;
+        line-height: 1.5;
+        margin: 0;
+        max-width: 340px;
+      }
+
+      /* Slide 1 — demo row */
+      .slide-visual {
         display: flex;
         flex-direction: column;
         align-items: center;
+        gap: 12px;
+        margin-top: 4px;
+      }
+
+      .demo-row {
+        display: flex;
         gap: 10px;
-        text-align: center;
-        flex: 1;
       }
 
-      .example-caption {
-        font-size: 0.7rem;
-        color: #94a3b8;
-        line-height: 1.3;
+      .demo-tile {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.3rem;
+        font-weight: 800;
         font-family: "Chivo Mono", monospace;
+        color: #fff;
+        background: #334155;
+        border: 2px solid rgba(255, 255, 255, 0.1);
+        position: relative;
       }
 
-      /* Information Grid */
-      .rule-grid {
+      .demo-label {
+        font-size: 0.75rem;
+        color: #64748b;
+        font-style: italic;
+      }
+
+      /* Slide 2 — clue examples */
+      .clue-examples {
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        margin-bottom: 25px;
-        padding: 0 5px;
+        gap: 14px;
+        width: 100%;
+        text-align: left;
       }
 
-      .rule-line {
+      .clue-row {
         display: flex;
-        align-items: flex-start; /* Align top */
-        gap: 12px;
-        font-size: 0.9rem;
+        align-items: center;
+        gap: 14px;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 12px;
+        padding: 12px 14px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      .clue-row .demo-tile {
+        flex-shrink: 0;
+        width: 46px;
+        height: 46px;
+        font-size: 1.2rem;
+      }
+
+      .clue-row .demo-tile.correct {
+        background: var(--color-correct);
+        border-color: var(--color-correct);
+      }
+
+      .clue-row .demo-tile.close {
+        background: var(--color-close);
+        border-color: var(--color-close);
+      }
+
+      .clue-row .demo-tile.far {
+        background: var(--color-far);
+        border-color: var(--color-far);
+      }
+
+      .demo-arrow {
+        position: absolute;
+        bottom: -2px;
+        right: -2px;
+        font-size: 0.65rem;
+        background: rgba(0, 0, 0, 0.6);
+        border-radius: 4px;
+        padding: 1px 3px;
+        line-height: 1;
+      }
+
+      .clue-text {
+        font-size: 0.85rem;
         color: #cbd5e1;
         line-height: 1.4;
       }
 
-      .icon-box {
-        color: var(--key-text);
-        min-width: 20px;
-        font-size: 1rem;
-        text-align: center;
-        margin-top: 1px; /* Optical alignment */
+      .clue-text em {
+        color: #fff;
+        font-style: italic;
+      }
+
+      /* Slide 3 — tool cards */
+      .tools-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        width: 100%;
+      }
+
+      .tool-card {
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+        background: rgba(0, 0, 0, 0.25);
+        border-radius: 12px;
+        padding: 14px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.05);
+        text-align: left;
+      }
+
+      .tool-icon {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .tool-info {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+
+      .tool-info strong {
+        color: #fff;
+        font-size: 0.95rem;
+      }
+
+      .tool-info span {
+        color: #94a3b8;
+        font-size: 0.85rem;
+        line-height: 1.4;
+      }
+
+      /* Navigation bar */
+      .tutorial-nav {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .tutorial-dots {
+        display: flex;
+        gap: 8px;
+      }
+
+      .dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #334155;
+        border: none;
+        cursor: pointer;
+        padding: 0;
+        transition: all 0.2s ease;
+      }
+
+      .dot.active {
+        background: var(--color-correct);
+        transform: scale(1.3);
       }
 
       /* --- THE NEW BUTTON (Green Tile Style) --- */
@@ -1287,35 +1446,24 @@
           max-width: 95%;
         }
 
-        .mission-title {
+        .slide-title {
           font-size: 1.4rem;
         }
 
-        .mission-subtitle {
-          font-size: 0.65rem;
+        .demo-tile {
+          width: 44px;
+          height: 44px;
+          font-size: 1.1rem;
         }
 
-        .example-set {
-          gap: 10px;
-          padding: 12px 8px;
+        .clue-row .demo-tile {
+          width: 40px;
+          height: 40px;
+          font-size: 1rem;
         }
 
-        .example-tile {
-          width: 45px;
-          height: 45px;
-          font-size: 1.3rem;
-        }
-
-        .example-caption {
-          font-size: 0.65rem;
-        }
-
-        .rule-grid {
-          gap: 10px;
-        }
-
-        .rule-line {
-          font-size: 0.85rem;
+        .clue-text {
+          font-size: 0.8rem;
         }
 
         .tutorial-btn {
@@ -1403,18 +1551,24 @@
           padding: 14px;
         }
 
-        .mission-title {
+        .slide-title {
           font-size: 1.3rem;
         }
 
-        .example-tile {
+        .demo-tile {
           width: 40px;
           height: 40px;
-          font-size: 1.2rem;
+          font-size: 1rem;
         }
 
-        .rule-line {
-          font-size: 0.8rem;
+        .clue-row .demo-tile {
+          width: 36px;
+          height: 36px;
+        }
+
+        .clue-row {
+          padding: 10px 12px;
+          gap: 10px;
         }
       }
 
@@ -1463,22 +1617,35 @@
           padding: 12px;
         }
 
-        .mission-title {
-          font-size: 1.2rem;
+        .slide-title {
+          font-size: 1.15rem;
         }
 
-        .example-tile {
-          width: 38px;
-          height: 38px;
-          font-size: 1.1rem;
+        .slide-desc {
+          font-size: 0.8rem;
         }
 
-        .example-caption {
-          font-size: 0.6rem;
+        .demo-tile {
+          width: 36px;
+          height: 36px;
+          font-size: 0.95rem;
         }
 
-        .rule-line {
+        .clue-row .demo-tile {
+          width: 34px;
+          height: 34px;
+        }
+
+        .clue-text {
           font-size: 0.75rem;
+        }
+
+        .tool-info strong {
+          font-size: 0.85rem;
+        }
+
+        .tool-info span {
+          font-size: 0.78rem;
         }
       }
 
@@ -2535,103 +2702,95 @@
 
     <div id="tutorial-modal" class="tutorial-modal">
       <div class="tutorial-content">
-        <div class="mission-header">
-          <h2 class="mission-title">Mission Briefing</h2>
-          <div class="mission-subtitle">Crack the 4-Letter Code</div>
-        </div>
 
-        <div class="example-set">
-          <div class="example-item">
-            <div class="example-tile correct">C</div>
-            <div class="example-caption">
-              <strong style="color: var(--color-correct)">LOCKED</strong
-              ><br />Correct Letter
+        <!-- Slide 1: Guess the Code -->
+        <div class="tutorial-slide active" data-slide="0">
+          <div class="slide-icon">🔐</div>
+          <h2 class="slide-title">Guess the Code</h2>
+          <p class="slide-desc">
+            Crack a <strong>4-letter secret word</strong> in
+            <strong>6 attempts</strong> to break into the vault.
+          </p>
+          <div class="slide-visual">
+            <div class="demo-row">
+              <div class="demo-tile">?</div>
+              <div class="demo-tile">?</div>
+              <div class="demo-tile">?</div>
+              <div class="demo-tile">?</div>
             </div>
-          </div>
-
-          <div class="example-item">
-            <div class="example-tile close">
-              J
-              <div class="example-arrow">▲</div>
-            </div>
-            <div class="example-caption">
-              <strong style="color: var(--color-close)">CLOSE</strong
-              ><br />Within 9
-            </div>
-          </div>
-
-          <div class="example-item">
-            <div class="example-tile far">
-              Z
-              <div class="example-arrow">▼▼</div>
-            </div>
-            <div class="example-caption">
-              <strong style="color: var(--color-far)">FAR</strong><br />10+ Away
-            </div>
+            <div class="demo-label">Each guess reveals clues about every letter</div>
           </div>
         </div>
 
-        <div class="rule-grid">
-          <div class="rule-line">
-            <div class="icon-box">🎯</div>
-            <div>Guess the secret word in <strong>6 attempts</strong>.</div>
-          </div>
-
-          <div class="rule-line">
-            <div class="icon-box">↕️</div>
-            <div>
-              <strong>Follow the Arrows:</strong> They point towards the
-              answer.<br />
-              <span style="font-size: 0.8rem; color: #94a3b8">
-                (e.g. <strong>▲</strong> means the real letter is
-                <em>Higher</em> in the alphabet)
-              </span>
+        <!-- Slide 2: Read the Clues -->
+        <div class="tutorial-slide" data-slide="1">
+          <div class="slide-icon">🧩</div>
+          <h2 class="slide-title">Read the Clues</h2>
+          <p class="slide-desc">
+            After each guess, tiles change color and show arrows pointing you toward the answer.
+          </p>
+          <div class="clue-examples">
+            <div class="clue-row">
+              <div class="demo-tile correct">C</div>
+              <div class="clue-text">
+                <strong style="color: var(--color-correct)">Green = Locked In</strong><br />
+                Right letter, right spot.
+              </div>
             </div>
-          </div>
-
-          <div class="rule-line">
-            <div class="icon-box">⌨️</div>
-            <div>
-              <strong>Intel Assist:</strong> Impossible keys are automatically
-              disabled to help you.
+            <div class="clue-row">
+              <div class="demo-tile close">J<span class="demo-arrow">▲</span></div>
+              <div class="clue-text">
+                <strong style="color: var(--color-close)">Yellow = Close</strong><br />
+                Within 9 spots. Arrow (▲) means go <em>higher</em> in the alphabet.
+              </div>
             </div>
-          </div>
-
-          <div class="rule-line">
-            <div class="icon-box">🔍</div>
-            <div>
-              <strong>Intel Boost:</strong> Stuck? Purchase vault intel to see
-              the code sum for <strong>$1,000</strong>.
+            <div class="clue-row">
+              <div class="demo-tile far">Z<span class="demo-arrow">▼▼</span></div>
+              <div class="clue-text">
+                <strong style="color: var(--color-far)">Gray = Far</strong><br />
+                10+ spots away. Double arrow (▼▼) means go <em>much lower</em>.
+              </div>
             </div>
           </div>
         </div>
 
-        <div class="rule-line">
-          <div class="icon-box">👥</div>
-          <div>
-            <strong>Join a Crew:</strong> Compete with friends on daily and
-            career leaderboards.<br />
-            <span style="font-size: 0.8rem; color: #94a3b8">
-              (Click <strong>👥 Crew</strong> button to create or join a group)
-            </span>
+        <!-- Slide 3: Bonus Tools -->
+        <div class="tutorial-slide" data-slide="2">
+          <div class="slide-icon">🛠️</div>
+          <h2 class="slide-title">Your Tools</h2>
+          <p class="slide-desc">
+            Two built-in assists to help you crack the code.
+          </p>
+          <div class="tools-list">
+            <div class="tool-card">
+              <div class="tool-icon">⌨️</div>
+              <div class="tool-info">
+                <strong>Intel Assist</strong>
+                <span>Impossible keys are automatically disabled after each guess.</span>
+              </div>
+            </div>
+            <div class="tool-card">
+              <div class="tool-icon">🔍</div>
+              <div class="tool-info">
+                <strong>Intel Boost</strong>
+                <span>Stuck? Spend <strong>$1,000</strong> to reveal the code sum as a hint.</span>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div class="rule-line">
-          <div class="icon-box">🏆</div>
-          <div>
-            <strong>Master Thief Badges:</strong> Permanent badges earned by
-            your career stash.<br />
-            <span style="font-size: 0.8rem; color: #94a3b8">
-              🔓 Bronze ($1M+) &nbsp;•&nbsp; 🔐 Silver ($5M+) &nbsp;•&nbsp; 🗝️
-              Gold ($10M+)
-            </span>
+        <!-- Navigation -->
+        <div class="tutorial-nav">
+          <div class="tutorial-dots">
+            <button class="dot active" data-dot="0" onclick="goToSlide(0)"></button>
+            <button class="dot" data-dot="1" onclick="goToSlide(1)"></button>
+            <button class="dot" data-dot="2" onclick="goToSlide(2)"></button>
           </div>
+          <button class="tutorial-btn" id="tutorial-next-btn" onclick="nextSlide()">
+            NEXT
+          </button>
         </div>
 
-        <button class="tutorial-btn" onclick="closeTutorial()">
-          START CRACKING
-        </button>
       </div>
     </div>
 
@@ -6617,7 +6776,12 @@
         document.getElementById("trends-modal").style.display = "flex";
       }
 
+      let currentSlide = 0;
+      const totalSlides = 3;
+
       function showTutorial() {
+        currentSlide = 0;
+        updateSlide();
         document.getElementById("tutorial-modal").style.display = "flex";
       }
 
@@ -6626,6 +6790,42 @@
         // Only start timer if it hasn't been started yet
         if (!startTime) {
           startTimer();
+        }
+      }
+
+      function goToSlide(index) {
+        currentSlide = index;
+        updateSlide();
+      }
+
+      function nextSlide() {
+        if (currentSlide < totalSlides - 1) {
+          currentSlide++;
+          updateSlide();
+        } else {
+          closeTutorial();
+        }
+      }
+
+      function updateSlide() {
+        // Update slides
+        document.querySelectorAll("#tutorial-modal .tutorial-slide").forEach(s => {
+          s.classList.remove("active");
+        });
+        const activeSlide = document.querySelector(`#tutorial-modal .tutorial-slide[data-slide="${currentSlide}"]`);
+        if (activeSlide) activeSlide.classList.add("active");
+
+        // Update dots
+        document.querySelectorAll("#tutorial-modal .dot").forEach(d => {
+          d.classList.remove("active");
+        });
+        const activeDot = document.querySelector(`#tutorial-modal .dot[data-dot="${currentSlide}"]`);
+        if (activeDot) activeDot.classList.add("active");
+
+        // Update button text
+        const btn = document.getElementById("tutorial-next-btn");
+        if (btn) {
+          btn.textContent = currentSlide === totalSlides - 1 ? "START CRACKING" : "NEXT";
         }
       }
 
