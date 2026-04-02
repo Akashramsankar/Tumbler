@@ -4213,7 +4213,18 @@
       window.buyRecoveryFromAlert = buyRecoveryFromAlert;
 
       // --- STATE VARIABLES ---
-      let TARGET_WORD = "";
+      // Target word stored in obfuscated form to prevent console inspection
+      const _tgt = (() => {
+        let _e = ""; // encoded value
+        const _k = 0x2A; // XOR key
+        const _enc = (w) => w.split("").map(c => String.fromCharCode(c.charCodeAt(0) ^ _k)).join("");
+        return {
+          s(w) { _e = _enc(w); },
+          g() { return _enc(_e); }, // XOR is self-inverse
+        };
+      })();
+      // Decoy: if someone types TARGET_WORD in console, they get nothing useful
+      let TARGET_WORD = "████";
       let currentRow = 0;
       let currentTile = 0;
       let guesses = Array(6)
@@ -4227,6 +4238,7 @@
 
       let dictionary = new Set();
       let answerList = [];
+      let dailyWords = [];
       let slotConstraints = [];
       let keyboardLayout =
         localStorage.getItem("tumblerKeyboardLayout") || "abc"; // 'abc' or 'qwerty'
@@ -4376,9 +4388,28 @@
           return;
         }
 
+        // Validate: only alphanumeric, underscores, hyphens
+        if (!/^[A-Z0-9_-]+$/.test(newName)) {
+          showMessage("Only letters, numbers, hyphens, and underscores allowed.");
+          return;
+        }
+
         if (newName === userNick) {
           cancelNameEdit();
           return;
+        }
+
+        // Check if username is already taken by another user
+        if (db) {
+          try {
+            const profileSnap = await db.ref(`userProfile/${newName}`).once("value");
+            if (profileSnap.exists()) {
+              showMessage("This name is already taken!");
+              return;
+            }
+          } catch (e) {
+            // If Firebase is unreachable, allow the rename offline
+          }
         }
 
         const oldName = userNick;
@@ -4484,7 +4515,7 @@
           if (layoutText) {
             layoutText.textContent = keyboardLayout.toUpperCase();
           }
-          TARGET_WORD = getDailyWord();
+          _tgt.s(getDailyWord());
 
           // Check if already played today
           if (await hasPlayedToday()) {
@@ -4781,7 +4812,7 @@
 
               // Re-evaluate completed rows
               if (r < currentRow) {
-                const targetLetter = TARGET_WORD[c];
+                const targetLetter = _tgt.g()[c];
                 const diff = targetLetter.charCodeAt(0) - letter.charCodeAt(0);
 
                 tile.classList.add("evaluated");
@@ -4811,7 +4842,7 @@
 
         // Restore intel UI
         if (intelUsed) {
-          const targetSum = TARGET_WORD.split("").reduce(
+          const targetSum = _tgt.g().split("").reduce(
             (sum, char) => sum + (char.charCodeAt(0) - 64),
             0,
           );
@@ -4905,7 +4936,7 @@
 
         // 4. Populate Grid with Saved Data
         if (gameData.grid && gameData.grid.length > 0) {
-          const targetArr = TARGET_WORD.split(""); // Needed to re-calculate arrows
+          const targetArr = _tgt.g().split(""); // Needed to re-calculate arrows
 
           gameData.grid.forEach((row, rowIndex) => {
             row.forEach((tileData, colIndex) => {
@@ -4982,7 +5013,7 @@
         if (intelUsed) {
           // Show panel with data
           intelPanel.style.display = "block";
-          const targetSum = TARGET_WORD.split("").reduce(
+          const targetSum = _tgt.g().split("").reduce(
             (sum, char) => sum + (char.charCodeAt(0) - 64),
             0,
           );
@@ -5228,6 +5259,10 @@
         const answersResponse = await fetch("Common-used.json");
         const answersData = await answersResponse.json();
         answerList = answersData.map((w) => w.toUpperCase());
+
+        const dailyResponse = await fetch("daily-words.json");
+        const dailyData = await dailyResponse.json();
+        dailyWords = dailyData.map((w) => w.toUpperCase());
       }
 
       function getDailyWord(dateObj = new Date()) {
@@ -5241,193 +5276,10 @@
         const timeDiff = targetMidnight - epochMidnight;
         const daysPassed = Math.floor(timeDiff / msPerDay);
 
-        // Reuse your existing manualWords array
-        const manualWords = [
-          "ROCK",
-          "SOUL",
-          "FIRE",
-          "THIS",
-          "OPEN",
-          "MINT",
-          "GOLD",
-          "SAFE",
-          "CODE",
-          "LINK",
-          "BEST",
-          "TIME",
-          "HACK",
-          "DATA",
-          "BYTE",
-          "NODE",
-          "GIRL",
-          "BOSS",
-          "PLAN",
-          "RISK",
-          "TEAM",
-          "BULK",
-          "EVIL",
-          "ZERO",
-          "FILM",
-          "WALL",
-          "CASH",
-          "DROP",
-          "MAST",
-          "FANG",
-          "LIST",
-          "PUMP",
-          "WIFE",
-          "DUST",
-          "LUCK",
-          "ALSO",
-          "CREW",
-          "MASK",
-          "DEED",
-          "MOON",
-          "THIN",
-          "JUMP",
-          "BOLT",
-          "RIDE",
-          "SICK",
-          "RUST",
-          "HURL",
-          "GOWN",
-          "BAND",
-          "DIAL",
-          "BARN",
-          "HORN",
-          "DULL",
-          "WIDE",
-          "VARY",
-          "NEON",
-          "WING",
-          "DEEM",
-          "FIRM",
-          "PEAK",
-          "SURE",
-          "BEND",
-          "PLUG",
-          "SCAM",
-          "JAZZ",
-          "SKEW",
-          "SHOE",
-          "TANK",
-          "HALL",
-          "BUNK",
-          "TAXI",
-          "WOLF",
-          "FALL",
-          "ZOOM",
-          "LIMP",
-          "HOME",
-          "GASP",
-          "FOUL",
-          "CLUE",
-          "SNAP",
-          "FLIP",
-          "QUIZ",
-          "COAT",
-          "BOOK",
-          "JOKE",
-          "VOTE",
-          "BITE",
-          "HUGE",
-          "SAND",
-          "TREE",
-          "PLUS",
-          "LOVE",
-          "DEAL",
-          "NEED",
-          "SUIT",
-          "TEAM",
-          "VIEW",
-          "WISH",
-          "YARD",
-          "ONLY",
-          "FAIR",
-          "HARD",
-          "KIND",
-          "LONG",
-          "PAID",
-          "REAL",
-          "SAME",
-          "WELL",
-          "TURF",
-          "DOVE",
-          "EDGE",
-          "FAME",
-          "GIFT",
-          "HINT",
-          "JURY",
-          "LACE",
-          "DENY",
-          "BOLD",
-          "CALM",
-          "EARN",
-          "BOAT",
-          "CROP",
-          "NEWS",
-          "PARK",
-          "QUIT",
-          "RARE",
-          "SOAR",
-          "VAST",
-          "WARM",
-          "YAWN",
-          "ZINC",
-          "AURA",
-          "FOOD",
-          "GATE",
-          "FAST",
-          "CANE",
-          "DARK",
-          "EASY",
-          "FIRM",
-          "GLOW",
-          "HUGE",
-          "IRON",
-          "JUMP",
-          "KITE",
-          "CAKE",
-          "COIL",
-          "DUCK",
-          "ECHO",
-          "FORK",
-          "GUNS",
-          "HALL",
-          "INCH",
-          "JOKE",
-          "KIND",
-          "GRIP",
-          "HISS",
-          "MUTE",
-          "NICE",
-          "ODOR",
-          "PICK",
-          "QUAD",
-          "ROPE",
-          "SICK",
-          "TILE",
-          "UNIT",
-          "VOWS",
-          "ZONE",
-          "ALLY",
-          "BEAM",
-          "CHIP",
-          "DIME",
-          "EASE",
-          "LURE",
-          "MILD",
-          "NEAR",
-          "PEER",
-          "QUIP",
-          "RIFT",
-          "SLOT",
-        ];
+        const index = daysPassed % dailyWords.length;
+        const safeIndex = index < 0 ? index + dailyWords.length : index;
 
-        const index = daysPassed % manualWords.length;
-        const safeIndex = index < 0 ? index + manualWords.length : index;
-
-        return manualWords[safeIndex];
+        return dailyWords[safeIndex];
       }
 
       // NEW: Function to calculate cash prize
@@ -5741,7 +5593,7 @@
       }
 
       function evaluateGuess(guessArr) {
-        const targetArr = TARGET_WORD.split("");
+        const targetArr = _tgt.g().split("");
         let correctCount = 0;
 
         for (let i = 0; i < WORD_LENGTH; i++) {
@@ -5932,7 +5784,7 @@
                 // ADD THIS LINE BELOW:
                 saveTodayGame(MAX_TRIES, 0, 0);
 
-                showMessage(`🚨 ALARM! Code was: ${TARGET_WORD}`);
+                showMessage(`🚨 ALARM! Code was: ${_tgt.g()}`);
                 localStorage.removeItem(getActiveSessionKey(currentPlayDate));
                 isGameOver = true;
               }
@@ -6439,7 +6291,7 @@
         closeIntelModal();
 
         // Calculate target sum (YES - AUTOMATIC!)
-        const targetSum = TARGET_WORD.split("").reduce((sum, char) => {
+        const targetSum = _tgt.g().split("").reduce((sum, char) => {
           return sum + (char.charCodeAt(0) - ASCII_A + 1);
         }, 0);
 
@@ -6582,7 +6434,7 @@
         if (existingCountdown) existingCountdown.remove();
 
         // 5. Re-Init Game
-        TARGET_WORD = getDailyWord(currentPlayDate);
+        _tgt.s(getDailyWord(currentPlayDate));
 
         if (await hasPlayedToday()) {
           loadCompletedGame();
@@ -7456,6 +7308,26 @@
           return;
         }
 
+        // Validate: only alphanumeric, underscores, hyphens (blocks Firebase-unsafe chars and XSS)
+        const safePattern = /^[A-Z0-9_-]+$/;
+        if (!safePattern.test(nick) || !safePattern.test(group)) {
+          alert("Only letters, numbers, hyphens, and underscores allowed.");
+          return;
+        }
+
+        // Check if username is already taken by another user
+        if (db) {
+          try {
+            const profileSnap = await db.ref(`userProfile/${nick}`).once("value");
+            if (profileSnap.exists()) {
+              alert("This name is already taken. Please choose a different one.");
+              return;
+            }
+          } catch (e) {
+            // If Firebase is unreachable, allow offline play
+          }
+        }
+
         // 1. Save Locally
         userNick = nick;
         if (!userGroups.includes(group)) {
@@ -7542,9 +7414,9 @@
           dropdown.innerHTML = userGroups
             .map(
               (g) =>
-                `<option value="${g}" ${
+                `<option value="${escapeHTML(g)}" ${
                   g === activeGroup ? "selected" : ""
-                }>${g}</option>`,
+                }>${escapeHTML(g)}</option>`,
             )
             .join("");
         } else {
