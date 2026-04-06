@@ -1301,6 +1301,270 @@
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
       }
 
+      /* Turf War styles */
+      .turf-war-header {
+        text-align: center;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      .turf-war-header h3 {
+        margin: 0 0 4px 0;
+        font-size: 1rem;
+        color: #f8fafc;
+      }
+      .turf-war-matchup {
+        font-size: 0.85rem;
+        color: #94a3b8;
+      }
+      .turf-war-matchup strong {
+        color: #f8fafc;
+      }
+
+      .vault-progress-container {
+        background: var(--safe-inset);
+        border: 1px solid var(--safe-border);
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 12px;
+      }
+      .vault-progress-container h4 {
+        margin: 0 0 10px 0;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-align: center;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      .vault-crew-row {
+        margin-bottom: 10px;
+      }
+      .vault-crew-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.75rem;
+        color: #cbd5e1;
+        margin-bottom: 4px;
+      }
+      .vault-bar-track {
+        height: 22px;
+        background: var(--key-disabled);
+        border-radius: 11px;
+        overflow: hidden;
+        position: relative;
+      }
+      .vault-bar-fill {
+        height: 100%;
+        border-radius: 11px;
+        transition: width 0.8s ease-out;
+        min-width: 2px;
+      }
+      .vault-bar-fill.ours {
+        background: linear-gradient(90deg, var(--color-correct), #4ade80);
+      }
+      .vault-bar-fill.theirs {
+        background: linear-gradient(90deg, var(--color-close), #f59e0b);
+      }
+      .vault-target-label {
+        text-align: center;
+        font-size: 0.7rem;
+        color: #64748b;
+        margin-top: 6px;
+      }
+
+      .turf-war-stats {
+        display: flex;
+        justify-content: space-around;
+        text-align: center;
+        background: var(--safe-inset);
+        border: 1px solid var(--safe-border);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 12px;
+      }
+      .turf-war-stats .stat-value {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #f8fafc;
+      }
+      .turf-war-stats .stat-label {
+        font-size: 0.65rem;
+        color: #94a3b8;
+        margin-top: 2px;
+      }
+
+      .turf-war-timer {
+        text-align: center;
+        font-size: 0.75rem;
+        color: #64748b;
+        margin-bottom: 12px;
+      }
+
+      .battle-result-banner {
+        text-align: center;
+        padding: 15px;
+        border-radius: 10px;
+        margin-bottom: 12px;
+        font-weight: 700;
+        font-size: 0.9rem;
+      }
+      .battle-result-banner.won {
+        background: rgba(106, 170, 100, 0.15);
+        border: 1px solid var(--color-correct);
+        color: var(--color-correct);
+      }
+      .battle-result-banner.lost {
+        background: rgba(239, 68, 68, 0.15);
+        border: 1px solid var(--color-far);
+        color: var(--color-far);
+      }
+      .battle-result-banner.draw {
+        background: rgba(245, 158, 11, 0.15);
+        border: 1px solid var(--color-close);
+        color: var(--color-close);
+      }
+      .battle-result-banner.no-match {
+        background: rgba(100, 116, 139, 0.15);
+        border: 1px solid #64748b;
+        color: #94a3b8;
+      }
+
+      .turf-contributors h4 {
+        margin: 0 0 8px 0;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .turf-contributor-row {
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        font-size: 0.8rem;
+      }
+      .turf-contributor-row .rank {
+        width: 24px;
+        color: #64748b;
+        font-weight: 700;
+      }
+      .turf-contributor-row .name {
+        flex: 1;
+        color: #f8fafc;
+      }
+      .turf-contributor-row .cash {
+        color: var(--color-cash);
+        font-weight: 700;
+      }
+
+      .turf-history h4 {
+        margin: 12px 0 8px 0;
+        font-size: 0.8rem;
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .turf-history-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 12px;
+        font-size: 0.75rem;
+        color: #cbd5e1;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+      }
+      .turf-history-row .result-won { color: var(--color-correct); }
+      .turf-history-row .result-lost { color: var(--color-far); }
+      .turf-history-row .result-draw { color: var(--color-close); }
+
+      .turf-info-btn {
+        background: none;
+        border: 1px solid #475569;
+        color: #94a3b8;
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        font-size: 0.7rem;
+        font-weight: 700;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-left: 6px;
+        vertical-align: middle;
+        transition: all 0.2s;
+      }
+      .turf-info-btn:hover {
+        border-color: #94a3b8;
+        color: #f8fafc;
+      }
+
+      #turf-rules-modal {
+        display: none;
+        position: fixed;
+        top: 0; left: 0;
+        width: 100%; height: 100%;
+        background: rgba(0, 0, 0, 0.85);
+        z-index: 3000;
+        justify-content: center;
+        align-items: center;
+      }
+      .turf-rules-content {
+        background: var(--safe-body);
+        border: 1px solid var(--safe-border);
+        padding: 22px;
+        border-radius: 16px;
+        max-width: 400px;
+        width: 90%;
+        max-height: 85vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.9);
+        font-family: "Chivo Mono", monospace;
+        color: #f8fafc;
+      }
+      .turf-rules-content h3 {
+        margin: 0 0 14px 0;
+        font-size: 1rem;
+        text-align: center;
+      }
+      .turf-rules-content h4 {
+        margin: 16px 0 8px 0;
+        font-size: 0.85rem;
+        color: var(--color-close);
+      }
+      .turf-rules-content p,
+      .turf-rules-content li {
+        font-size: 0.78rem;
+        color: #cbd5e1;
+        line-height: 1.6;
+      }
+      .turf-rules-content ul {
+        padding-left: 18px;
+        margin: 6px 0;
+      }
+      .turf-rules-content li {
+        margin-bottom: 4px;
+      }
+      .turf-rules-section {
+        background: var(--safe-inset);
+        border: 1px solid var(--safe-border);
+        border-radius: 10px;
+        padding: 12px;
+        margin-bottom: 10px;
+      }
+      .turf-rules-close {
+        width: 100%;
+        background: var(--color-correct);
+        color: #fff;
+        border: none;
+        padding: 10px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-family: "Chivo Mono", monospace;
+        font-weight: 700;
+        font-size: 0.85rem;
+        margin-top: 10px;
+      }
+
       .group-input {
         width: 100%;
         padding: 12px;
@@ -3483,6 +3747,9 @@
             <button class="tab-btn" onclick="switchTab('week')">
               This Week
             </button>
+            <button class="tab-btn" onclick="switchTab('turfwar')">
+              Turf War
+            </button>
           </div>
 
           <div id="lb-crew-stats" style="display:none; background: var(--safe-inset); border: 1px solid var(--safe-border); border-radius: 8px; padding: 12px; margin-bottom: 12px; display: none;"></div>
@@ -3782,6 +4049,62 @@
       </div>
     </div>
 
+    <!-- Turf War Rules Modal -->
+    <div id="turf-rules-modal" onclick="if(event.target===this)closeTurfRules()">
+      <div class="turf-rules-content">
+        <h3>⚔️ Turf Wars — How It Works</h3>
+
+        <div class="turf-rules-section">
+          <h4>🗓️ Weekly Battles</h4>
+          <p>Every week, your crew is automatically matched against a rival crew of similar size. No sign-up needed — just play!</p>
+          <ul>
+            <li><strong>Mon–Wed:</strong> Your crew is registered based on recent activity</li>
+            <li><strong>Wed night:</strong> Matchups are locked in</li>
+            <li><strong>All week:</strong> Every puzzle you solve earns cash for your crew's vault</li>
+            <li><strong>Monday:</strong> Results are in, rewards paid out</li>
+          </ul>
+        </div>
+
+        <div class="turf-rules-section">
+          <h4>🏦 The Vault Race</h4>
+          <p>Both crews race to fill a shared vault target. Your daily puzzle cash goes straight into the vault.</p>
+          <ul>
+            <li><strong>First crew to fill the vault wins instantly</strong> — even mid-week</li>
+            <li>If nobody fills it, the crew with the higher <strong>battle score</strong> wins on Monday</li>
+            <li>The vault target scales to the smaller crew, so it's always fair</li>
+          </ul>
+        </div>
+
+        <div class="turf-rules-section">
+          <h4>📊 Battle Score</h4>
+          <p>Your battle score rewards both skill and participation:</p>
+          <ul>
+            <li><strong>Average cash per player</strong> — solve fast, earn more</li>
+            <li><strong>Participation multiplier</strong> — more crew members playing = bigger boost</li>
+            <li>If scores are within 5%, it's a <strong>draw</strong></li>
+          </ul>
+        </div>
+
+        <div class="turf-rules-section">
+          <h4>💰 Rewards (per player)</h4>
+          <ul>
+            <li>🏦 <strong>Vault race win:</strong> $5,000</li>
+            <li>⚔️ <strong>Score win:</strong> $3,000</li>
+            <li>🤝 <strong>Draw:</strong> $1,500</li>
+            <li>💀 <strong>Loss:</strong> $500</li>
+            <li>Plus <strong>$500 per day played</strong> that week</li>
+          </ul>
+        </div>
+
+        <div class="turf-rules-section">
+          <h4>👥 Multi-Crew Players</h4>
+          <p>In multiple crews that end up as rivals? Your score counts for <strong>both</strong> sides equally and it cancels out. No unfair advantage either way.</p>
+        </div>
+
+        <button class="turf-rules-close" onclick="closeTurfRules()">Got it!</button>
+      </div>
+    </div>
+
     <script>
       // --- CONFIGURATION ---
       let currentPlayDate = new Date();
@@ -3805,6 +4128,18 @@
       const STREAK_BONUS_PER_MILESTONE = 1000;
       const STREAK_PROTECTOR_COST = 20000;
       const STREAK_RECOVERY_COST = 30000;
+
+      // TURF WAR CONSTANTS
+      const TURF_WAR_VAULT_WIN_REWARD = 5000;
+      const TURF_WAR_SCORE_WIN_REWARD = 3000;
+      const TURF_WAR_DRAW_REWARD = 1500;
+      const TURF_WAR_LOSS_REWARD = 500;
+      const TURF_WAR_DAILY_PARTICIPATION_BONUS = 500;
+      const TURF_WAR_VAULT_BASE_PER_MEMBER = 15000;
+      const TURF_WAR_VAULT_DAYS = 7;
+      const TURF_WAR_VAULT_FILL_FACTOR = 0.6;
+      const TURF_WAR_REGISTRATION_CUTOFF_DAY = 3; // Wednesday (0=Sun, 3=Wed)
+      const TURF_WAR_DRAW_THRESHOLD = 0.05; // 5% margin for draw
 
       // ==================== SOUND EFFECTS ====================
       const audioContext = new (
@@ -6805,6 +7140,11 @@
 
           if (userNick) {
             syncAllStatsFromFirebase();
+            // Initialize Turf Wars for all crews
+            if (userGroups.length > 0) {
+              userGroups.forEach((group) => initTurfWar(group));
+              flushOfflineVaultQueue();
+            }
           }
         } else {
         }
@@ -7025,6 +7365,7 @@
       let hasSeenCrewIntro =
         localStorage.getItem("tumblerCrewIntroSeen") === "true";
       let currentTab = "daily";
+      let turfWarListenerRef = null;
 
       // --- 3. FUNCTIONS ---
 
@@ -7386,6 +7727,11 @@
       }
 
       function switchTab(tab) {
+        // Clean up Turf War listener when switching away
+        if (currentTab === "turfwar" && tab !== "turfwar" && turfWarListenerRef) {
+          turfWarListenerRef.off();
+          turfWarListenerRef = null;
+        }
         currentTab = tab;
         document
           .querySelectorAll(".tab-btn")
@@ -7435,6 +7781,12 @@
         if (!db) {
           list.innerHTML =
             '<div style="text-align:center; padding:20px; color:red;">Error: Database not initialized.</div>';
+          return;
+        }
+
+        // Turf War has its own data loading path
+        if (currentTab === "turfwar") {
+          loadTurfWarData();
           return;
         }
 
@@ -7804,6 +8156,9 @@
               intel: intelUsed,
               timestamp: Date.now(),
             });
+
+            // Update Turf War vault contribution
+            updateTurfWarVault(group, cash, userNick);
           }
 
           // ALWAYS update career stats - fetch existing first to avoid overwriting
@@ -8128,6 +8483,784 @@
 
       setTimeout(maybeShowBadgeIntroPopup, 1500);
 
+      // ==================== TURF WAR SYSTEM ====================
+
+      function showTurfRules() {
+        document.getElementById("turf-rules-modal").style.display = "flex";
+      }
+
+      function closeTurfRules() {
+        document.getElementById("turf-rules-modal").style.display = "none";
+      }
+
+      // Load and render the Turf War tab
+      function loadTurfWarData() {
+        const list = document.getElementById("lb-list");
+        const crewStatsEl = document.getElementById("lb-crew-stats");
+        crewStatsEl.style.display = "none";
+
+        list.innerHTML = '<div style="text-align:center; padding:20px; color:#64748b;">Loading battle data...</div>';
+
+        if (!db || !activeGroup) {
+          list.innerHTML = '<div style="text-align:center; padding:20px; color:#94a3b8;">Join a crew to participate in Turf Wars.</div>';
+          return;
+        }
+
+        const weekKey = getTurfWarWeekKey();
+
+        // Detach any previous opponent listener
+        if (turfWarListenerRef) {
+          turfWarListenerRef.off();
+          turfWarListenerRef = null;
+        }
+
+        db.ref(`turfWars/${weekKey}/${activeGroup}`).once("value", (snap) => {
+          const war = snap.val();
+
+          if (!war || !war.opponent) {
+            // Check if registration is still open
+            if (isRegistrationOpen()) {
+              list.innerHTML = `
+                <div style="text-align:center; padding:30px;">
+                  <div style="font-size:2rem; margin-bottom:10px;">⚔️</div>
+                  <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">Turf War — Matchmaking <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
+                  <div style="color:#94a3b8; font-size:0.8rem; line-height:1.5;">
+                    Your crew is registered for this week's battle.<br>
+                    Matchups are determined on <strong style="color:#f8fafc;">Wednesday night</strong>.<br><br>
+                    Keep playing to improve your crew's ranking!
+                  </div>
+                </div>`;
+            } else if (war && war.status === "no_match") {
+              list.innerHTML = `
+                <div style="text-align:center; padding:30px;">
+                  <div style="font-size:2rem; margin-bottom:10px;">🔍</div>
+                  <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">No Rival Found <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
+                  <div style="color:#94a3b8; font-size:0.8rem;">
+                    No matching crew this week. Keep playing — matchups reset every Monday!
+                  </div>
+                </div>`;
+            } else {
+              list.innerHTML = `
+                <div style="text-align:center; padding:30px;">
+                  <div style="font-size:2rem; margin-bottom:10px;">⚔️</div>
+                  <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">Turf Wars <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
+                  <div style="color:#94a3b8; font-size:0.8rem;">
+                    No battle this week. Play daily to register your crew for next week's matchup!
+                  </div>
+                </div>`;
+            }
+            return;
+          }
+
+          const opponent = war.opponent;
+
+          // Load opponent data
+          db.ref(`turfWars/${weekKey}/${opponent}`).once("value", (oppSnap) => {
+            const oppWar = oppSnap.val() || {};
+
+            // Load battle history
+            db.ref(`turfWarHistory/${activeGroup}`).orderByKey().limitToLast(4).once("value", (histSnap) => {
+              const history = histSnap.val() || {};
+
+              // Load registry for member counts
+              db.ref(`turfWarRegistry/${weekKey}`).once("value", (regSnap) => {
+                const registry = regSnap.val() || {};
+
+                // Count participation from weekly scores
+                const weekDates = getWeekDates(weekKey);
+                let ourParticipants = new Set();
+                let theirParticipants = new Set();
+                let scoresLoaded = 0;
+                const totalToLoad = weekDates.length * 2;
+
+                weekDates.forEach((dateKey) => {
+                  db.ref(`scores/${activeGroup}/${dateKey}`).once("value", (s) => {
+                    const dayScores = s.val() || {};
+                    Object.keys(dayScores).forEach((nick) => ourParticipants.add(nick));
+                    scoresLoaded++;
+                    if (scoresLoaded === totalToLoad) {
+                      renderTurfWarDashboard(war, oppWar, opponent, registry, history,
+                        ourParticipants.size, theirParticipants.size, weekKey);
+                    }
+                  });
+
+                  db.ref(`scores/${opponent}/${dateKey}`).once("value", (s) => {
+                    const dayScores = s.val() || {};
+                    Object.keys(dayScores).forEach((nick) => theirParticipants.add(nick));
+                    scoresLoaded++;
+                    if (scoresLoaded === totalToLoad) {
+                      renderTurfWarDashboard(war, oppWar, opponent, registry, history,
+                        ourParticipants.size, theirParticipants.size, weekKey);
+                    }
+                  });
+                });
+              });
+            });
+          });
+        });
+      }
+
+      function renderTurfWarDashboard(war, oppWar, opponent, registry, history,
+        ourParticipation, theirParticipation, weekKey) {
+        const list = document.getElementById("lb-list");
+        const ourVault = war.vault || {};
+        const theirVault = oppWar.vault || {};
+        const vaultTarget = ourVault.target || 1;
+        const ourProgress = ourVault.current || 0;
+        const theirProgress = theirVault.current || 0;
+        const ourPct = Math.min(100, (ourProgress / vaultTarget) * 100);
+        const theirPct = Math.min(100, (theirProgress / vaultTarget) * 100);
+        const ourMembers = (registry[activeGroup] || {}).memberCount || 1;
+        const theirMembers = (registry[opponent] || {}).memberCount || 1;
+        const weekEnd = getWeekEndForKey(weekKey);
+        const isEnded = new Date() >= weekEnd;
+
+        // Battle score
+        const ourScore = calculateBattleScore(ourProgress, ourParticipation, ourMembers);
+        const theirScore = calculateBattleScore(theirProgress, theirParticipation, theirMembers);
+
+        // Format cash display
+        const fmtCash = (v) => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` :
+                               v >= 1000 ? `$${(v/1000).toFixed(1)}k` : `$${v}`;
+
+        // Result banner
+        let resultHTML = "";
+        const status = war.status;
+        if (status === "won_vault") {
+          resultHTML = `<div class="battle-result-banner won">🏦 VAULT CRACKED! Your crew won the race!</div>`;
+        } else if (status === "won_score") {
+          resultHTML = `<div class="battle-result-banner won">⚔️ VICTORY! Your crew won on score!</div>`;
+        } else if (status === "lost") {
+          resultHTML = `<div class="battle-result-banner lost">💀 Defeated. Rival crew took this one.</div>`;
+        } else if (status === "draw") {
+          resultHTML = `<div class="battle-result-banner draw">🤝 DRAW! Evenly matched this week.</div>`;
+        }
+
+        // Contributors
+        const contributors = ourVault.contributors || {};
+        const sortedContributors = Object.entries(contributors)
+          .map(([nick, cash]) => ({ nick, cash }))
+          .sort((a, b) => b.cash - a.cash);
+
+        let contributorHTML = "";
+        if (sortedContributors.length > 0) {
+          contributorHTML = `<div class="turf-contributors"><h4>Crew Contributors</h4>`;
+          sortedContributors.forEach((c, i) => {
+            contributorHTML += `
+              <div class="turf-contributor-row">
+                <span class="rank">${i + 1}.</span>
+                <span class="name">${escapeHTML(c.nick)}</span>
+                <span class="cash">${fmtCash(c.cash)}</span>
+              </div>`;
+          });
+          contributorHTML += `</div>`;
+        }
+
+        // History
+        let historyHTML = "";
+        const historyEntries = Object.entries(history).sort((a, b) => b[0].localeCompare(a[0]));
+        if (historyEntries.length > 0) {
+          historyHTML = `<div class="turf-history"><h4>Battle History</h4>`;
+          historyEntries.forEach(([wk, h]) => {
+            const resultClass = h.result.startsWith("won") ? "result-won" :
+                                h.result === "draw" ? "result-draw" : "result-lost";
+            const resultText = h.result.startsWith("won") ? "Won" :
+                               h.result === "draw" ? "Draw" : "Lost";
+            const rewardText = h.reward ? ` (+${fmtCash(h.reward)})` : "";
+            historyHTML += `
+              <div class="turf-history-row">
+                <span>${wk}</span>
+                <span><span class="${resultClass}">${resultText}</span> vs ${escapeHTML(h.opponent)}${rewardText}</span>
+              </div>`;
+          });
+          historyHTML += `</div>`;
+        }
+
+        // Parse week number for display
+        const weekNum = weekKey.split("-W")[1];
+
+        list.innerHTML = `
+          <div class="turf-war-header">
+            <h3>⚔️ TURF WAR — Week ${weekNum} <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></h3>
+            <div class="turf-war-matchup">
+              <strong>${escapeHTML(activeGroup)}</strong>
+              <span style="color:#64748b;"> vs </span>
+              <strong>${escapeHTML(opponent)}</strong>
+            </div>
+          </div>
+
+          ${resultHTML}
+
+          <div class="vault-progress-container">
+            <h4>Vault Race</h4>
+            <div class="vault-crew-row">
+              <div class="vault-crew-label">
+                <span>${escapeHTML(activeGroup)}</span>
+                <span style="color:var(--color-cash);">${fmtCash(ourProgress)}</span>
+              </div>
+              <div class="vault-bar-track">
+                <div class="vault-bar-fill ours" style="width:${ourPct}%"></div>
+              </div>
+            </div>
+            <div class="vault-crew-row" style="margin-bottom:0;">
+              <div class="vault-crew-label">
+                <span>${escapeHTML(opponent)}</span>
+                <span style="color:var(--color-close);">${fmtCash(theirProgress)}</span>
+              </div>
+              <div class="vault-bar-track">
+                <div class="vault-bar-fill theirs" style="width:${theirPct}%"></div>
+              </div>
+            </div>
+            <div class="vault-target-label">Target: ${fmtCash(vaultTarget)}</div>
+          </div>
+
+          <div class="turf-war-stats">
+            <div>
+              <div class="stat-value">${fmtCash(ourScore)} vs ${fmtCash(theirScore)}</div>
+              <div class="stat-label">Battle Score</div>
+            </div>
+            <div>
+              <div class="stat-value">${ourParticipation}/${ourMembers} vs ${theirParticipation}/${theirMembers}</div>
+              <div class="stat-label">Participation</div>
+            </div>
+          </div>
+
+          ${!isEnded ? `<div class="turf-war-timer">⏰ ${formatTimeRemaining(weekEnd)}</div>` : ""}
+
+          ${contributorHTML}
+          ${historyHTML}
+        `;
+
+        // Set up real-time listener on opponent vault
+        if (!isEnded && war.status === "active") {
+          turfWarListenerRef = db.ref(`turfWars/${weekKey}/${opponent}/vault/current`);
+          turfWarListenerRef.on("value", (snap) => {
+            const newVal = snap.val() || 0;
+            const newPct = Math.min(100, (newVal / vaultTarget) * 100);
+            const fillEl = list.querySelector(".vault-bar-fill.theirs");
+            const labelEl = list.querySelectorAll(".vault-crew-label")[1];
+            if (fillEl) fillEl.style.width = `${newPct}%`;
+            if (labelEl) {
+              const cashSpan = labelEl.querySelector("span:last-child");
+              if (cashSpan) cashSpan.textContent = fmtCash(newVal);
+            }
+          });
+        }
+      }
+
+      function hashCode(str) {
+        let hash = 0;
+        for (let i = 0; i < str.length; i++) {
+          hash = ((hash << 5) - hash) + str.charCodeAt(i);
+          hash |= 0;
+        }
+        return Math.abs(hash);
+      }
+
+      function getTurfWarWeekKey(date = new Date()) {
+        return getWeekKey(date);
+      }
+
+      function getDayOfWeek(date = new Date()) {
+        return date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
+      }
+
+      function isRegistrationOpen() {
+        return getDayOfWeek() <= TURF_WAR_REGISTRATION_CUTOFF_DAY;
+      }
+
+      function getWeekEndTime() {
+        const now = new Date();
+        const nextMonday = new Date(now);
+        nextMonday.setDate(now.getDate() + ((8 - now.getDay()) % 7 || 7));
+        nextMonday.setHours(0, 0, 0, 0);
+        return nextMonday;
+      }
+
+      function formatTimeRemaining(targetDate) {
+        const now = new Date();
+        const diff = targetDate - now;
+        if (diff <= 0) return "Ended";
+        const days = Math.floor(diff / 86400000);
+        const hours = Math.floor((diff % 86400000) / 3600000);
+        if (days > 0) return `${days}d ${hours}h remaining`;
+        const mins = Math.floor((diff % 3600000) / 60000);
+        return `${hours}h ${mins}m remaining`;
+      }
+
+      // Calculate vault target scaled to crew sizes
+      function calculateVaultTarget(ourSize, theirSize) {
+        const smaller = Math.max(Math.min(ourSize, theirSize), 2);
+        return Math.floor(
+          TURF_WAR_VAULT_BASE_PER_MEMBER * smaller *
+          TURF_WAR_VAULT_DAYS * TURF_WAR_VAULT_FILL_FACTOR
+        );
+      }
+
+      // Calculate battle score with participation multiplier
+      function calculateBattleScore(totalCash, participation, memberCount) {
+        if (participation === 0) return 0;
+        const avgCash = totalCash / participation;
+        const participationRate = participation / Math.max(memberCount, 1);
+        const multiplier = Math.max(0.7, Math.min(1.5, 1.0 + (participationRate - 0.5)));
+        return Math.floor(avgCash * multiplier);
+      }
+
+      // Register crew for this week's Turf War
+      function registerForTurfWar(crewId) {
+        if (!db || !crewId) return Promise.resolve();
+
+        const weekKey = getTurfWarWeekKey();
+
+        return new Promise((resolve) => {
+          // Get previous week's stats for matchmaking quality
+          const prevWeek = new Date();
+          prevWeek.setDate(prevWeek.getDate() - 7);
+          const prevWeekKey = getTurfWarWeekKey(prevWeek);
+
+          // Count active members (played in last 14 days)
+          db.ref(`career/${crewId}`).once("value", (snap) => {
+            const careers = snap.val() || {};
+            const fourteenDaysAgo = Date.now() - (14 * 86400000);
+            let activeCount = 0;
+            let totalWeeklyCash = 0;
+            let activePlayers = 0;
+
+            Object.values(careers).forEach((c) => {
+              if ((c.lastPlayed || 0) >= fourteenDaysAgo) {
+                activeCount++;
+              }
+            });
+
+            if (activeCount === 0) {
+              resolve();
+              return;
+            }
+
+            // Get last week's scores for avg cash
+            db.ref(`scores/${crewId}`).orderByKey().limitToLast(7).once("value", (scoresSnap) => {
+              const allScores = scoresSnap.val() || {};
+              const playerCash = {};
+              Object.values(allScores).forEach((dayScores) => {
+                Object.entries(dayScores).forEach(([nick, data]) => {
+                  playerCash[nick] = (playerCash[nick] || 0) + (data.cash || 0);
+                });
+              });
+              const players = Object.values(playerCash);
+              const avgWeeklyCash = players.length > 0
+                ? Math.floor(players.reduce((a, b) => a + b, 0) / players.length)
+                : 0;
+
+              db.ref(`turfWarRegistry/${weekKey}/${crewId}`).set({
+                memberCount: activeCount,
+                avgWeeklyCash: avgWeeklyCash,
+                registered: firebase.database.ServerValue.TIMESTAMP,
+                matched: false,
+              }).then(resolve).catch(() => resolve());
+            });
+          });
+        });
+      }
+
+      // Deterministic matchmaking — sort by memberCount, pair adjacent
+      function pairCrews(registryData) {
+        const crews = Object.entries(registryData)
+          .map(([id, data]) => ({ id, ...data }))
+          .filter((c) => c.memberCount > 0)
+          .sort((a, b) => {
+            const diff = a.memberCount - b.memberCount;
+            return diff !== 0 ? diff : a.id.localeCompare(b.id);
+          });
+
+        const pairs = [];
+        for (let i = 0; i < crews.length - 1; i += 2) {
+          pairs.push([crews[i].id, crews[i + 1].id]);
+        }
+        return pairs;
+      }
+
+      // Find opponent for a crew from paired list
+      function findOpponent(pairs, crewId) {
+        for (const [a, b] of pairs) {
+          if (a === crewId) return b;
+          if (b === crewId) return a;
+        }
+        return null;
+      }
+
+      // Compute matchmaking and write result to Firebase
+      function computeTurfWarMatch(crewId) {
+        if (!db || !crewId) return Promise.resolve(null);
+
+        const weekKey = getTurfWarWeekKey();
+
+        return new Promise((resolve) => {
+          // First check if match already computed
+          db.ref(`turfWars/${weekKey}/${crewId}/opponent`).once("value", (snap) => {
+            if (snap.val()) {
+              resolve(snap.val());
+              return;
+            }
+
+            // Read registry and compute
+            db.ref(`turfWarRegistry/${weekKey}`).once("value", (regSnap) => {
+              const registry = regSnap.val() || {};
+
+              if (!registry[crewId]) {
+                resolve(null);
+                return;
+              }
+
+              const pairs = pairCrews(registry);
+              const opponent = findOpponent(pairs, crewId);
+
+              if (!opponent) {
+                db.ref(`turfWars/${weekKey}/${crewId}`).update({
+                  opponent: null,
+                  status: "no_match",
+                });
+                resolve(null);
+                return;
+              }
+
+              // Calculate vault target
+              const ourSize = registry[crewId].memberCount;
+              const theirSize = registry[opponent].memberCount;
+              const vaultTarget = calculateVaultTarget(ourSize, theirSize);
+
+              // Write match for both crews
+              const updates = {};
+              updates[`turfWars/${weekKey}/${crewId}/opponent`] = opponent;
+              updates[`turfWars/${weekKey}/${crewId}/status`] = "active";
+              updates[`turfWars/${weekKey}/${crewId}/vault/target`] = vaultTarget;
+              updates[`turfWars/${weekKey}/${crewId}/vault/current`] = updates[`turfWars/${weekKey}/${crewId}/vault/current`] || 0;
+
+              updates[`turfWars/${weekKey}/${opponent}/opponent`] = crewId;
+              updates[`turfWars/${weekKey}/${opponent}/status`] = "active";
+              updates[`turfWars/${weekKey}/${opponent}/vault/target`] = vaultTarget;
+
+              db.ref().update(updates).then(() => resolve(opponent)).catch(() => resolve(null));
+            });
+          });
+        });
+      }
+
+      // Initialize Turf War for a crew on app startup
+      function initTurfWar(crewId) {
+        if (!db || !crewId) return;
+
+        const weekKey = getTurfWarWeekKey();
+        const lastCheck = localStorage.getItem(`tumblerTurfWarInit_${weekKey}_${crewId}`);
+        if (lastCheck) return; // Already initialized this week for this crew
+
+        // Check if Turf War already exists for this week
+        db.ref(`turfWars/${weekKey}/${crewId}`).once("value", (snap) => {
+          const existing = snap.val();
+
+          if (existing && existing.opponent) {
+            // Already matched — check if battle ended and needs resolution
+            if (existing.status === "active") {
+              checkAndResolveTurfWar(crewId, weekKey);
+            }
+            localStorage.setItem(`tumblerTurfWarInit_${weekKey}_${crewId}`, "done");
+            return;
+          }
+
+          // Check previous week's battle resolution first
+          const prevWeek = new Date();
+          prevWeek.setDate(prevWeek.getDate() - 7);
+          const prevWeekKey = getTurfWarWeekKey(prevWeek);
+          checkAndResolveTurfWar(crewId, prevWeekKey);
+
+          // Register if registration is still open
+          if (isRegistrationOpen()) {
+            registerForTurfWar(crewId).then(() => {
+              localStorage.setItem(`tumblerTurfWarInit_${weekKey}_${crewId}`, "done");
+            });
+          } else {
+            // Registration closed — try to compute match
+            computeTurfWarMatch(crewId).then(() => {
+              localStorage.setItem(`tumblerTurfWarInit_${weekKey}_${crewId}`, "done");
+            });
+          }
+        });
+      }
+
+      // Update vault after solving today's puzzle
+      // Flush any offline-queued vault contributions
+      function flushOfflineVaultQueue() {
+        if (!db) return;
+        const queue = JSON.parse(localStorage.getItem("tumblerVaultQueue") || "[]");
+        if (queue.length === 0) return;
+        localStorage.removeItem("tumblerVaultQueue");
+        queue.forEach((entry) => {
+          updateTurfWarVault(entry.crewId, entry.cash, entry.nickname);
+        });
+      }
+
+      // Listen for reconnection to flush queue
+      if (typeof window !== "undefined") {
+        window.addEventListener("online", flushOfflineVaultQueue);
+      }
+
+      function updateTurfWarVault(crewId, cashEarned, nickname) {
+        if (!crewId || !nickname || cashEarned <= 0) return;
+
+        // If offline, queue the contribution
+        if (!db || !navigator.onLine) {
+          const queue = JSON.parse(localStorage.getItem("tumblerVaultQueue") || "[]");
+          queue.push({ crewId, cash: cashEarned, nickname, weekKey: getTurfWarWeekKey() });
+          localStorage.setItem("tumblerVaultQueue", JSON.stringify(queue));
+          return;
+        }
+
+        const weekKey = getTurfWarWeekKey();
+
+        // Check if there's an active turf war
+        db.ref(`turfWars/${weekKey}/${crewId}`).once("value", (snap) => {
+          const war = snap.val();
+          if (!war || !war.opponent || war.status !== "active") return;
+
+          const vaultRef = db.ref(`turfWars/${weekKey}/${crewId}/vault`);
+
+          // Atomically increment vault total
+          db.ref(`turfWars/${weekKey}/${crewId}/vault/current`)
+            .transaction((current) => (current || 0) + cashEarned);
+
+          // Track individual contribution
+          db.ref(`turfWars/${weekKey}/${crewId}/vault/contributors/${nickname}`)
+            .transaction((current) => (current || 0) + cashEarned);
+
+          // Check if vault is now filled
+          vaultRef.once("value", (vaultSnap) => {
+            const vault = vaultSnap.val() || {};
+            if (vault.current >= vault.target && !vault.filledAt) {
+              db.ref(`turfWars/${weekKey}/${crewId}/vault/filledAt`)
+                .set(firebase.database.ServerValue.TIMESTAMP);
+            }
+          });
+        });
+      }
+
+      // Check and resolve a completed Turf War
+      function checkAndResolveTurfWar(crewId, weekKey) {
+        if (!db || !crewId || !weekKey) return;
+
+        db.ref(`turfWars/${weekKey}/${crewId}`).once("value", (snap) => {
+          const war = snap.val();
+          if (!war || !war.opponent || war.status !== "active") return;
+
+          // Check if the week has ended
+          const weekEnd = getWeekEndForKey(weekKey);
+          if (new Date() < weekEnd) return; // Week hasn't ended yet
+
+          const opponent = war.opponent;
+
+          // Read opponent's data
+          db.ref(`turfWars/${weekKey}/${opponent}`).once("value", (oppSnap) => {
+            const oppWar = oppSnap.val();
+            if (!oppWar) return;
+
+            const ourVault = war.vault || {};
+            const theirVault = oppWar.vault || {};
+
+            let result;
+
+            // Win condition 1: Vault race (first to fill)
+            if (ourVault.filledAt && theirVault.filledAt) {
+              result = ourVault.filledAt < theirVault.filledAt ? "won_vault" :
+                       ourVault.filledAt > theirVault.filledAt ? "lost" : "draw";
+            } else if (ourVault.filledAt && !theirVault.filledAt) {
+              result = "won_vault";
+            } else if (!ourVault.filledAt && theirVault.filledAt) {
+              result = "lost";
+            } else {
+              // Win condition 2: Battle score
+              // Need participation data from weekly scores
+              resolveByScore(crewId, opponent, weekKey, war, oppWar);
+              return;
+            }
+
+            writeTurfWarResult(crewId, opponent, weekKey, result, ourVault, theirVault);
+          });
+        });
+      }
+
+      // Resolve by weekly score when neither crew filled vault
+      function resolveByScore(crewId, opponent, weekKey, war, oppWar) {
+        // Get all scores for the week to calculate participation
+        const weekDates = getWeekDates(weekKey);
+
+        let ourTotal = 0, ourParticipants = new Set(), ourMemberCount = 0;
+        let theirTotal = 0, theirParticipants = new Set(), theirMemberCount = 0;
+
+        // Get member counts from registry
+        db.ref(`turfWarRegistry/${weekKey}`).once("value", (regSnap) => {
+          const reg = regSnap.val() || {};
+          ourMemberCount = (reg[crewId] || {}).memberCount || 1;
+          theirMemberCount = (reg[opponent] || {}).memberCount || 1;
+
+          // Get our weekly scores
+          let loaded = 0;
+          const totalToLoad = weekDates.length * 2;
+
+          weekDates.forEach((dateKey) => {
+            db.ref(`scores/${crewId}/${dateKey}`).once("value", (s) => {
+              const dayScores = s.val() || {};
+              Object.entries(dayScores).forEach(([nick, data]) => {
+                ourTotal += data.cash || 0;
+                ourParticipants.add(nick);
+              });
+              loaded++;
+              if (loaded === totalToLoad) finalizeScore();
+            });
+
+            db.ref(`scores/${opponent}/${dateKey}`).once("value", (s) => {
+              const dayScores = s.val() || {};
+              Object.entries(dayScores).forEach(([nick, data]) => {
+                theirTotal += data.cash || 0;
+                theirParticipants.add(nick);
+              });
+              loaded++;
+              if (loaded === totalToLoad) finalizeScore();
+            });
+          });
+
+          function finalizeScore() {
+            const ourScore = calculateBattleScore(ourTotal, ourParticipants.size, ourMemberCount);
+            const theirScore = calculateBattleScore(theirTotal, theirParticipants.size, theirMemberCount);
+
+            let result;
+            const margin = Math.max(ourScore, theirScore) > 0
+              ? Math.abs(ourScore - theirScore) / Math.max(ourScore, theirScore)
+              : 0;
+
+            if (margin <= TURF_WAR_DRAW_THRESHOLD) {
+              result = "draw";
+            } else if (ourScore > theirScore) {
+              result = "won_score";
+            } else {
+              result = "lost";
+            }
+
+            writeTurfWarResult(crewId, opponent, weekKey, result,
+              war.vault || {}, oppWar.vault || {});
+          }
+        });
+      }
+
+      // Write the final result and history
+      function writeTurfWarResult(crewId, opponent, weekKey, result, ourVault, theirVault) {
+        const updates = {};
+
+        // Determine opponent's mirror result
+        const oppResult = result === "draw" ? "draw" :
+                          result.startsWith("won") ? "lost" :
+                          "won_score";
+
+        updates[`turfWars/${weekKey}/${crewId}/status`] = result;
+        updates[`turfWars/${weekKey}/${opponent}/status`] = oppResult;
+
+        // Write history
+        updates[`turfWarHistory/${crewId}/${weekKey}`] = {
+          opponent: opponent,
+          result: result,
+          ourTotal: ourVault.current || 0,
+          theirTotal: theirVault.current || 0,
+        };
+
+        db.ref().update(updates);
+      }
+
+      // Claim Turf War reward for current player
+      function claimTurfWarReward(crewId, weekKey) {
+        if (!db || !userNick) return;
+
+        const claimKey = `tumblerTurfWarClaimed_${weekKey}_${crewId}`;
+        if (localStorage.getItem(claimKey)) return; // Already claimed
+
+        db.ref(`turfWars/${weekKey}/${crewId}`).once("value", (snap) => {
+          const war = snap.val();
+          if (!war || war.status === "active" || war.status === "no_match") return;
+
+          let reward = 0;
+          if (war.status === "won_vault") {
+            reward = TURF_WAR_VAULT_WIN_REWARD;
+          } else if (war.status === "won_score") {
+            reward = TURF_WAR_SCORE_WIN_REWARD;
+          } else if (war.status === "draw") {
+            reward = TURF_WAR_DRAW_REWARD;
+          } else if (war.status === "lost") {
+            reward = TURF_WAR_LOSS_REWARD;
+          }
+
+          if (reward === 0) return;
+
+          // Count days played this week for participation bonus
+          const weekDates = getWeekDates(weekKey);
+          let daysPlayed = 0;
+          let checked = 0;
+
+          weekDates.forEach((dateKey) => {
+            db.ref(`scores/${crewId}/${dateKey}/${userNick}`).once("value", (s) => {
+              if (s.val()) daysPlayed++;
+              checked++;
+
+              if (checked === weekDates.length) {
+                const totalReward = reward + (daysPlayed * TURF_WAR_DAILY_PARTICIPATION_BONUS);
+
+                // Add to career cash
+                db.ref(`career/${crewId}/${userNick}/totalCash`)
+                  .transaction((current) => (current || 0) + totalReward);
+
+                // Update local stats
+                const localStats = JSON.parse(localStorage.getItem("tumblerStats")) || {};
+                localStats.totalCash = (localStats.totalCash || 0) + totalReward;
+                localStorage.setItem("tumblerStats", JSON.stringify(localStats));
+
+                // Write to history
+                db.ref(`turfWarHistory/${crewId}/${weekKey}/reward`).set(totalReward);
+
+                localStorage.setItem(claimKey, "done");
+              }
+            });
+          });
+        });
+      }
+
+      // Helper: get date keys for a given week
+      function getWeekDates(weekKey) {
+        // Parse weekKey format "YYYY-Www"
+        const [yearStr, weekStr] = weekKey.split("-W");
+        const year = parseInt(yearStr);
+        const week = parseInt(weekStr);
+
+        // Calculate Monday of that week (ISO week)
+        const jan4 = new Date(year, 0, 4);
+        const dayOfWeek = jan4.getDay() || 7;
+        const monday = new Date(jan4);
+        monday.setDate(jan4.getDate() - dayOfWeek + 1 + (week - 1) * 7);
+
+        const dates = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date(monday);
+          d.setDate(monday.getDate() + i);
+          dates.push(`${d.getFullYear()}-${d.getMonth() + 1}-${d.getDate()}`);
+        }
+        return dates;
+      }
+
+      // Helper: get end time for a week key
+      function getWeekEndForKey(weekKey) {
+        const dates = getWeekDates(weekKey);
+        const lastDay = dates[dates.length - 1];
+        const parts = lastDay.split("-");
+        const end = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+        end.setDate(end.getDate() + 1); // Monday 00:00 of next week
+        end.setHours(0, 0, 0, 0);
+        return end;
+      }
+
       // Expose to window (Safety)
       window.openGroupModal = openGroupModal;
       window.closeGroupModal = closeGroupModal;
@@ -8167,6 +9300,12 @@
       window.maybePromptNotifications = maybePromptNotifications;
       window.showCalendar = showCalendar;
       window.closeCalendar = closeCalendar;
+      // Turf War functions
+      window.initTurfWar = initTurfWar;
+      window.loadTurfWarData = loadTurfWarData;
+      window.claimTurfWarReward = claimTurfWarReward;
+      window.showTurfRules = showTurfRules;
+      window.closeTurfRules = closeTurfRules;
 
       // Start foreground message listener
       setupForegroundMessaging();
