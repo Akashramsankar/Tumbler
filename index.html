@@ -8507,6 +8507,7 @@
         }
 
         const weekKey = getTurfWarWeekKey();
+        const { matchKey } = getTurfWarStorageKeys(weekKey, activeGroup);
 
         // Detach any previous opponent listener
         if (turfWarListenerRef) {
@@ -8539,6 +8540,24 @@
                     No matching crew this week. Keep playing — matchups reset every Monday!
                   </div>
                 </div>`;
+            } else if (!localStorage.getItem(matchKey)) {
+              const currentCrew = activeGroup;
+              list.innerHTML = `
+                <div style="text-align:center; padding:30px;">
+                  <div style="font-size:2rem; margin-bottom:10px;">⚔️</div>
+                  <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">Finalizing Matchup <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
+                  <div style="color:#94a3b8; font-size:0.8rem; line-height:1.5;">
+                    Registration just closed.<br>
+                    Building this week's matchup now...
+                  </div>
+                </div>`;
+
+              initTurfWar(currentCrew);
+              setTimeout(() => {
+                if (currentTab === "turfwar" && activeGroup === currentCrew) {
+                  loadTurfWarData();
+                }
+              }, 1200);
             } else {
               list.innerHTML = `
                 <div style="text-align:center; padding:30px;">
@@ -8761,6 +8780,14 @@
         return getWeekKey(date);
       }
 
+      function getTurfWarStorageKeys(weekKey, crewId) {
+        return {
+          registrationKey: `tumblerTurfWarRegistered_${weekKey}_${crewId}`,
+          matchKey: `tumblerTurfWarMatched_${weekKey}_${crewId}`,
+          resolutionKey: `tumblerTurfWarResolved_${weekKey}_${crewId}`,
+        };
+      }
+
       function getDayOfWeek(date = new Date()) {
         return date.getDay(); // 0=Sun, 1=Mon, ..., 6=Sat
       }
@@ -8950,8 +8977,7 @@
         if (!db || !crewId) return;
 
         const weekKey = getTurfWarWeekKey();
-        const lastCheck = localStorage.getItem(`tumblerTurfWarInit_${weekKey}_${crewId}`);
-        if (lastCheck) return; // Already initialized this week for this crew
+        const { registrationKey, matchKey } = getTurfWarStorageKeys(weekKey, crewId);
 
         // Check if Turf War already exists for this week
         db.ref(`turfWars/${weekKey}/${crewId}`).once("value", (snap) => {
@@ -8962,7 +8988,12 @@
             if (existing.status === "active") {
               checkAndResolveTurfWar(crewId, weekKey);
             }
-            localStorage.setItem(`tumblerTurfWarInit_${weekKey}_${crewId}`, "done");
+            localStorage.setItem(matchKey, "done");
+            return;
+          }
+
+          if (existing && existing.status === "no_match") {
+            localStorage.setItem(matchKey, "done");
             return;
           }
 
@@ -8970,17 +9001,23 @@
           const prevWeek = new Date();
           prevWeek.setDate(prevWeek.getDate() - 7);
           const prevWeekKey = getTurfWarWeekKey(prevWeek);
-          checkAndResolveTurfWar(crewId, prevWeekKey);
+          const { resolutionKey } = getTurfWarStorageKeys(prevWeekKey, crewId);
+          if (!localStorage.getItem(resolutionKey)) {
+            checkAndResolveTurfWar(crewId, prevWeekKey);
+            localStorage.setItem(resolutionKey, "done");
+          }
 
           // Register if registration is still open
           if (isRegistrationOpen()) {
+            if (localStorage.getItem(registrationKey)) return;
             registerForTurfWar(crewId).then(() => {
-              localStorage.setItem(`tumblerTurfWarInit_${weekKey}_${crewId}`, "done");
+              localStorage.setItem(registrationKey, "done");
             });
           } else {
             // Registration closed — try to compute match
+            if (localStorage.getItem(matchKey)) return;
             computeTurfWarMatch(crewId).then(() => {
-              localStorage.setItem(`tumblerTurfWarInit_${weekKey}_${crewId}`, "done");
+              localStorage.setItem(matchKey, "done");
             });
           }
         });
