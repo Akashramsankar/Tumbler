@@ -6207,7 +6207,10 @@
       function showJoinNewCrew() {
         // Show the setup form for joining a new crew
         document.getElementById("view-setup").style.display = "block";
+        document.getElementById("player-nick").value = userNick || "";
+        document.getElementById("player-nick").disabled = !!userNick;
         document.getElementById("group-id").value = ""; // Clear crew ID field
+        document.getElementById("group-id").disabled = false;
         document.getElementById("group-id").focus();
 
         // Change button text
@@ -7622,6 +7625,7 @@
 
       function openGroupModal() {
         document.getElementById("group-modal").style.display = "flex";
+        document.getElementById("player-nick").disabled = false;
 
         // Check for invite crew in session
         const inviteCrew = sessionStorage.getItem("inviteCrew");
@@ -7673,20 +7677,41 @@
           .value.trim()
           .toUpperCase();
 
-        if (nick.length < 2 || group.length < 3) {
-          alert("Name must be 2+ chars, Crew ID 3+ chars.");
+        const isReusingCurrentNick = !!userNick && nick === userNick;
+
+        if (!isReusingCurrentNick && nick.length < 2) {
+          alert("Name must be 2+ chars.");
+          return;
+        }
+
+        if (group.length < 3) {
+          alert("Crew ID must be 3+ chars.");
           return;
         }
 
         // Validate: only alphanumeric, underscores, hyphens (blocks Firebase-unsafe chars and XSS)
         const safePattern = /^[A-Z0-9_-]+$/;
-        if (!safePattern.test(nick) || !safePattern.test(group)) {
-          alert("Only letters, numbers, hyphens, and underscores allowed.");
+        if (!isReusingCurrentNick && !safePattern.test(nick)) {
+          alert("Codename can only use letters, numbers, hyphens, and underscores.");
+          return;
+        }
+
+        if (!safePattern.test(group)) {
+          alert("Crew ID can only use letters, numbers, hyphens, and underscores.");
+          return;
+        }
+
+        if (userGroups.includes(group)) {
+          activeGroup = group;
+          localStorage.setItem("tumblerActiveGroup", group);
+          showLeaderboardView();
+          hideJoinNewCrew();
+          showMessage("You're already in this crew.");
           return;
         }
 
         // Check if username is already taken by another user
-        if (db) {
+        if (db && !isReusingCurrentNick) {
           try {
             const profileSnap = await db.ref(`userProfile/${nick}`).once("value");
             if (profileSnap.exists()) {
@@ -7707,6 +7732,7 @@
         activeGroup = group;
         localStorage.setItem("tumblerNick", nick);
         localStorage.setItem("tumblerActiveGroup", group);
+        saveProfileToFirebase();
 
         // 2. Try Update Firebase (Don't wait for it)
         if (db) {
