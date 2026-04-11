@@ -792,11 +792,22 @@
         height: 32px;
         border-radius: 6px; /* Square with rounded corners looks better for calendar */
         cursor: pointer;
-        font-size: 1rem;
         display: flex;
         align-items: center;
         justify-content: center;
+        line-height: 1;
         z-index: 10;
+      }
+
+      .calendar-btn svg {
+        width: 18px;
+        height: 18px;
+        stroke: currentColor;
+        fill: none;
+        stroke-width: 1.8;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        pointer-events: none;
       }
 
       .calendar-btn:hover {
@@ -2834,7 +2845,23 @@
   <body>
     <header>
       <button class="help-icon" onclick="showTutorial()">?</button>
-      <button class="calendar-btn" onclick="showCalendar()">📅</button>
+      <button
+        class="calendar-btn"
+        type="button"
+        aria-label="Open puzzle calendar"
+        title="Puzzle calendar"
+        onclick="showCalendar()"
+      >
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <rect x="3" y="5" width="18" height="16" rx="2"></rect>
+          <line x1="3" y1="10" x2="21" y2="10"></line>
+          <line x1="8" y1="3" x2="8" y2="7"></line>
+          <line x1="16" y1="3" x2="16" y2="7"></line>
+          <path d="M8 14h.01"></path>
+          <path d="M12 14h.01"></path>
+          <path d="M16 14h.01"></path>
+        </svg>
+      </button>
       <h1>Tumbler</h1>
       <div class="sub-text">Crack the code</div>
       <!-- Timer moved to be part of the header flow -->
@@ -9474,7 +9501,7 @@
 
         banner.innerHTML = `
           <div style="display:flex; align-items:center; gap:12px; margin-bottom:12px;">
-            <img src="/icons/icon-192.png" width="44" height="44"
+            <img src="/Tumbler/icons/icon-192.png" width="44" height="44"
                  style="border-radius:10px; flex-shrink:0;"
                  onerror="this.style.display='none'">
             <div>
