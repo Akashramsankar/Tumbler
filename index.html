@@ -56,6 +56,8 @@
         /* THEME: Premium Dark Heist */
         --bg-grad-start: #121212;
         --bg-grad-end: #1e293b;
+        --safe-top-inset: env(safe-area-inset-top, 0px);
+        --safe-left-inset: env(safe-area-inset-left, 0px);
 
         --safe-body: #1e293b;
         --safe-inset: #0f172a;
@@ -108,7 +110,7 @@
 
       /* --- HEADER --- */
       header {
-        margin-top: calc(15px + env(safe-area-inset-top, 0px));
+        margin-top: calc(15px + var(--safe-top-inset));
         text-align: center;
         margin-bottom: 15px;
         border-bottom: 1px solid #334155;
@@ -666,7 +668,7 @@
       .help-icon {
         position: absolute;
         top: 15px;
-        left: 10px;
+        left: calc(10px + var(--safe-left-inset));
         background: var(--key-bg);
         color: var(--text-color);
         border: none;
@@ -784,7 +786,7 @@
       .calendar-btn {
         position: absolute;
         top: 15px;
-        left: 55px; /* Spaced to the right of the help icon */
+        left: calc(55px + var(--safe-left-inset)); /* Spaced to the right of the help icon */
         background: var(--key-bg);
         color: var(--text-color);
         border: none;
@@ -1726,7 +1728,7 @@
           max-width: 320px;
         }
         header {
-          margin-top: 10px;
+          margin-top: calc(10px + var(--safe-top-inset));
           margin-bottom: 10px;
           padding-bottom: 10px;
         }
@@ -1833,7 +1835,7 @@
           margin-bottom: 10px;
         }
         header {
-          margin-top: 8px;
+          margin-top: calc(8px + var(--safe-top-inset));
           margin-bottom: 8px;
         }
       }

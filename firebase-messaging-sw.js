@@ -10,7 +10,7 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 // ── CACHE CONFIG ────────────────────────────────────────────────────────────
 // Bump the version number any time you update index.html or other assets.
 // This forces the old cache to clear and the new files to download.
-const CACHE_VERSION = "tumbler-v1";
+const CACHE_VERSION = "tumbler-v2";
 
 const CACHE_ASSETS = [
   "/Tumbler/",
