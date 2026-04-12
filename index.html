@@ -798,7 +798,8 @@
         align-items: center;
         justify-content: center;
         line-height: 1;
-        z-index: 10;
+        -webkit-tap-highlight-color: transparent;
+        z-index: 12;
       }
 
       .calendar-btn svg {
@@ -2848,6 +2849,7 @@
     <header>
       <button class="help-icon" onclick="showTutorial()">?</button>
       <button
+        id="calendar-button"
         class="calendar-btn"
         type="button"
         aria-label="Open puzzle calendar"
@@ -6696,7 +6698,13 @@
         ) {
           const tempDate = new Date(d);
           const key = getStorageKey(tempDate);
-          const savedData = JSON.parse(localStorage.getItem(key));
+          let savedData = null;
+
+          try {
+            savedData = JSON.parse(localStorage.getItem(key));
+          } catch (error) {
+            console.warn("Skipping unreadable calendar entry:", key, error);
+          }
           const puzzleNum =
             Math.floor((tempDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
 
@@ -6742,6 +6750,24 @@
         }
 
         document.getElementById("calendar-modal").style.display = "flex";
+      }
+
+      function bindCalendarButton() {
+        const calendarBtn = document.getElementById("calendar-button");
+        if (!calendarBtn || calendarBtn.dataset.bound === "true") return;
+
+        const openCalendar = (event) => {
+          if (event) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          showCalendar();
+        };
+
+        calendarBtn.dataset.bound = "true";
+        calendarBtn.addEventListener("touchend", openCalendar, {
+          passive: false,
+        });
       }
 
       function closeCalendar() {
@@ -9392,6 +9418,7 @@
       window.maybePromptNotifications = maybePromptNotifications;
       window.showCalendar = showCalendar;
       window.closeCalendar = closeCalendar;
+      bindCalendarButton();
       // Turf War functions
       window.initTurfWar = initTurfWar;
       window.loadTurfWarData = loadTurfWarData;
