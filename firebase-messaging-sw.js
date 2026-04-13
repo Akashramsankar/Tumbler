@@ -10,7 +10,7 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 // ── CACHE CONFIG ────────────────────────────────────────────────────────────
 // Bump the version number any time you update index.html or other assets.
 // This forces the old cache to clear and the new files to download.
-const CACHE_VERSION = "tumbler-v2";
+const CACHE_VERSION = "tumbler-v3";
 
 const CACHE_ASSETS = [
   "/Tumbler/",
@@ -109,6 +109,13 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+function getLocalDateStamp(dateObj = new Date()) {
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
 // Check IndexedDB to see if user already played today
 function hasPlayedTodayIDB() {
   return new Promise((resolve) => {
@@ -125,7 +132,7 @@ function hasPlayedTodayIDB() {
         const tx = db.transaction("flags", "readonly");
         const getReq = tx.objectStore("flags").get("lastPlayedDate");
         getReq.onsuccess = () => {
-          const today = new Date().toISOString().slice(0, 10);
+          const today = getLocalDateStamp(new Date());
           resolve(getReq.result === today);
         };
         getReq.onerror = () => resolve(false);

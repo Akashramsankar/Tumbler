@@ -4145,7 +4145,7 @@
       const ASCII_Z = 90;
       const CLOSE_DISTANCE = 9;
       const FAR_DISTANCE = 10;
-      const GAME_EPOCH = new Date("November 26, 2025 00:00:00");
+      const GAME_EPOCH = new Date(2025, 10, 26);
 
       // CASH CALCULATION CONSTANTS
       const CASH_BASE_VALUE = 10000;
@@ -5002,30 +5002,35 @@
         }
       }
 
-      // Get current puzzle number (days since epoch)
-      function getPuzzleNumber(dateObj = new Date()) {
-        const msPerDay = 24 * 60 * 60 * 1000;
-        const currentMidnight = new Date(dateObj).setHours(0, 0, 0, 0);
-        const launchMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
-        const daysPassed = Math.floor(
-          (currentMidnight - launchMidnight) / msPerDay,
+      function getLocalDateStamp(dateObj = new Date()) {
+        const year = dateObj.getFullYear();
+        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+        const day = String(dateObj.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      function getLocalDayNumber(dateObj = new Date()) {
+        return Math.floor(
+          Date.UTC(
+            dateObj.getFullYear(),
+            dateObj.getMonth(),
+            dateObj.getDate(),
+          ) / 86400000,
         );
+      }
+
+      // Get current puzzle number (calendar days since epoch)
+      function getPuzzleNumber(dateObj = new Date()) {
+        const daysPassed = getLocalDayNumber(dateObj) - getLocalDayNumber(GAME_EPOCH);
         return daysPassed + 1;
       }
 
       function getStorageKey(dateObj) {
-        // Use local time components to ensure stability across page reloads
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-        const day = String(dateObj.getDate()).padStart(2, "0");
-        return `tumblerGame_${year}-${month}-${day}`;
+        return `tumblerGame_${getLocalDateStamp(dateObj)}`;
       }
 
       function getActiveSessionKey(dateObj) {
-        const year = dateObj.getFullYear();
-        const month = String(dateObj.getMonth() + 1).padStart(2, "0");
-        const day = String(dateObj.getDate()).padStart(2, "0");
-        return `tumblerActiveGame_${year}-${month}-${day}`;
+        return `tumblerActiveGame_${getLocalDateStamp(dateObj)}`;
       }
 
       function resetIntelUI() {
@@ -5051,7 +5056,7 @@
       // Save today's game state
       // Store played-today date in IndexedDB so the service worker can suppress notifications
       function markPlayedInIDB() {
-        const today = new Date().toISOString().slice(0, 10);
+        const today = getLocalDateStamp(new Date());
         const req = indexedDB.open("tumblerState", 1);
         req.onupgradeneeded = (e) => {
           const db = e.target.result;
@@ -5632,16 +5637,7 @@
       }
 
       function getDailyWord(dateObj = new Date()) {
-        // Accepts date argument
-        const msPerDay = 24 * 60 * 60 * 1000;
-
-        // Normalize dates to midnight
-        const targetMidnight = new Date(dateObj).setHours(0, 0, 0, 0);
-        const epochMidnight = new Date(GAME_EPOCH).setHours(0, 0, 0, 0);
-
-        const timeDiff = targetMidnight - epochMidnight;
-        const daysPassed = Math.floor(timeDiff / msPerDay);
-
+        const daysPassed = getLocalDayNumber(dateObj) - getLocalDayNumber(GAME_EPOCH);
         const index = daysPassed % dailyWords.length;
         const safeIndex = index < 0 ? index + dailyWords.length : index;
 
@@ -6705,8 +6701,7 @@
           } catch (error) {
             console.warn("Skipping unreadable calendar entry:", key, error);
           }
-          const puzzleNum =
-            Math.floor((tempDate - startDate) / (1000 * 60 * 60 * 24)) + 1;
+          const puzzleNum = getPuzzleNumber(tempDate);
 
           const dayBtn = document.createElement("div");
           dayBtn.classList.add("cal-day");
