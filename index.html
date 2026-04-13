@@ -8874,7 +8874,9 @@
       }
 
       function isRegistrationOpen() {
-        return getDayOfWeek() <= TURF_WAR_REGISTRATION_CUTOFF_DAY;
+        const day = getDayOfWeek();
+        // Sunday (0) is the last battle day, not a registration day
+        return day >= 1 && day <= TURF_WAR_REGISTRATION_CUTOFF_DAY;
       }
 
       function getWeekEndTime() {
@@ -9046,6 +9048,7 @@
               updates[`turfWars/${weekKey}/${opponent}/opponent`] = crewId;
               updates[`turfWars/${weekKey}/${opponent}/status`] = "active";
               updates[`turfWars/${weekKey}/${opponent}/vault/target`] = vaultTarget;
+              updates[`turfWars/${weekKey}/${opponent}/vault/current`] = 0;
 
               db.ref().update(updates).then(() => resolve(opponent)).catch(() => resolve(null));
             });
@@ -9141,22 +9144,23 @@
 
           const vaultRef = db.ref(`turfWars/${weekKey}/${crewId}/vault`);
 
-          // Atomically increment vault total
+          // Atomically increment vault total, then check if vault is filled
           db.ref(`turfWars/${weekKey}/${crewId}/vault/current`)
-            .transaction((current) => (current || 0) + cashEarned);
+            .transaction((current) => (current || 0) + cashEarned)
+            .then(() => {
+              // Check if vault is now filled (after transaction commits)
+              vaultRef.once("value", (vaultSnap) => {
+                const vault = vaultSnap.val() || {};
+                if (vault.current >= vault.target && !vault.filledAt) {
+                  db.ref(`turfWars/${weekKey}/${crewId}/vault/filledAt`)
+                    .set(firebase.database.ServerValue.TIMESTAMP);
+                }
+              });
+            });
 
           // Track individual contribution
           db.ref(`turfWars/${weekKey}/${crewId}/vault/contributors/${nickname}`)
             .transaction((current) => (current || 0) + cashEarned);
-
-          // Check if vault is now filled
-          vaultRef.once("value", (vaultSnap) => {
-            const vault = vaultSnap.val() || {};
-            if (vault.current >= vault.target && !vault.filledAt) {
-              db.ref(`turfWars/${weekKey}/${crewId}/vault/filledAt`)
-                .set(firebase.database.ServerValue.TIMESTAMP);
-            }
-          });
         });
       }
 
@@ -9273,18 +9277,26 @@
 
         // Determine opponent's mirror result
         const oppResult = result === "draw" ? "draw" :
-                          result.startsWith("won") ? "lost" :
-                          "won_score";
+                          result === "won_vault" ? "lost" :
+                          result === "won_score" ? "lost" :
+                          // We lost — check if opponent won by vault or score
+                          theirVault.filledAt ? "won_vault" : "won_score";
 
         updates[`turfWars/${weekKey}/${crewId}/status`] = result;
         updates[`turfWars/${weekKey}/${opponent}/status`] = oppResult;
 
-        // Write history
+        // Write history for both crews
         updates[`turfWarHistory/${crewId}/${weekKey}`] = {
           opponent: opponent,
           result: result,
           ourTotal: ourVault.current || 0,
           theirTotal: theirVault.current || 0,
+        };
+        updates[`turfWarHistory/${opponent}/${weekKey}`] = {
+          opponent: crewId,
+          result: oppResult,
+          ourTotal: theirVault.current || 0,
+          theirTotal: ourVault.current || 0,
         };
 
         db.ref().update(updates);
