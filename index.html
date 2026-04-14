@@ -7376,7 +7376,7 @@
         champion: { icon: "🥇", name: "Champion", desc: "#1 This Week" },
         runnerUp: { icon: "🥈", name: "Runner Up", desc: "#2 This Week" },
         bronze: { icon: "🥉", name: "Bronze", desc: "#3 This Week" },
-        speedKing: { icon: "⚡", name: "Speed King", desc: "Best Avg Time" },
+        speedKing: { icon: "⚡", name: "Speed King", desc: "Best Avg Time + Wins" },
       };
 
       const CAREER_BADGES = {
@@ -7447,6 +7447,57 @@
 
         if (days > 0) return `${days}d ${hours}h until reset`;
         return `${hours}h until reset`;
+      }
+
+      function getSpeedKingMetric(stats, baselineAvgTime, priorWins = 3) {
+        const wins = Math.max(stats?.wins || 0, 0);
+        const totalTime = stats?.totalTime || 0;
+        if (!wins || !Number.isFinite(baselineAvgTime) || baselineAvgTime <= 0) {
+          return Number.POSITIVE_INFINITY;
+        }
+
+        // Shrink low-volume averages toward the crew baseline so one quick win
+        // doesn't outrank someone who stayed fast across several wins.
+        return (totalTime + baselineAvgTime * priorWins) / (wins + priorWins);
+      }
+
+      function getSpeedKingLeader(entries) {
+        const validEntries = entries.filter(([, stats]) =>
+          (stats?.wins || 0) > 0 && (stats?.totalTime || 0) > 0,
+        );
+        if (!validEntries.length) return null;
+
+        const totalWins = validEntries.reduce(
+          (sum, [, stats]) => sum + (stats.wins || 0),
+          0,
+        );
+        if (!totalWins) return null;
+
+        const baselineAvgTime = validEntries.reduce(
+          (sum, [, stats]) => sum + (stats.totalTime || 0),
+          0,
+        ) / totalWins;
+
+        return validEntries
+          .map(([nick, stats]) => {
+            const wins = stats.wins || 0;
+            const avgTime = wins > 0
+              ? stats.totalTime / wins
+              : Number.POSITIVE_INFINITY;
+
+            return {
+              nick,
+              wins,
+              avgTime,
+              adjustedAvgTime: getSpeedKingMetric(stats, baselineAvgTime),
+            };
+          })
+          .sort((a, b) =>
+            a.adjustedAvgTime - b.adjustedAvgTime ||
+            b.wins - a.wins ||
+            a.avgTime - b.avgTime ||
+            a.nick.localeCompare(b.nick),
+          )[0];
       }
 
       // Fetch user's badges for active crew
@@ -8026,7 +8077,7 @@
             </div>
             <div style="font-size: 0.75rem; color: #cbd5e1; line-height: 1.4; text-align: center;">
               Top 3 by total cash earn badges on Monday reset<br>
-              <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King (Avg)</span>
+              <span style="font-size: 0.7rem; color: #94a3b8;">🥇 Champion • 🥈 Runner Up • 🥉 Bronze • ⚡ Speed King (Avg + Wins)</span>
             </div>
             <div style="text-align: center; margin-top: 8px; font-size: 0.75rem; color: var(--color-close);">
               ⏰ ${getTimeUntilMonday()}
@@ -8076,6 +8127,7 @@
       function renderList(data, type, weeklyBadges = {}, careerData = {}) {
         const list = document.getElementById("lb-list");
         list.innerHTML = "";
+        const speedKingLeader = type === "week" ? getSpeedKingLeader(data) : null;
 
         let currentRank = 1;
         let previousScore = null;
@@ -8125,14 +8177,8 @@
               provisionalBadge = `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Bronze badge">🥉</span>`;
             }
 
-            // Speed King indicator (check if this person has best avg time)
-            if (stats.wins > 0 && stats.totalTime > 0) {
-              const avgTime = stats.totalTime / stats.wins;
-              const allAvgTimes = data.map(([, s]) => s.wins > 0 ? s.totalTime / s.wins : 999999);
-              const fastestAvg = Math.min(...allAvgTimes);
-              if (avgTime <= fastestAvg) {
-                provisionalBadge += `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Speed King badge (avg ${Math.round(avgTime)}s)">⚡</span>`;
-              }
+            if (speedKingLeader && speedKingLeader.nick === nick) {
+              provisionalBadge += `<span style="opacity: 0.6; margin-left: 8px;" title="Leading for Speed King badge (${Math.round(speedKingLeader.adjustedAvgTime)}s weighted avg across ${speedKingLeader.wins} wins)">⚡</span>`;
             }
           }
 
@@ -8172,7 +8218,7 @@
             badgeHTML += `<span class="badge" title="Bronze - #3 This Week">🥉</span>`;
           }
           if (weeklyBadges.speedKing === nick) {
-            badgeHTML += `<span class="badge" title="Speed King - Best Avg Time This Week">⚡</span>`;
+            badgeHTML += `<span class="badge" title="Speed King - Best Avg Time + Wins This Week">⚡</span>`;
           }
 
           // Master Thief permanent badge
@@ -8472,12 +8518,12 @@
                 weeklyTotals[nick] = {
                   totalCash: 0,
                   totalTime: 0,
-                  plays: 0,
+                  wins: 0,
                 };
               }
               weeklyTotals[nick].totalCash += score.cash;
               weeklyTotals[nick].totalTime += score.time || 0;
-              weeklyTotals[nick].plays++;
+              weeklyTotals[nick].wins++;
             });
           });
 
@@ -8486,19 +8532,14 @@
             ([, a], [, b]) => b.totalCash - a.totalCash,
           );
 
-          // Find speed king (best average solve time)
-          const speedKing = Object.entries(weeklyTotals)
-            .filter(([, d]) => d.plays > 0)
-            .sort(
-              ([, a], [, b]) => (a.totalTime / a.plays) - (b.totalTime / b.plays),
-            )[0];
+          const speedKing = getSpeedKingLeader(Object.entries(weeklyTotals));
 
           // Award badges
           const badges = {
             champion: sorted[0] ? sorted[0][0] : null,
             runnerUp: sorted[1] ? sorted[1][0] : null,
             bronze: sorted[2] ? sorted[2][0] : null,
-            speedKing: speedKing ? speedKing[0] : null,
+            speedKing: speedKing ? speedKing.nick : null,
           };
 
           // Save to Firebase
