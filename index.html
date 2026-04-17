@@ -7191,14 +7191,7 @@
             messaging = firebase.messaging();
           }
 
-          if (userNick) {
-            syncAllStatsFromFirebase();
-            // Initialize Turf Wars for all crews
-            if (userGroups.length > 0) {
-              userGroups.forEach((group) => initTurfWar(group));
-              flushOfflineVaultQueue();
-            }
-          }
+          // userNick/userGroups not yet declared here — startup init moved below
         } else {
         }
       } catch (e) {
@@ -7419,6 +7412,15 @@
         localStorage.getItem("tumblerCrewIntroSeen") === "true";
       let currentTab = "daily";
       let turfWarListenerRef = null;
+
+      // Startup init — userNick/userGroups now declared
+      if (db && userNick) {
+        syncAllStatsFromFirebase();
+        if (userGroups.length > 0) {
+          userGroups.forEach((group) => initTurfWar(group));
+          flushOfflineVaultQueue();
+        }
+      }
 
       // --- 3. FUNCTIONS ---
 
@@ -8283,6 +8285,17 @@
             updateTurfWarVault(group, cash, userNick);
           }
 
+          // Register crew for Turf War if registration window is open
+          if (isRegistrationOpen()) {
+            const weekKey = getTurfWarWeekKey();
+            const { registrationKey } = getTurfWarStorageKeys(weekKey, group);
+            if (!localStorage.getItem(registrationKey)) {
+              registerForTurfWar(group).then(() => {
+                localStorage.setItem(registrationKey, "done");
+              }).catch(() => {});
+            }
+          }
+
           // ALWAYS update career stats - fetch existing first to avoid overwriting
           const careerRef = db.ref(`career/${group}/${userNick}`);
           careerRef.once("value", (snapshot) => {
@@ -8403,6 +8416,14 @@
               profileData[field] !== undefined &&
               profileData[field] > (localStats[field] || 0)
             ) {
+              // For currentStreak: only sync if play history supports keeping a streak.
+              // If the user missed yesterday and hasn't played today, initGame will
+              // immediately break the streak to 0 and write it back — which overwrites
+              // any admin-set Firebase value. Skip the sync in that case.
+              if (field === "currentStreak") {
+                const playedToday = !!localStorage.getItem(getStorageKey(currentPlayDate));
+                if (!playedToday && !wasYesterdayPlayed()) return;
+              }
               localStats[field] = profileData[field];
               needsSync = true;
             }
@@ -8638,6 +8659,7 @@
           if (!war || !war.opponent) {
             // Check if registration is still open
             if (isRegistrationOpen()) {
+              initTurfWar(activeGroup);
               list.innerHTML = `
                 <div style="text-align:center; padding:30px;">
                   <div style="font-size:2rem; margin-bottom:10px;">⚔️</div>
@@ -8676,14 +8698,36 @@
                 }
               }, 1200);
             } else {
-              list.innerHTML = `
-                <div style="text-align:center; padding:30px;">
-                  <div style="font-size:2rem; margin-bottom:10px;">⚔️</div>
-                  <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">Turf Wars <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
-                  <div style="color:#94a3b8; font-size:0.8rem;">
-                    No battle this week. Play daily to register your crew for next week's matchup!
-                  </div>
-                </div>`;
+              // matchKey is set but no war data — stale state, retry once
+              const retryKey = `turfWarRetry_${weekKey}_${activeGroup}`;
+              if (!localStorage.getItem(retryKey)) {
+                localStorage.removeItem(matchKey);
+                localStorage.setItem(retryKey, "1");
+                const currentCrew = activeGroup;
+                list.innerHTML = `
+                  <div style="text-align:center; padding:30px;">
+                    <div style="font-size:2rem; margin-bottom:10px;">⚔️</div>
+                    <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">Checking Matchup <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
+                    <div style="color:#94a3b8; font-size:0.8rem; line-height:1.5;">
+                      Looking for this week's battle...
+                    </div>
+                  </div>`;
+                initTurfWar(currentCrew);
+                setTimeout(() => {
+                  if (currentTab === "turfwar" && activeGroup === currentCrew) {
+                    loadTurfWarData();
+                  }
+                }, 1500);
+              } else {
+                list.innerHTML = `
+                  <div style="text-align:center; padding:30px;">
+                    <div style="font-size:2rem; margin-bottom:10px;">⚔️</div>
+                    <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">Turf Wars <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
+                    <div style="color:#94a3b8; font-size:0.8rem;">
+                      No battle this week. Play daily to register your crew for next week's matchup!
+                    </div>
+                  </div>`;
+              }
             }
             return;
           }
@@ -8958,7 +9002,7 @@
 
         const weekKey = getTurfWarWeekKey();
 
-        return new Promise((resolve) => {
+        return new Promise((resolve, reject) => {
           // Get previous week's stats for matchmaking quality
           const prevWeek = new Date();
           prevWeek.setDate(prevWeek.getDate() - 7);
@@ -9002,7 +9046,7 @@
                 avgWeeklyCash: avgWeeklyCash,
                 registered: firebase.database.ServerValue.TIMESTAMP,
                 matched: false,
-              }).then(resolve).catch(() => resolve());
+              }).then(resolve).catch((err) => reject(err));
             });
           });
         });
@@ -9053,7 +9097,10 @@
               const registry = regSnap.val() || {};
 
               if (!registry[crewId]) {
-                resolve(null);
+                db.ref(`turfWars/${weekKey}/${crewId}`).update({
+                  opponent: null,
+                  status: "no_match",
+                }).then(() => resolve("no_match")).catch(() => resolve(null));
                 return;
               }
 
@@ -9064,8 +9111,7 @@
                 db.ref(`turfWars/${weekKey}/${crewId}`).update({
                   opponent: null,
                   status: "no_match",
-                });
-                resolve(null);
+                }).then(() => resolve("no_match")).catch(() => resolve(null));
                 return;
               }
 
@@ -9132,12 +9178,16 @@
             if (localStorage.getItem(registrationKey)) return;
             registerForTurfWar(crewId).then(() => {
               localStorage.setItem(registrationKey, "done");
+            }).catch(() => {
+              // Registration failed — don't set registrationKey so next load retries
             });
           } else {
             // Registration closed — try to compute match
             if (localStorage.getItem(matchKey)) return;
-            computeTurfWarMatch(crewId).then(() => {
-              localStorage.setItem(matchKey, "done");
+            computeTurfWarMatch(crewId).then((result) => {
+              if (result) {
+                localStorage.setItem(matchKey, "done");
+              }
             });
           }
         });
