@@ -4850,20 +4850,15 @@
           }
 
           // 5. Migrate FCM tokens to new name
-          const fcmToken = localStorage.getItem("tumblerFcmToken");
-          if (fcmToken) {
-            try {
-              for (const group of userGroups) {
-                await db.ref(`fcmTokens/${group}/${newName}`).set({
-                  token: fcmToken,
-                  updatedAt: Date.now(),
-                });
-                if (oldName) {
-                  await db.ref(`fcmTokens/${group}/${oldName}`).remove();
-                }
-              }
-            } catch (e) {
+          try {
+            if (oldName) {
+              await removeFcmTokenRegistrations(userGroups, oldName);
             }
+            await syncNotificationRegistration({
+              groups: userGroups,
+              nick: newName,
+            });
+          } catch (e) {
           }
         }
 
@@ -7202,17 +7197,125 @@
       // Your VAPID key from Firebase Console → Project Settings → Cloud Messaging
       const VAPID_KEY =
         "BBfLtIF_PM63BJU-pWwfHSy5q8AfZ_Tjp1KFlM9P2b5v4gctfd4zlCRDjUIHIOfrtNKkRtSPihieZCbHwgcuc4k"; // ← Replace this in Firebase Console
+      const GROUPS_UPDATED_AT_KEY = "tumblerGroupsUpdatedAt";
+
+      function normalizeGroupList(groups) {
+        return [...new Set(
+          (Array.isArray(groups) ? groups : [])
+            .filter(Boolean)
+            .map((group) => String(group).trim().toUpperCase()),
+        )];
+      }
+
+      function haveSameGroups(a, b) {
+        const aNorm = normalizeGroupList(a).sort();
+        const bNorm = normalizeGroupList(b).sort();
+        return aNorm.length === bNorm.length &&
+          aNorm.every((group, index) => group === bNorm[index]);
+      }
+
+      function markGroupsUpdated(timestamp = Date.now()) {
+        localStorage.setItem(GROUPS_UPDATED_AT_KEY, String(timestamp));
+        return timestamp;
+      }
+
+      function getLocalGroupsUpdatedAt() {
+        return Number(localStorage.getItem(GROUPS_UPDATED_AT_KEY) || 0);
+      }
+
+      function getStoredFcmToken() {
+        return localStorage.getItem("tumblerFcmToken") || "";
+      }
+
+      function clearStoredFcmToken() {
+        localStorage.removeItem("tumblerFcmToken");
+      }
 
       async function registerServiceWorker() {
         if (!("serviceWorker" in navigator)) return null;
         try {
           const reg = await navigator.serviceWorker.register(
             "/Tumbler/firebase-messaging-sw.js",
+            {
+              scope: "/Tumbler/",
+            },
           );
           return reg;
         } catch (e) {
-          return null;
+          try {
+            return await navigator.serviceWorker.ready;
+          } catch (readyError) {
+            return null;
+          }
         }
+      }
+
+      async function getCurrentFcmToken() {
+        if (!messaging || Notification.permission !== "granted") return null;
+
+        const storedToken = getStoredFcmToken();
+
+        try {
+          const registration = await registerServiceWorker();
+          const readyRegistration = await navigator.serviceWorker.ready.catch(
+            () => registration,
+          );
+          const activeRegistration = readyRegistration || registration;
+          if (!activeRegistration) return storedToken || null;
+
+          const token = await messaging.getToken({
+            vapidKey: VAPID_KEY,
+            serviceWorkerRegistration: activeRegistration,
+          });
+
+          if (!token) {
+            clearStoredFcmToken();
+            return null;
+          }
+
+          localStorage.setItem("tumblerFcmToken", token);
+          return token;
+        } catch (e) {
+          return storedToken || null;
+        }
+      }
+
+      async function removeFcmTokenRegistrations(groups, nick = userNick) {
+        const normalizedGroups = normalizeGroupList(groups);
+        if (!db || !nick || normalizedGroups.length === 0) return;
+
+        const updates = {};
+        normalizedGroups.forEach((group) => {
+          updates[`fcmTokens/${group}/${nick}`] = null;
+        });
+
+        try {
+          await db.ref().update(updates);
+        } catch (e) {
+        }
+      }
+
+      async function syncNotificationRegistration(options = {}) {
+        const groups = normalizeGroupList(options.groups ?? userGroups);
+        const nick = options.nick || userNick;
+        const removeGroups = normalizeGroupList(options.removeGroups || []);
+        const removeNick = options.removeNick || "";
+
+        if (removeNick) {
+          await removeFcmTokenRegistrations(groups, removeNick);
+        }
+        if (removeGroups.length > 0) {
+          await removeFcmTokenRegistrations(removeGroups, nick);
+        }
+
+        if (!messaging || !db || !nick || groups.length === 0) return null;
+        if (Notification.permission !== "granted") return null;
+
+        const token = await getCurrentFcmToken();
+        if (!token) return null;
+
+        await saveFcmTokenToFirebase(token, groups, nick);
+        return token;
       }
 
       async function requestNotificationPermission() {
@@ -7220,16 +7323,13 @@
 
         // Don't re-ask if already decided
         if (Notification.permission === "denied") return;
-        if (localStorage.getItem("tumblerFcmToken")) {
-          // Token already saved — just make sure it's in Firebase
-          await saveFcmTokenToFirebase(localStorage.getItem("tumblerFcmToken"));
+        if (Notification.permission === "granted") {
+          await syncNotificationRegistration();
           return;
         }
-
-        // If permission already granted (e.g. token lost from localStorage), silently re-enable
-        if (Notification.permission === "granted") {
-          await enableNotifications();
-          return;
+        if (getStoredFcmToken()) {
+          const token = await syncNotificationRegistration();
+          if (token) return;
         }
 
         // Show our custom prompt before the browser one
@@ -7300,23 +7400,8 @@
             return;
           }
 
-          // Register service worker with correct scope
-          await navigator.serviceWorker.register(
-            "/Tumbler/firebase-messaging-sw.js",
-            {
-              scope: "/Tumbler/",
-            },
-          );
-
-          // Wait for service worker to be ready, then get FCM token
-          const token = await messaging.getToken({
-            vapidKey: VAPID_KEY,
-            serviceWorkerRegistration: await navigator.serviceWorker.ready,
-          });
-
+          const token = await syncNotificationRegistration();
           if (token) {
-            localStorage.setItem("tumblerFcmToken", token);
-            await saveFcmTokenToFirebase(token);
             showMessage("🔔 Crew notifications enabled!");
           }
         } catch (e) {
@@ -7328,12 +7413,13 @@
         if (prompt) prompt.remove();
       }
 
-      async function saveFcmTokenToFirebase(token) {
-        if (!db || !token || !userNick || userGroups.length === 0) return;
+      async function saveFcmTokenToFirebase(token, groups = userGroups, nick = userNick) {
+        const normalizedGroups = normalizeGroupList(groups);
+        if (!db || !token || !nick || normalizedGroups.length === 0) return;
         const updates = {};
-        userGroups.forEach((group) => {
+        normalizedGroups.forEach((group) => {
           // Store token under each crew the user belongs to
-          updates[`fcmTokens/${group}/${userNick}`] = {
+          updates[`fcmTokens/${group}/${nick}`] = {
             token: token,
             updatedAt: Date.now(),
           };
@@ -7802,6 +7888,7 @@
         if (!userGroups.includes(group)) {
           userGroups.push(group);
           localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+          markGroupsUpdated();
         }
         activeGroup = group;
         localStorage.setItem("tumblerNick", nick);
@@ -7835,17 +7922,28 @@
 
         // Hide the join form after successful join
         hideJoinNewCrew();
+
+        syncNotificationRegistration().catch(() => {});
       }
 
-      function logoutGroup() {
+      async function logoutGroup() {
         if (confirm("Leave this crew?")) {
-          userGroups = userGroups.filter((g) => g !== activeGroup);
+          const leavingGroup = activeGroup;
+          userGroups = userGroups.filter((g) => g !== leavingGroup);
           localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+          markGroupsUpdated();
+          saveProfileToFirebase();
+
+          if (db && userNick && leavingGroup) {
+            db.ref(`groups/${leavingGroup}/members/${userNick}`).remove().catch(() => {});
+          }
+          await removeFcmTokenRegistrations([leavingGroup], userNick);
 
           if (userGroups.length > 0) {
             activeGroup = userGroups[0];
             localStorage.setItem("tumblerActiveGroup", activeGroup);
             showLeaderboardView();
+            syncNotificationRegistration().catch(() => {});
           } else {
             activeGroup = "";
             localStorage.removeItem("tumblerActiveGroup");
@@ -8378,21 +8476,62 @@
           const localStats =
             JSON.parse(localStorage.getItem("tumblerStats")) || {};
           let needsSync = false;
+          const hasLocalGroupsState = localStorage.getItem("tumblerGroups") !== null;
+          const localGroupsUpdatedAt = getLocalGroupsUpdatedAt();
+          const remoteGroups = normalizeGroupList(profileData.groups);
+          const remoteGroupsUpdatedAt = Number(profileData.groupsUpdatedAt || 0);
 
-          // Restore groups if PWA has none
-          if (profileData.groups && profileData.groups.length > 0) {
-            // MERGE Firebase groups with local groups — never overwrite
-            const merged = [...new Set([...userGroups, ...profileData.groups])];
-            if (merged.length !== userGroups.length) {
-              userGroups = merged;
-              localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
-              needsSync = true;
+          // Sync crew membership from the most recently updated source.
+          if (!hasLocalGroupsState && remoteGroups.length > 0) {
+            userGroups = remoteGroups;
+            localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+            if (remoteGroupsUpdatedAt) {
+              localStorage.setItem(GROUPS_UPDATED_AT_KEY, String(remoteGroupsUpdatedAt));
             }
-            if (!activeGroup && userGroups.length > 0) {
-              activeGroup = userGroups[0];
+            needsSync = true;
+          } else if (
+            remoteGroupsUpdatedAt > localGroupsUpdatedAt &&
+            !haveSameGroups(userGroups, remoteGroups)
+          ) {
+            userGroups = remoteGroups;
+            localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+            localStorage.setItem(GROUPS_UPDATED_AT_KEY, String(remoteGroupsUpdatedAt));
+            needsSync = true;
+          } else if (
+            hasLocalGroupsState &&
+            !remoteGroupsUpdatedAt &&
+            !haveSameGroups(userGroups, remoteGroups)
+          ) {
+            // Legacy profiles had no group timestamp; trust local state once so stale crews stop reappearing.
+            markGroupsUpdated();
+            saveProfileToFirebase();
+          } else if (
+            hasLocalGroupsState &&
+            localGroupsUpdatedAt > remoteGroupsUpdatedAt &&
+            !haveSameGroups(userGroups, remoteGroups)
+          ) {
+            saveProfileToFirebase();
+          }
+
+          if (!activeGroup && userGroups.length > 0) {
+            activeGroup = userGroups[0];
+            localStorage.setItem("tumblerActiveGroup", activeGroup);
+          } else if (activeGroup && !userGroups.includes(activeGroup)) {
+            activeGroup = userGroups[0] || "";
+            if (activeGroup) {
               localStorage.setItem("tumblerActiveGroup", activeGroup);
+            } else {
+              localStorage.removeItem("tumblerActiveGroup");
             }
-            if (needsSync) showLeaderboardView();
+            needsSync = true;
+          }
+
+          if (needsSync && userGroups.length > 0) {
+            showLeaderboardView();
+            syncNotificationRegistration().catch(() => {});
+          } else if (needsSync) {
+            document.getElementById("view-setup").style.display = "block";
+            document.getElementById("view-leaderboard").style.display = "none";
           }
 
           // For each stat, take the higher/more recent value
@@ -8460,10 +8599,9 @@
 
         const localStats =
           JSON.parse(localStorage.getItem("tumblerStats")) || {};
-
-        db.ref(`userProfile/${userNick}`).update({
+        const profileUpdate = {
           nick: userNick,
-          groups: userGroups,
+          groups: normalizeGroupList(userGroups),
           totalCash: localStats.totalCash || 0,
           gameplayCash: localStats.gameplayCash || 0,
           currentStreak: localStats.currentStreak || 0,
@@ -8478,7 +8616,13 @@
           bestSingleHeist: localStats.bestSingleHeist || 0,
           previousStreak: localStats.previousStreak || 0,
           lastUpdated: Date.now(),
-        });
+        };
+        const groupsUpdatedAt = getLocalGroupsUpdatedAt();
+        if (groupsUpdatedAt) {
+          profileUpdate.groupsUpdatedAt = groupsUpdatedAt;
+        }
+
+        db.ref(`userProfile/${userNick}`).update(profileUpdate);
       }
 
       function hasPlayedTodayCheck() {
