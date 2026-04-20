@@ -3702,8 +3702,7 @@
 
         <div id="view-setup">
           <p style="color: #94a3b8; font-size: 0.9rem">
-            Enter a codename and a Crew ID to compete. Use your old codename
-            to import saved stats on this device.
+            Enter a codename and a Crew ID to compete.
           </p>
           <input
             type="text"
@@ -3719,8 +3718,19 @@
             placeholder="Crew ID (e.g., OfficeHeist)"
             maxlength="15"
           />
-          <button class="group-action-btn" onclick="joinGroup()">
+          <button
+            id="join-group-btn"
+            class="group-action-btn"
+            onclick="joinGroup()"
+          >
             Join / Create Crew
+          </button>
+          <button
+            id="recover-profile-btn"
+            class="group-action-btn secondary"
+            onclick="recoverCodename()"
+          >
+            Recover Existing Codename
           </button>
         </div>
 
@@ -6208,8 +6218,11 @@
         document.getElementById("group-id").focus();
 
         // Change button text
-        const joinBtn = document.querySelector("#view-setup .group-action-btn");
-        joinBtn.textContent = "Join New Crew";
+        const joinBtn = document.getElementById("join-group-btn");
+        if (joinBtn) joinBtn.textContent = "Join New Crew";
+
+        const recoverBtn = document.getElementById("recover-profile-btn");
+        if (recoverBtn) recoverBtn.style.display = userNick ? "none" : "block";
       }
 
       function hideJoinNewCrew() {
@@ -7787,6 +7800,10 @@
       function openGroupModal() {
         document.getElementById("group-modal").style.display = "flex";
         document.getElementById("player-nick").disabled = false;
+        const joinBtn = document.getElementById("join-group-btn");
+        if (joinBtn) joinBtn.textContent = "Join / Create Crew";
+        const recoverBtn = document.getElementById("recover-profile-btn");
+        if (recoverBtn) recoverBtn.style.display = userNick ? "none" : "block";
 
         // Check for invite crew in session
         const inviteCrew = sessionStorage.getItem("inviteCrew");
@@ -7828,7 +7845,11 @@
         }
       }
 
-      async function joinGroup() {
+      async function recoverCodename() {
+        await joinGroup({ recoverExistingProfile: true });
+      }
+
+      async function joinGroup(options = {}) {
         const nick = document
           .getElementById("player-nick")
           .value.trim()
@@ -7839,6 +7860,7 @@
           .toUpperCase();
 
         const isReusingCurrentNick = !!userNick && nick === userNick;
+        const recoverExistingProfile = !!options.recoverExistingProfile;
         let existingProfileData = null;
         let isImportingExistingProfile = false;
 
@@ -7864,6 +7886,16 @@
           return;
         }
 
+        if (recoverExistingProfile && userNick) {
+          alert("Recovery is only available before choosing a codename on this device.");
+          return;
+        }
+
+        if (recoverExistingProfile && !db) {
+          alert("Recovery needs a connection to saved profiles. Please try again.");
+          return;
+        }
+
         if (userGroups.includes(group)) {
           activeGroup = group;
           localStorage.setItem("tumblerActiveGroup", group);
@@ -7879,8 +7911,8 @@
           try {
             const profileSnap = await db.ref(`userProfile/${nick}`).once("value");
             if (profileSnap.exists()) {
-              if (userNick) {
-                alert("This name is already taken. Please choose a different one.");
+              if (!recoverExistingProfile || userNick) {
+                alert("This name is already taken. Use recovery if this is your codename.");
                 return;
               }
 
@@ -7891,8 +7923,15 @@
 
               existingProfileData = profileSnap.val() || {};
               isImportingExistingProfile = true;
+            } else if (recoverExistingProfile) {
+              alert("No saved profile found for that codename. Check the spelling or create a new one.");
+              return;
             }
           } catch (e) {
+            if (recoverExistingProfile) {
+              alert("Couldn't check saved profiles right now. Please try again.");
+              return;
+            }
             // If Firebase is unreachable, allow offline play
           }
         }
