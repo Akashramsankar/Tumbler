@@ -3702,7 +3702,8 @@
 
         <div id="view-setup">
           <p style="color: #94a3b8; font-size: 0.9rem">
-            Enter a codename and a Crew ID to compete.
+            Enter a codename and a Crew ID to compete. Use your old codename
+            to import saved stats on this device.
           </p>
           <input
             type="text"
@@ -7838,6 +7839,8 @@
           .toUpperCase();
 
         const isReusingCurrentNick = !!userNick && nick === userNick;
+        let existingProfileData = null;
+        let isImportingExistingProfile = false;
 
         if (!isReusingCurrentNick && nick.length < 2) {
           alert("Name must be 2+ chars.");
@@ -7870,13 +7873,24 @@
           return;
         }
 
-        // Check if username is already taken by another user
+        // Existing names can be recovered on a fresh device, but not claimed
+        // over a different codename already stored on this device.
         if (db && !isReusingCurrentNick) {
           try {
             const profileSnap = await db.ref(`userProfile/${nick}`).once("value");
             if (profileSnap.exists()) {
-              alert("This name is already taken. Please choose a different one.");
-              return;
+              if (userNick) {
+                alert("This name is already taken. Please choose a different one.");
+                return;
+              }
+
+              const shouldImport = confirm(
+                `Codename ${nick} already exists. Import its saved stats to this device? Only continue if this is your codename.`,
+              );
+              if (!shouldImport) return;
+
+              existingProfileData = profileSnap.val() || {};
+              isImportingExistingProfile = true;
             }
           } catch (e) {
             // If Firebase is unreachable, allow offline play
@@ -7885,11 +7899,37 @@
 
         // 1. Save Locally
         userNick = nick;
-        if (!userGroups.includes(group)) {
+
+        if (isImportingExistingProfile) {
+          const remoteGroups = normalizeGroupList(existingProfileData.groups);
+          const combinedGroups = normalizeGroupList([
+            ...remoteGroups,
+            ...userGroups,
+            group,
+          ]);
+          const groupListChanged = !haveSameGroups(remoteGroups, combinedGroups);
+
+          userGroups = combinedGroups;
+          localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
+
+          if (existingProfileData.groupsUpdatedAt && !groupListChanged) {
+            localStorage.setItem(
+              GROUPS_UPDATED_AT_KEY,
+              String(existingProfileData.groupsUpdatedAt),
+            );
+          } else {
+            markGroupsUpdated();
+          }
+
+          importProfileStatsToLocal(existingProfileData, {
+            trustRemoteStreak: true,
+          });
+        } else if (!userGroups.includes(group)) {
           userGroups.push(group);
           localStorage.setItem("tumblerGroups", JSON.stringify(userGroups));
           markGroupsUpdated();
         }
+
         activeGroup = group;
         localStorage.setItem("tumblerNick", nick);
         localStorage.setItem("tumblerActiveGroup", group);
@@ -7922,6 +7962,10 @@
 
         // Hide the join form after successful join
         hideJoinNewCrew();
+
+        if (isImportingExistingProfile) {
+          showMessage("✅ Stats imported. Welcome back!");
+        }
 
         syncNotificationRegistration().catch(() => {});
       }
@@ -8459,6 +8503,68 @@
             }
           });
         });
+      }
+
+      function importProfileStatsToLocal(profileData, options = {}) {
+        if (!profileData) return false;
+
+        const localStats =
+          JSON.parse(localStorage.getItem("tumblerStats")) || {};
+        let changed = false;
+
+        const fieldsToImport = [
+          "totalCash",
+          "gameplayCash",
+          "currentStreak",
+          "maxStreak",
+          "played",
+          "won",
+          "archiveWon",
+          "streakProtectors",
+          "lastProtectorPurchase",
+          "lastStreakMilestone",
+          "bestSingleHeist",
+          "previousStreak",
+        ];
+
+        fieldsToImport.forEach((field) => {
+          const remoteValue = Number(profileData[field]);
+          if (!Number.isFinite(remoteValue)) return;
+          if (remoteValue <= (localStats[field] || 0)) return;
+
+          if (field === "currentStreak" && !options.trustRemoteStreak) {
+            const playedToday = !!localStorage.getItem(getStorageKey(currentPlayDate));
+            if (!playedToday && !wasYesterdayPlayed()) return;
+          }
+
+          localStats[field] = remoteValue;
+          changed = true;
+        });
+
+        if (profileData.guessDistribution) {
+          const remoteDist = Array.isArray(profileData.guessDistribution)
+            ? profileData.guessDistribution
+            : [];
+          const localDist = Array.isArray(localStats.guessDistribution)
+            ? localStats.guessDistribution
+            : [0, 0, 0, 0, 0, 0];
+          const merged = [0, 1, 2, 3, 4, 5].map((index) =>
+            Math.max(Number(remoteDist[index]) || 0, Number(localDist[index]) || 0),
+          );
+
+          if (merged.some((value, index) => value !== (localDist[index] || 0))) {
+            localStats.guessDistribution = merged;
+            changed = true;
+          }
+        }
+
+        if (changed) {
+          localStorage.setItem("tumblerStats", JSON.stringify(localStats));
+          stats = localStats;
+          updateStreakIndicator();
+        }
+
+        return changed;
       }
 
       function syncAllStatsFromFirebase() {
