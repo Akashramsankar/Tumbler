@@ -4275,7 +4275,47 @@
 
         const gameData = JSON.parse(saved);
         // Check if they WON yesterday (not just played)
-        return gameData.cashWon > 0;
+        return (gameData.cashWon || gameData.cash || 0) > 0;
+      }
+
+      async function wasYesterdayWon() {
+        if (wasYesterdayPlayed()) return true;
+        if (!db || !userNick || userGroups.length === 0) return false;
+
+        const yesterday = new Date(currentPlayDate);
+        yesterday.setDate(yesterday.getDate() - 1);
+        yesterday.setHours(0, 0, 0, 0);
+
+        try {
+          const dateKey = getDateKey(yesterday);
+
+          for (const crewId of userGroups) {
+            const snapshot = await db
+              .ref(`scores/${crewId}/${dateKey}/${userNick}`)
+              .once("value");
+            const scoreData = snapshot.val();
+            const cashWon = Number(scoreData?.cash || scoreData?.cashWon || 0);
+
+            if (cashWon > 0) {
+              localStorage.setItem(
+                getStorageKey(yesterday),
+                JSON.stringify({
+                  attempts: scoreData.attempts || 6,
+                  cashWon,
+                  solveTime: scoreData.time || scoreData.solveTime || 0,
+                  intelUsed: scoreData.intel || scoreData.intelUsed || false,
+                  timestamp: scoreData.timestamp || Date.now(),
+                  recoveredFromFirebase: true,
+                }),
+              );
+              return true;
+            }
+          }
+        } catch (e) {
+          return false;
+        }
+
+        return false;
       }
 
       function toggleMute() {
@@ -4890,15 +4930,17 @@
           _tgt.s(getDailyWord());
 
           // Check if already played today
-          if (await hasPlayedToday()) {
+          const playedToday = await hasPlayedToday();
+          if (playedToday) {
             loadCompletedGame();
             return;
           }
 
           // CHECK AND BREAK STREAK ON PAGE LOAD IF NECESSARY
+          const wonYesterday = await wasYesterdayWon();
           if (
-            !(await hasPlayedToday()) &&
-            !wasYesterdayPlayed() &&
+            !playedToday &&
+            !wonYesterday &&
             stats.currentStreak > 0
           ) {
             // Streak should be broken - user missed yesterday and hasn't played today yet
@@ -6008,7 +6050,7 @@
         }
 
         setTimeout(
-          () => {
+          async () => {
             if (correctCount === WORD_LENGTH) {
               isGameOver = true;
               document
@@ -6027,7 +6069,7 @@
               if (isToday) {
                 stats.played++;
                 stats.won++;
-                if (wasYesterdayPlayed()) {
+                if (await wasYesterdayWon()) {
                   stats.currentStreak++;
                 } else {
                   if (stats.streakProtectors > 0) {
