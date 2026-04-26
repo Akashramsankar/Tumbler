@@ -18,8 +18,8 @@
   "WARM", "YAWN", "ZINC", "AURA", "FOOD", "GATE", "FAST", "CANE",
   "DARK", "EASY", "FIRM", "GLOW", "HUGE", "IRON", "JUMP", "KITE",
   "CAKE", "COIL", "DUCK", "ECHO", "FORK", "GUNS", "HALL", "INCH",
-  "JOKE", "KIND", "GRIP", "HISS", "MUTE", "NICE", "ODOR", "PICK",
-  "QUAD", "ROPE", "SICK", "TILE", "UNIT", "VOWS", "ZONE", "ALLY",
-  "BEAM", "CHIP", "DIME", "EASE", "LURE", "MILD", "NEAR", "PEER",
-  "QUIP", "RIFT", "SLOT"
+  "HISS", "GRIP", "KIND", "JOKE", "MUTE", "ODOR", "PICK", "NICE",
+  "ROPE", "QUAD", "SICK", "UNIT", "VOWS", "TILE", "ZONE", "ALLY",
+  "DIME", "CHIP", "BEAM", "EASE", "LURE", "MILD", "PEER", "NEAR",
+  "SLOT", "RIFT", "QUIP"
 ]
