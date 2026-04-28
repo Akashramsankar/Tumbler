@@ -3243,6 +3243,7 @@
             >
           </div>
           <div
+            id="protector-actions"
             style="
               display: grid;
               grid-template-columns: 1fr 1fr;
@@ -3268,6 +3269,16 @@
               Buy Recovery<br /><span style="opacity: 0.8">$30,000</span>
             </button>
           </div>
+          <div
+            id="protector-status-note"
+            style="
+              display: none;
+              font-size: 0.65rem;
+              color: #94a3b8;
+              margin-top: 6px;
+              line-height: 1.4;
+            "
+          ></div>
           <div
             style="
               font-size: 0.65rem;
@@ -3615,16 +3626,18 @@
         <!-- Badge Showcase -->
         <div id="badge-showcase" style="display: none">
           <div class="badge-showcase">
-            <div class="showcase-label">🏆 Your Weekly Crew Badges</div>
+            <div class="showcase-label">🏆 Your Crew & Career Badges</div>
             <div
               style="
                 font-size: 0.7rem;
                 color: #94a3b8;
                 text-align: center;
                 margin-bottom: 10px;
+                line-height: 1.5;
               "
             >
-              Compete for new badges each week!
+              Weekly crew badges reset every Monday.<br />
+              Master Thief badges are permanent: Bronze $1M, Silver $5M, Gold $10M career stash.
             </div>
             <div class="user-badges" id="user-badges-display">
               <div style="color: #64748b; font-size: 0.85rem">
@@ -4091,6 +4104,41 @@
       </div>
     </div>
 
+    <div
+      id="announcement-modal"
+      class="tutorial-modal"
+      style="display: none"
+      onclick="if(event.target===this)closeAnnouncementModal()"
+    >
+      <div class="tutorial-content" style="max-width: 420px">
+        <h2
+          id="announcement-title"
+          style="margin-top: 0; font-size: 1.45rem; text-align: center"
+        ></h2>
+        <div
+          id="announcement-body"
+          style="
+            background: var(--safe-inset);
+            border: 1px solid var(--safe-border);
+            border-radius: 12px;
+            padding: 16px;
+            margin: 18px 0;
+            font-size: 0.84rem;
+            color: #cbd5e1;
+            line-height: 1.6;
+            text-align: center;
+          "
+        ></div>
+        <button
+          id="announcement-confirm-btn"
+          class="tutorial-btn"
+          onclick="closeAnnouncementModal()"
+        >
+          Got it
+        </button>
+      </div>
+    </div>
+
     <!-- Turf War Rules Modal -->
     <div id="turf-rules-modal" onclick="if(event.target===this)closeTurfRules()">
       <div class="turf-rules-content">
@@ -4102,7 +4150,7 @@
           <ul>
             <li><strong>Mon–Wed:</strong> Your crew is registered based on recent activity</li>
             <li><strong>Wed night:</strong> Matchups are locked in</li>
-            <li><strong>All week:</strong> Every puzzle you solve earns cash for your crew's vault</li>
+            <li><strong>Thu–Sun:</strong> Every daily solve adds cash to your crew's vault</li>
             <li><strong>Monday:</strong> Results are in, rewards paid out</li>
           </ul>
         </div>
@@ -4113,7 +4161,7 @@
           <ul>
             <li><strong>First crew to fill the vault wins instantly</strong> — even mid-week</li>
             <li>If nobody fills it, the crew with the higher <strong>battle score</strong> wins on Monday</li>
-            <li>The vault target scales to the smaller crew, so it's always fair</li>
+            <li>The target is based on the smaller crew's <strong>recent active players</strong> across a 4-day battle</li>
           </ul>
         </div>
 
@@ -4177,9 +4225,9 @@
       const TURF_WAR_DRAW_REWARD = 1500;
       const TURF_WAR_LOSS_REWARD = 500;
       const TURF_WAR_DAILY_PARTICIPATION_BONUS = 500;
-      const TURF_WAR_VAULT_BASE_PER_MEMBER = 15000;
-      const TURF_WAR_VAULT_DAYS = 7;
-      const TURF_WAR_VAULT_FILL_FACTOR = 0.6;
+      const TURF_WAR_VAULT_MAX_DAILY_PER_PLAYER = 10000;
+      const TURF_WAR_BATTLE_DAYS = 4;
+      const TURF_WAR_VAULT_FILL_FACTOR = 0.75;
       const TURF_WAR_REGISTRATION_CUTOFF_DAY = 3; // Wednesday (0=Sun, 3=Wed)
       const TURF_WAR_DRAW_THRESHOLD = 0.05; // 5% margin for draw
 
@@ -4421,7 +4469,24 @@
         }
       }
 
+      function getProtectorCooldownRemainingMs(now = Date.now()) {
+        const oneMonth = 30 * 24 * 60 * 60 * 1000;
+        return Math.max(
+          0,
+          oneMonth - (now - (stats.lastProtectorPurchase || 0)),
+        );
+      }
+
+      function getProtectorCooldownDaysRemaining(now = Date.now()) {
+        const remaining = getProtectorCooldownRemainingMs(now);
+        return remaining > 0
+          ? Math.ceil(remaining / (24 * 60 * 60 * 1000))
+          : 0;
+      }
+
       function buyProtector() {
+        const cooldownRemaining = getProtectorCooldownRemainingMs();
+
         // Check if streak is already broken
         if (stats.currentStreak === 0) {
           showMessage("❌ Streak is already broken! Use Recovery instead.");
@@ -4444,14 +4509,8 @@
         }
 
         // Check monthly limit
-        const now = Date.now();
-        const oneMonth = 30 * 24 * 60 * 60 * 1000;
-        const timeSinceLastPurchase = now - (stats.lastProtectorPurchase || 0);
-
-        if (timeSinceLastPurchase < oneMonth) {
-          const daysRemaining = Math.ceil(
-            (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000),
-          );
+        if (cooldownRemaining > 0) {
+          const daysRemaining = getProtectorCooldownDaysRemaining();
           showMessage(`❌ Available in ${daysRemaining} days!`);
           playSound("error");
           return;
@@ -6299,28 +6358,46 @@
 
         // Check protector purchase availability
         const protectorBtn = document.getElementById("protector-btn");
+        const protectorActions = document.getElementById("protector-actions");
+        const protectorStatusNote = document.getElementById(
+          "protector-status-note",
+        );
+        const recoveryBtn = document.getElementById("recovery-btn");
         if (protectorBtn) {
-          const now = Date.now();
-          const oneMonth = 30 * 24 * 60 * 60 * 1000;
-          const timeSinceLastPurchase =
-            now - (stats.lastProtectorPurchase || 0);
+          const daysRemaining = getProtectorCooldownDaysRemaining();
 
-          if (timeSinceLastPurchase < oneMonth) {
-            const daysRemaining = Math.ceil(
-              (oneMonth - timeSinceLastPurchase) / (24 * 60 * 60 * 1000),
-            );
-            protectorBtn.disabled = true;
-            protectorBtn.style.opacity = "0.5";
-            protectorBtn.innerHTML = `Buy Insurance<br><span style="opacity: 0.8;">Available in ${daysRemaining}d</span>`;
+          if (daysRemaining > 0) {
+            protectorBtn.style.display = "none";
+            if (protectorActions) {
+              protectorActions.style.gridTemplateColumns = "1fr";
+            }
+            if (recoveryBtn) {
+              recoveryBtn.style.gridColumn = "1 / -1";
+            }
+            if (protectorStatusNote) {
+              protectorStatusNote.style.display = "block";
+              protectorStatusNote.textContent =
+                `Next insurance purchase available in ${daysRemaining} day${daysRemaining === 1 ? "" : "s"}.`;
+            }
           } else {
+            protectorBtn.style.display = "";
             protectorBtn.disabled = false;
             protectorBtn.style.opacity = "1";
             protectorBtn.innerHTML = `Buy Insurance<br><span style="opacity: 0.8;">$20,000</span>`;
+            if (protectorActions) {
+              protectorActions.style.gridTemplateColumns = "1fr 1fr";
+            }
+            if (recoveryBtn) {
+              recoveryBtn.style.gridColumn = "";
+            }
+            if (protectorStatusNote) {
+              protectorStatusNote.style.display = "none";
+              protectorStatusNote.textContent = "";
+            }
           }
         }
 
         // Enable/disable recovery button
-        const recoveryBtn = document.getElementById("recovery-btn");
         if (recoveryBtn) {
           if (stats.currentStreak === 0 && wasYesterdayPlayed()) {
             recoveryBtn.disabled = false;
@@ -7554,6 +7631,8 @@
         localStorage.getItem("tumblerCrewIntroSeen") === "true";
       let currentTab = "daily";
       let turfWarListenerRef = null;
+      let announcementModalOpen = false;
+      const announcementQueue = [];
 
       // Startup init — userNick/userGroups now declared
       if (db && userNick) {
@@ -7561,6 +7640,9 @@
         if (userGroups.length > 0) {
           userGroups.forEach((group) => initTurfWar(group));
           flushOfflineVaultQueue();
+          setTimeout(() => {
+            userGroups.forEach((group) => checkTurfWarAnnouncements(group));
+          }, 1800);
         }
       }
 
@@ -8030,6 +8112,11 @@
             syncTodaysScore();
           }
           syncAllStatsFromFirebase();
+        }
+
+        if (db) {
+          initTurfWar(group);
+          setTimeout(() => checkTurfWarAnnouncements(group), 1200);
         }
 
         //saveProfileToFirebase();
@@ -8505,7 +8592,9 @@
             });
 
             // Update Turf War vault contribution
-            updateTurfWarVault(group, cash, userNick);
+            if (isTurfWarBattleDay()) {
+              updateTurfWarVault(group, cash, userNick);
+            }
           }
 
           // Register crew for Turf War if registration window is open
@@ -8921,37 +9010,6 @@
         }
       }
 
-      function maybeShowBadgeIntroPopup() {
-        if (localStorage.getItem("tumblerBadgeIntroSeen") === "true") return;
-
-        const popup = document.createElement("div");
-        popup.style.cssText = `
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    background: #1e293b; border: 1px solid #334155;
-    border-radius: 16px; padding: 18px 20px;
-    max-width: 340px; width: 90%;
-    box-shadow: 0 8px 32px rgba(0,0,0,0.7);
-    z-index: 9997; font-family: 'Chivo Mono', monospace; color: #f8fafc;
-  `;
-        popup.innerHTML = `
-    <div style="font-weight:700; font-size:1rem; margin-bottom:8px;">🏆 New: Master Thief Badges!</div>
-    <div style="font-size:0.8rem; color:#94a3b8; line-height:1.6; margin-bottom:14px;">
-      Permanent badges based on your <strong style="color:#f8fafc;">Career Stash</strong> — visible next to your name across all crews.<br><br>
-      🔓 Bronze Master Thief — $1M+<br>
-      🔐 Silver Master Thief — $5M+<br>
-      🗝️ Gold Master Thief — $10M+
-    </div>
-    <button onclick="this.parentElement.remove(); localStorage.setItem('tumblerBadgeIntroSeen','true');" style="
-      width:100%; background:#6aaa64; color:#fff; border:none;
-      padding:10px; border-radius:8px; cursor:pointer;
-      font-family:'Chivo Mono',monospace; font-weight:700; font-size:0.85rem;
-    ">Got it!</button>
-  `;
-        document.body.appendChild(popup);
-      }
-
-      setTimeout(maybeShowBadgeIntroPopup, 1500);
-
       // ==================== TURF WAR SYSTEM ====================
 
       function showTurfRules() {
@@ -8960,6 +9018,181 @@
 
       function closeTurfRules() {
         document.getElementById("turf-rules-modal").style.display = "none";
+      }
+
+      function formatCashCompact(value) {
+        if (value >= 1000000) return `$${(value / 1000000).toFixed(1)}M`;
+        if (value >= 1000) return `$${(value / 1000).toFixed(1)}k`;
+        return `$${value}`;
+      }
+
+      function queueAnnouncementModal({
+        title,
+        bodyHTML,
+        buttonLabel = "Got it",
+      }) {
+        announcementQueue.push({ title, bodyHTML, buttonLabel });
+        if (!announcementModalOpen) {
+          showNextAnnouncementModal();
+        }
+      }
+
+      function showNextAnnouncementModal() {
+        if (announcementModalOpen || announcementQueue.length === 0) return;
+
+        const next = announcementQueue.shift();
+        const modal = document.getElementById("announcement-modal");
+        const titleEl = document.getElementById("announcement-title");
+        const bodyEl = document.getElementById("announcement-body");
+        const buttonEl = document.getElementById("announcement-confirm-btn");
+
+        if (!modal || !titleEl || !bodyEl || !buttonEl) return;
+
+        titleEl.textContent = next.title;
+        bodyEl.innerHTML = next.bodyHTML;
+        buttonEl.textContent = next.buttonLabel;
+        announcementModalOpen = true;
+        modal.style.display = "flex";
+      }
+
+      function closeAnnouncementModal() {
+        const modal = document.getElementById("announcement-modal");
+        if (modal) {
+          modal.style.display = "none";
+        }
+        announcementModalOpen = false;
+        setTimeout(showNextAnnouncementModal, 0);
+      }
+
+      function getTurfWarAnnouncementKeys(weekKey, crewId) {
+        return {
+          matchupKey: `tumblerTurfWarMatchupAnnounced_${weekKey}_${crewId}`,
+          resultKey: `tumblerTurfWarResultAnnounced_${weekKey}_${crewId}`,
+        };
+      }
+
+      function isTurfWarBattleDay(date = new Date()) {
+        const day = date.getDay();
+        return day === 0 || day >= 4;
+      }
+
+      function getTurfWarBattleDates(weekKey) {
+        return getWeekDates(weekKey).slice(-TURF_WAR_BATTLE_DAYS);
+      }
+
+      function getTurfWarRewardForStatus(status) {
+        if (status === "won_vault") return TURF_WAR_VAULT_WIN_REWARD;
+        if (status === "won_score") return TURF_WAR_SCORE_WIN_REWARD;
+        if (status === "draw") return TURF_WAR_DRAW_REWARD;
+        if (status === "lost") return TURF_WAR_LOSS_REWARD;
+        return 0;
+      }
+
+      function maybeQueueTurfWarMatchAnnouncement(crewId, weekKey, war) {
+        if (!war || !war.opponent || war.status !== "active") return;
+
+        const { matchupKey } = getTurfWarAnnouncementKeys(weekKey, crewId);
+        if (localStorage.getItem(matchupKey)) return;
+
+        const weekEnd = getWeekEndForKey(weekKey);
+        if (new Date() >= weekEnd) return;
+
+        const vaultTarget = (war.vault || {}).target || 0;
+        queueAnnouncementModal({
+          title: "Turf War Started",
+          bodyHTML: `
+            <strong>${escapeHTML(crewId)}</strong> is up against <strong>${escapeHTML(war.opponent)}</strong> this week.<br /><br />
+            Battle days run <strong>Thursday through Sunday</strong>.<br />
+            Shared vault target: <strong>${formatCashCompact(vaultTarget)}</strong>.
+          `,
+          buttonLabel: "Let's go",
+        });
+
+        localStorage.setItem(matchupKey, "done");
+      }
+
+      function maybeQueueTurfWarResultAnnouncement(crewId, weekKey, war, oppWar) {
+        if (!war || !war.opponent || war.status === "active" || war.status === "no_match") {
+          return;
+        }
+
+        const { resultKey } = getTurfWarAnnouncementKeys(weekKey, crewId);
+        if (localStorage.getItem(resultKey)) return;
+
+        const ourTotal = (war.vault || {}).current || 0;
+        const theirTotal = (oppWar?.vault || {}).current || 0;
+        let title = "Turf War Results";
+        let bodyHTML = "";
+
+        if (war.status === "draw") {
+          title = "Turf War Draw";
+          bodyHTML = `
+            <strong>${escapeHTML(crewId)}</strong> and <strong>${escapeHTML(war.opponent)}</strong> finished dead even.<br /><br />
+            Final vault: <strong>${formatCashCompact(ourTotal)}</strong> to <strong>${formatCashCompact(theirTotal)}</strong>.<br />
+            Reward available: <strong>${formatCashCompact(TURF_WAR_DRAW_REWARD)}</strong> per player, plus the daily participation bonus.
+          `;
+        } else {
+          const weWon = war.status === "won_vault" || war.status === "won_score";
+          const winnerCrew = weWon ? crewId : war.opponent;
+          const winnerStatus = weWon
+            ? war.status
+            : (oppWar?.status === "won_vault" || oppWar?.status === "won_score"
+              ? oppWar.status
+              : ((oppWar?.vault || {}).filledAt ? "won_vault" : "won_score"));
+          const reward = getTurfWarRewardForStatus(winnerStatus);
+          const winReason = winnerStatus === "won_vault"
+            ? "cracked the vault first"
+            : "won on battle score";
+
+          title = weWon ? "Turf War Won" : "Turf War Lost";
+          bodyHTML = `
+            <strong>${escapeHTML(winnerCrew)}</strong> ${winReason}.<br /><br />
+            Final vault: <strong>${formatCashCompact(ourTotal)}</strong> to <strong>${formatCashCompact(theirTotal)}</strong>.<br />
+            Winning crew reward: <strong>${formatCashCompact(reward)}</strong> per player, plus the daily participation bonus.
+          `;
+        }
+
+        queueAnnouncementModal({
+          title,
+          bodyHTML,
+        });
+
+        localStorage.setItem(resultKey, "done");
+      }
+
+      async function checkTurfWarAnnouncements(crewId) {
+        if (!db || !crewId) return;
+
+        const currentWeekKey = getTurfWarWeekKey();
+        const prevWeek = new Date();
+        prevWeek.setDate(prevWeek.getDate() - 7);
+        const prevWeekKey = getTurfWarWeekKey(prevWeek);
+        const weekKeys = prevWeekKey === currentWeekKey
+          ? [currentWeekKey]
+          : [prevWeekKey, currentWeekKey];
+
+        for (const weekKey of weekKeys) {
+          try {
+            const snap = await db.ref(`turfWars/${weekKey}/${crewId}`).once("value");
+            const war = snap.val();
+            if (!war || !war.opponent) continue;
+
+            if (weekKey === currentWeekKey) {
+              maybeQueueTurfWarMatchAnnouncement(crewId, weekKey, war);
+            }
+
+            if (war.status === "active" || war.status === "no_match") continue;
+
+            const oppSnap = await db.ref(`turfWars/${weekKey}/${war.opponent}`).once("value");
+            maybeQueueTurfWarResultAnnouncement(
+              crewId,
+              weekKey,
+              war,
+              oppSnap.val() || {},
+            );
+          } catch (e) {
+          }
+        }
       }
 
       // Load and render the Turf War tab
@@ -8997,7 +9230,8 @@
                   <div style="color:#f8fafc; font-weight:700; margin-bottom:8px;">Turf War — Matchmaking <button class="turf-info-btn" onclick="showTurfRules()" title="How Turf Wars work">?</button></div>
                   <div style="color:#94a3b8; font-size:0.8rem; line-height:1.5;">
                     Your crew is registered for this week's battle.<br>
-                    Matchups are determined on <strong style="color:#f8fafc;">Wednesday night</strong>.<br><br>
+                    Matchups are determined on <strong style="color:#f8fafc;">Wednesday night</strong>.<br>
+                    Battles run <strong style="color:#f8fafc;">Thursday through Sunday</strong>.<br><br>
                     Keep playing to improve your crew's ranking!
                   </div>
                 </div>`;
@@ -9078,7 +9312,7 @@
                 const registry = regSnap.val() || {};
 
                 // Count participation from weekly scores
-                const weekDates = getWeekDates(weekKey);
+                const weekDates = getTurfWarBattleDates(weekKey);
                 let ourParticipants = new Set();
                 let theirParticipants = new Set();
                 let scoresLoaded = 0;
@@ -9130,10 +9364,6 @@
         const ourScore = calculateBattleScore(ourProgress, ourParticipation, ourMembers);
         const theirScore = calculateBattleScore(theirProgress, theirParticipation, theirMembers);
 
-        // Format cash display
-        const fmtCash = (v) => v >= 1000000 ? `$${(v/1000000).toFixed(1)}M` :
-                               v >= 1000 ? `$${(v/1000).toFixed(1)}k` : `$${v}`;
-
         // Result banner
         let resultHTML = "";
         const status = war.status;
@@ -9161,7 +9391,7 @@
               <div class="turf-contributor-row">
                 <span class="rank">${i + 1}.</span>
                 <span class="name">${escapeHTML(c.nick)}</span>
-                <span class="cash">${fmtCash(c.cash)}</span>
+                <span class="cash">${formatCashCompact(c.cash)}</span>
               </div>`;
           });
           contributorHTML += `</div>`;
@@ -9177,7 +9407,7 @@
                                 h.result === "draw" ? "result-draw" : "result-lost";
             const resultText = h.result.startsWith("won") ? "Won" :
                                h.result === "draw" ? "Draw" : "Lost";
-            const rewardText = h.reward ? ` (+${fmtCash(h.reward)})` : "";
+            const rewardText = h.reward ? ` (+${formatCashCompact(h.reward)})` : "";
             historyHTML += `
               <div class="turf-history-row">
                 <span>${wk}</span>
@@ -9207,7 +9437,7 @@
             <div class="vault-crew-row">
               <div class="vault-crew-label">
                 <span>${escapeHTML(activeGroup)}</span>
-                <span style="color:var(--color-cash);">${fmtCash(ourProgress)}</span>
+                <span style="color:var(--color-cash);">${formatCashCompact(ourProgress)}</span>
               </div>
               <div class="vault-bar-track">
                 <div class="vault-bar-fill ours" style="width:${ourPct}%"></div>
@@ -9216,18 +9446,18 @@
             <div class="vault-crew-row" style="margin-bottom:0;">
               <div class="vault-crew-label">
                 <span>${escapeHTML(opponent)}</span>
-                <span style="color:var(--color-close);">${fmtCash(theirProgress)}</span>
+                <span style="color:var(--color-close);">${formatCashCompact(theirProgress)}</span>
               </div>
               <div class="vault-bar-track">
                 <div class="vault-bar-fill theirs" style="width:${theirPct}%"></div>
               </div>
             </div>
-            <div class="vault-target-label">Target: ${fmtCash(vaultTarget)}</div>
+            <div class="vault-target-label">Target: ${formatCashCompact(vaultTarget)}</div>
           </div>
 
           <div class="turf-war-stats">
             <div>
-              <div class="stat-value">${fmtCash(ourScore)} vs ${fmtCash(theirScore)}</div>
+              <div class="stat-value">${formatCashCompact(ourScore)} vs ${formatCashCompact(theirScore)}</div>
               <div class="stat-label">Battle Score</div>
             </div>
             <div>
@@ -9253,7 +9483,7 @@
             if (fillEl) fillEl.style.width = `${newPct}%`;
             if (labelEl) {
               const cashSpan = labelEl.querySelector("span:last-child");
-              if (cashSpan) cashSpan.textContent = fmtCash(newVal);
+              if (cashSpan) cashSpan.textContent = formatCashCompact(newVal);
             }
           });
         }
@@ -9311,10 +9541,10 @@
 
       // Calculate vault target scaled to crew sizes
       function calculateVaultTarget(ourSize, theirSize) {
-        const smaller = Math.max(Math.min(ourSize, theirSize), 2);
+        const smaller = Math.max(Math.min(ourSize, theirSize), 1);
         return Math.floor(
-          TURF_WAR_VAULT_BASE_PER_MEMBER * smaller *
-          TURF_WAR_VAULT_DAYS * TURF_WAR_VAULT_FILL_FACTOR
+          TURF_WAR_VAULT_MAX_DAILY_PER_PLAYER * smaller *
+          TURF_WAR_BATTLE_DAYS * TURF_WAR_VAULT_FILL_FACTOR
         );
       }
 
@@ -9334,51 +9564,36 @@
         const weekKey = getTurfWarWeekKey();
 
         return new Promise((resolve, reject) => {
-          // Get previous week's stats for matchmaking quality
-          const prevWeek = new Date();
-          prevWeek.setDate(prevWeek.getDate() - 7);
-          const prevWeekKey = getTurfWarWeekKey(prevWeek);
+          // Count only players who actually solved within the recent 7 score days.
+          db.ref(`scores/${crewId}`).orderByKey().limitToLast(7).once("value", (scoresSnap) => {
+            const allScores = scoresSnap.val() || {};
+            const recentParticipants = new Set();
+            const playerCash = {};
 
-          // Count active members (played in last 14 days)
-          db.ref(`career/${crewId}`).once("value", (snap) => {
-            const careers = snap.val() || {};
-            const fourteenDaysAgo = Date.now() - (14 * 86400000);
-            let activeCount = 0;
-            let totalWeeklyCash = 0;
-            let activePlayers = 0;
-
-            Object.values(careers).forEach((c) => {
-              if ((c.lastPlayed || 0) >= fourteenDaysAgo) {
-                activeCount++;
-              }
+            Object.values(allScores).forEach((dayScores) => {
+              Object.entries(dayScores).forEach(([nick, data]) => {
+                recentParticipants.add(nick);
+                playerCash[nick] = (playerCash[nick] || 0) + (data.cash || 0);
+              });
             });
 
+            const activeCount = recentParticipants.size;
             if (activeCount === 0) {
               resolve();
               return;
             }
 
-            // Get last week's scores for avg cash
-            db.ref(`scores/${crewId}`).orderByKey().limitToLast(7).once("value", (scoresSnap) => {
-              const allScores = scoresSnap.val() || {};
-              const playerCash = {};
-              Object.values(allScores).forEach((dayScores) => {
-                Object.entries(dayScores).forEach(([nick, data]) => {
-                  playerCash[nick] = (playerCash[nick] || 0) + (data.cash || 0);
-                });
-              });
-              const players = Object.values(playerCash);
-              const avgWeeklyCash = players.length > 0
-                ? Math.floor(players.reduce((a, b) => a + b, 0) / players.length)
-                : 0;
+            const players = Object.values(playerCash);
+            const avgWeeklyCash = players.length > 0
+              ? Math.floor(players.reduce((a, b) => a + b, 0) / players.length)
+              : 0;
 
-              db.ref(`turfWarRegistry/${weekKey}/${crewId}`).set({
-                memberCount: activeCount,
-                avgWeeklyCash: avgWeeklyCash,
-                registered: firebase.database.ServerValue.TIMESTAMP,
-                matched: false,
-              }).then(resolve).catch((err) => reject(err));
-            });
+            db.ref(`turfWarRegistry/${weekKey}/${crewId}`).set({
+              memberCount: activeCount,
+              avgWeeklyCash: avgWeeklyCash,
+              registered: firebase.database.ServerValue.TIMESTAMP,
+              matched: false,
+            }).then(resolve).catch((err) => reject(err));
           });
         });
       }
@@ -9486,11 +9701,13 @@
               checkAndResolveTurfWar(crewId, weekKey);
             }
             localStorage.setItem(matchKey, "done");
+            checkTurfWarAnnouncements(crewId);
             return;
           }
 
           if (existing && existing.status === "no_match") {
             localStorage.setItem(matchKey, "done");
+            checkTurfWarAnnouncements(crewId);
             return;
           }
 
@@ -9518,6 +9735,7 @@
             computeTurfWarMatch(crewId).then((result) => {
               if (result) {
                 localStorage.setItem(matchKey, "done");
+                checkTurfWarAnnouncements(crewId);
               }
             });
           }
@@ -9528,10 +9746,12 @@
       // Flush any offline-queued vault contributions
       function flushOfflineVaultQueue() {
         if (!db) return;
+        const currentWeekKey = getTurfWarWeekKey();
         const queue = JSON.parse(localStorage.getItem("tumblerVaultQueue") || "[]");
         if (queue.length === 0) return;
         localStorage.removeItem("tumblerVaultQueue");
         queue.forEach((entry) => {
+          if (entry.weekKey !== currentWeekKey) return;
           updateTurfWarVault(entry.crewId, entry.cash, entry.nickname);
         });
       }
@@ -9543,6 +9763,7 @@
 
       function updateTurfWarVault(crewId, cashEarned, nickname) {
         if (!crewId || !nickname || cashEarned <= 0) return;
+        if (!isTurfWarBattleDay()) return;
 
         // If offline, queue the contribution
         if (!db || !navigator.onLine) {
@@ -9627,8 +9848,8 @@
 
       // Resolve by weekly score when neither crew filled vault
       function resolveByScore(crewId, opponent, weekKey, war, oppWar) {
-        // Get all scores for the week to calculate participation
-        const weekDates = getWeekDates(weekKey);
+        // Use only the Thursday-Sunday battle window for score resolution.
+        const weekDates = getTurfWarBattleDates(weekKey);
 
         let ourTotal = 0, ourParticipants = new Set(), ourMemberCount = 0;
         let theirTotal = 0, theirParticipants = new Set(), theirMemberCount = 0;
@@ -9716,7 +9937,14 @@
           theirTotal: ourVault.current || 0,
         };
 
-        db.ref().update(updates);
+        db.ref().update(updates).then(() => {
+          if (userGroups.includes(crewId)) {
+            checkTurfWarAnnouncements(crewId);
+          }
+          if (userGroups.includes(opponent)) {
+            checkTurfWarAnnouncements(opponent);
+          }
+        });
       }
 
       // Claim Turf War reward for current player
@@ -9744,7 +9972,7 @@
           if (reward === 0) return;
 
           // Count days played this week for participation bonus
-          const weekDates = getWeekDates(weekKey);
+          const weekDates = getTurfWarBattleDates(weekKey);
           let daysPlayed = 0;
           let checked = 0;
 
@@ -9854,6 +10082,7 @@
       window.claimTurfWarReward = claimTurfWarReward;
       window.showTurfRules = showTurfRules;
       window.closeTurfRules = closeTurfRules;
+      window.closeAnnouncementModal = closeAnnouncementModal;
 
       // Start foreground message listener
       setupForegroundMessaging();
