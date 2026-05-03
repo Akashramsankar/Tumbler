@@ -3061,7 +3061,7 @@
             <div class="clue-row">
               <div class="demo-tile far">Z<span class="demo-arrow">▼▼</span></div>
               <div class="clue-text">
-                <strong style="color: var(--color-far)">Gray = Far</strong><br />
+                <strong style="color: var(--color-far)">Red = Far</strong><br />
                 10+ spots away. Double arrow (▼▼) means go <em>much lower</em>.
               </div>
             </div>
@@ -3537,7 +3537,7 @@
 
     <div class="keyboard-toggle">
       <button class="keyboard-toggle-btn" onclick="toggleKeyboardLayout()">
-        ⌨️ <span id="keyboard-layout-text">ABC</span>
+        ⌨️ <span id="keyboard-layout-text">QWERTY</span>
       </button>
     </div>
 
@@ -4717,7 +4717,7 @@
       let dailyWords = [];
       let slotConstraints = [];
       let keyboardLayout =
-        localStorage.getItem("tumblerKeyboardLayout") || "abc"; // 'abc' or 'qwerty'
+        localStorage.getItem("tumblerKeyboardLayout") || "qwerty"; // 'abc' or 'qwerty'
 
       const board = document.getElementById("game-board");
       const keyboardContainer = document.getElementById("keyboard");
