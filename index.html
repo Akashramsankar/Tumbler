@@ -1114,6 +1114,11 @@
         user-select: none;
       }
 
+      #keyboard.locked {
+        opacity: 0.55;
+        pointer-events: none;
+      }
+
       .key-row {
         display: flex;
         width: 100%;
@@ -4707,6 +4712,7 @@
         .fill(null)
         .map(() => Array(4).fill(""));
       let isGameOver = false;
+      let isInputEnabled = false;
       let startTime = null;
       let timerInterval = null;
       let countdownInterval = null;
@@ -4722,6 +4728,11 @@
       const board = document.getElementById("game-board");
       const keyboardContainer = document.getElementById("keyboard");
       const messageContainer = document.getElementById("message-container");
+
+      function setInputEnabled(enabled) {
+        isInputEnabled = enabled && !isGameOver;
+        keyboardContainer.classList.toggle("locked", !isInputEnabled);
+      }
 
       // Load stats from localStorage, including NEW: totalCash
       let stats = JSON.parse(
@@ -5043,6 +5054,7 @@
           // Setup game but don't start timer
           resetSlotConstraints();
           intelUsed = false;
+          setInputEnabled(false);
           createBoard();
           createKeyboard();
           document.removeEventListener("keydown", handleKeydown);
@@ -5337,6 +5349,7 @@
         updateActiveRow();
         updateKeyboardVisuals();
         updateCurrentSum();
+        setInputEnabled(true);
         startTimer();
 
         return true;
@@ -5406,6 +5419,7 @@
 
         // 2. Stop Interactions
         document.removeEventListener("keydown", handleKeydown);
+        setInputEnabled(false);
         stopTimer(); // Ensure the timer stops visually
 
         // 3. Rebuild the Grid
@@ -5876,6 +5890,8 @@
           }
           keyboardContainer.appendChild(rowDiv);
         });
+
+        keyboardContainer.classList.toggle("locked", !isInputEnabled);
       }
 
       function toggleKeyboardLayout() {
@@ -5952,6 +5968,7 @@
       }
 
       function addLetter(letter) {
+        if (!isInputEnabled) return;
         if (isGameOver) return;
         if (currentTile >= WORD_LENGTH) return;
 
@@ -5981,6 +5998,7 @@
       }
 
       function deleteLetter() {
+        if (!isInputEnabled) return;
         if (isGameOver) return;
         if (currentTile > 0) {
           currentTile--;
@@ -6032,6 +6050,7 @@
       }
 
       function submitGuess() {
+        if (!isInputEnabled) return;
         if (isGameOver) return;
 
         // NEW: Prevent duplicate submissions during evaluation
@@ -6264,6 +6283,7 @@
       }
 
       function handleKeydown(e) {
+        if (!isInputEnabled) return;
         const key = e.key.toUpperCase();
         if (key === "ENTER") submitGuess();
         else if (key === "BACKSPACE") deleteLetter();
@@ -6937,6 +6957,7 @@
         currentTile = 0;
         isGameOver = false;
         intelUsed = false;
+        setInputEnabled(false);
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -6964,6 +6985,7 @@
         } else {
           // New game or archive (fresh start)
           createBoard();
+          setInputEnabled(true);
           createKeyboard();
           resetSlotConstraints();
           updateActiveRow();
@@ -7168,11 +7190,13 @@
       function showTutorial() {
         currentSlide = 0;
         updateSlide();
+        setInputEnabled(false);
         document.getElementById("tutorial-modal").style.display = "flex";
       }
 
       function closeTutorial() {
         document.getElementById("tutorial-modal").style.display = "none";
+        setInputEnabled(true);
         // Only start timer if it hasn't been started yet
         if (!startTime) {
           startTimer();
@@ -7243,11 +7267,13 @@
           });
         }
 
+        setInputEnabled(false);
         modal.style.display = "flex";
       }
 
       function startCracking() {
         document.getElementById("ready-modal").style.display = "none";
+        setInputEnabled(true);
         startTimer();
       }
 
