@@ -4155,45 +4155,43 @@
           <ul>
             <li><strong>Mon–Wed:</strong> Your crew is registered based on recent activity</li>
             <li><strong>Wed night:</strong> Matchups are locked in</li>
-            <li><strong>Thu–Sun:</strong> Every daily solve adds cash to your crew's vault</li>
-            <li><strong>Monday:</strong> Results are in, rewards paid out</li>
+            <li><strong>Thu–Sun:</strong> Every daily solve adds heist cash to your crew total</li>
+            <li><strong>Monday:</strong> Results are in and rewards are paid out</li>
           </ul>
         </div>
 
         <div class="turf-rules-section">
-          <h4>🏦 The Vault Race</h4>
-          <p>Both crews race to fill a shared vault target. Your daily puzzle cash goes straight into the vault.</p>
+          <h4>💰 How Scoring Works</h4>
+          <p>Every battle-day solve adds its normal heist cash to your crew's Turf War total.</p>
           <ul>
-            <li><strong>First crew to fill the vault wins instantly</strong> — even mid-week</li>
-            <li>If nobody fills it, the crew with the higher <strong>battle score</strong> wins on Monday</li>
-            <li>The target is based on the smaller crew's <strong>recent active players</strong> across a 4-day battle</li>
+            <li><strong>Total Heist:</strong> The full cash your crew steals during Thu-Sun</li>
+            <li><strong>Active Players:</strong> Crew members who contributed at least one solve</li>
+            <li><strong>Final Score:</strong> Total Heist divided by Active Players</li>
           </ul>
         </div>
 
         <div class="turf-rules-section">
-          <h4>📊 Battle Score</h4>
-          <p>Your battle score rewards both skill and participation:</p>
+          <h4>⚖️ How To Win</h4>
+          <p>Turf War is decided by average heist per active player, not by raw crew size.</p>
           <ul>
-            <li><strong>Average cash per player</strong> — solve fast, earn more</li>
-            <li><strong>Participation multiplier</strong> — more crew members playing = bigger boost</li>
-            <li>If scores are within 5%, it's a <strong>draw</strong></li>
+            <li><strong>Higher average heist per active player wins</strong></li>
+            <li>Total heist is shown live, but the average decides the battle</li>
+            <li>If both crews finish with the exact same average, it's a <strong>draw</strong></li>
           </ul>
         </div>
 
         <div class="turf-rules-section">
           <h4>💰 Rewards (per player)</h4>
           <ul>
-            <li>🏦 <strong>Vault race win:</strong> $5,000</li>
-            <li>⚔️ <strong>Score win:</strong> $3,000</li>
+            <li>⚔️ <strong>Win:</strong> $3,000</li>
             <li>🤝 <strong>Draw:</strong> $1,500</li>
             <li>💀 <strong>Loss:</strong> $500</li>
-            <li>Plus <strong>$500 per day played</strong> that week</li>
           </ul>
         </div>
 
         <div class="turf-rules-section">
           <h4>👥 Multi-Crew Players</h4>
-          <p>In multiple crews that end up as rivals? Your score counts for <strong>both</strong> sides equally and it cancels out. No unfair advantage either way.</p>
+          <p>If you're in multiple crews that end up as rivals, your solve counts for both sides equally and cancels out. No unfair advantage either way.</p>
         </div>
 
         <button class="turf-rules-close" onclick="closeTurfRules()">Got it!</button>
@@ -4225,16 +4223,13 @@
       const STREAK_RECOVERY_COST = 30000;
 
       // TURF WAR CONSTANTS
-      const TURF_WAR_VAULT_WIN_REWARD = 5000;
-      const TURF_WAR_SCORE_WIN_REWARD = 3000;
+      const TURF_WAR_LEGACY_VAULT_WIN_REWARD = 5000;
+      const TURF_WAR_WIN_REWARD = 3000;
       const TURF_WAR_DRAW_REWARD = 1500;
       const TURF_WAR_LOSS_REWARD = 500;
-      const TURF_WAR_DAILY_PARTICIPATION_BONUS = 500;
-      const TURF_WAR_VAULT_MAX_DAILY_PER_PLAYER = 10000;
       const TURF_WAR_BATTLE_DAYS = 4;
-      const TURF_WAR_VAULT_FILL_FACTOR = 0.75;
       const TURF_WAR_REGISTRATION_CUTOFF_DAY = 3; // Wednesday (0=Sun, 3=Wed)
-      const TURF_WAR_DRAW_THRESHOLD = 0.05; // 5% margin for draw
+      const TURF_WAR_RULES_NOTICE_KEY = "tumblerTurfWarRulesNotice_v2";
 
       // ==================== SOUND EFFECTS ====================
       const audioContext = new (
@@ -7660,6 +7655,10 @@
       let announcementModalOpen = false;
       const announcementQueue = [];
 
+      if (userNick && userGroups.length > 0) {
+        maybeQueueTurfWarRulesUpdateAnnouncement();
+      }
+
       // Startup init — userNick/userGroups now declared
       if (db && userNick) {
         syncAllStatsFromFirebase();
@@ -8143,6 +8142,10 @@
         if (db) {
           initTurfWar(group);
           setTimeout(() => checkTurfWarAnnouncements(group), 1200);
+        }
+
+        if (userGroups.length > 0) {
+          maybeQueueTurfWarRulesUpdateAnnouncement();
         }
 
         //saveProfileToFirebase();
@@ -9097,6 +9100,23 @@
         };
       }
 
+      function maybeQueueTurfWarRulesUpdateAnnouncement() {
+        if (localStorage.getItem(TURF_WAR_RULES_NOTICE_KEY)) return;
+
+        queueAnnouncementModal({
+          title: "Turf War Simplified",
+          bodyHTML: `
+            Turf War rules are now easier to follow.<br /><br />
+            <strong>Thu-Sun:</strong> every solve adds heist cash to your crew total.<br />
+            <strong>Winner:</strong> the crew with the higher <strong>average heist per active player</strong> wins.<br /><br />
+            Raw total still matters, but the average decides the battle.
+          `,
+          buttonLabel: "Got it",
+        });
+
+        localStorage.setItem(TURF_WAR_RULES_NOTICE_KEY, "done");
+      }
+
       function isTurfWarBattleDay(date = new Date()) {
         const day = date.getDay();
         return day === 0 || day >= 4;
@@ -9106,12 +9126,49 @@
         return getWeekDates(weekKey).slice(-TURF_WAR_BATTLE_DAYS);
       }
 
+      function normalizeTurfWarStatus(status) {
+        if (status === "won_vault" || status === "won_score") return "won";
+        return status || "active";
+      }
+
+      function isResolvedTurfWarStatus(status) {
+        const normalized = normalizeTurfWarStatus(status);
+        return normalized === "won" || normalized === "lost" || normalized === "draw";
+      }
+
+      function getTurfWarOutcomeLabel(status) {
+        const normalized = normalizeTurfWarStatus(status);
+        if (normalized === "won") return "Won";
+        if (normalized === "lost") return "Lost";
+        if (normalized === "draw") return "Draw";
+        if (normalized === "no_match") return "No Match";
+        return "Active";
+      }
+
       function getTurfWarRewardForStatus(status) {
-        if (status === "won_vault") return TURF_WAR_VAULT_WIN_REWARD;
-        if (status === "won_score") return TURF_WAR_SCORE_WIN_REWARD;
-        if (status === "draw") return TURF_WAR_DRAW_REWARD;
-        if (status === "lost") return TURF_WAR_LOSS_REWARD;
+        if (status === "won_vault") return TURF_WAR_LEGACY_VAULT_WIN_REWARD;
+        const normalized = normalizeTurfWarStatus(status);
+        if (normalized === "won") return TURF_WAR_WIN_REWARD;
+        if (normalized === "draw") return TURF_WAR_DRAW_REWARD;
+        if (normalized === "lost") return TURF_WAR_LOSS_REWARD;
         return 0;
+      }
+
+      function calculateTurfWarAverage(totalCash, activePlayers) {
+        if (activePlayers <= 0) return 0;
+        return totalCash / activePlayers;
+      }
+
+      function compareTurfWarAverages(ourTotal, ourPlayers, theirTotal, theirPlayers) {
+        const ourNumerator = ourPlayers > 0 ? ourTotal : 0;
+        const ourDenominator = ourPlayers > 0 ? ourPlayers : 1;
+        const theirNumerator = theirPlayers > 0 ? theirTotal : 0;
+        const theirDenominator = theirPlayers > 0 ? theirPlayers : 1;
+        const left = ourNumerator * theirDenominator;
+        const right = theirNumerator * ourDenominator;
+
+        if (left === right) return 0;
+        return left > right ? 1 : -1;
       }
 
       function maybeQueueTurfWarMatchAnnouncement(crewId, weekKey, war) {
@@ -9123,13 +9180,13 @@
         const weekEnd = getWeekEndForKey(weekKey);
         if (new Date() >= weekEnd) return;
 
-        const vaultTarget = (war.vault || {}).target || 0;
         queueAnnouncementModal({
           title: "Turf War Started",
           bodyHTML: `
             <strong>${escapeHTML(crewId)}</strong> is up against <strong>${escapeHTML(war.opponent)}</strong> this week.<br /><br />
             Battle days run <strong>Thursday through Sunday</strong>.<br />
-            Shared vault target: <strong>${formatCashCompact(vaultTarget)}</strong>.
+            Every solve adds heist cash.<br />
+            Winner is based on <strong>average heist per active player</strong>.
           `,
           buttonLabel: "Let's go",
         });
@@ -9138,43 +9195,48 @@
       }
 
       function maybeQueueTurfWarResultAnnouncement(crewId, weekKey, war, oppWar) {
-        if (!war || !war.opponent || war.status === "active" || war.status === "no_match") {
+        if (!war || !war.opponent || !isResolvedTurfWarStatus(war.status)) {
           return;
         }
 
         const { resultKey } = getTurfWarAnnouncementKeys(weekKey, crewId);
         if (localStorage.getItem(resultKey)) return;
 
-        const ourTotal = (war.vault || {}).current || 0;
-        const theirTotal = (oppWar?.vault || {}).current || 0;
+        const ourTotal = war.totalHeist ?? ((war.vault || {}).current || 0);
+        const theirTotal = oppWar?.totalHeist ?? (((oppWar || {}).vault || {}).current || 0);
+        const ourActivePlayers = war.activePlayers ?? 0;
+        const theirActivePlayers = oppWar?.activePlayers ?? 0;
+        const ourAverage = Math.round(
+          war.scoreAverage ?? calculateTurfWarAverage(ourTotal, ourActivePlayers),
+        );
+        const theirAverage = Math.round(
+          oppWar?.scoreAverage ?? calculateTurfWarAverage(theirTotal, theirActivePlayers),
+        );
         let title = "Turf War Results";
         let bodyHTML = "";
+        const normalizedStatus = normalizeTurfWarStatus(war.status);
 
-        if (war.status === "draw") {
+        if (normalizedStatus === "draw") {
           title = "Turf War Draw";
           bodyHTML = `
             <strong>${escapeHTML(crewId)}</strong> and <strong>${escapeHTML(war.opponent)}</strong> finished dead even.<br /><br />
-            Final vault: <strong>${formatCashCompact(ourTotal)}</strong> to <strong>${formatCashCompact(theirTotal)}</strong>.<br />
-            Reward available: <strong>${formatCashCompact(TURF_WAR_DRAW_REWARD)}</strong> per player, plus the daily participation bonus.
+            Total heist: <strong>${formatCashCompact(ourTotal)}</strong> to <strong>${formatCashCompact(theirTotal)}</strong>.<br />
+            Average per active player: <strong>${formatCashCompact(ourAverage)}</strong> to <strong>${formatCashCompact(theirAverage)}</strong>.<br />
+            Reward available: <strong>${formatCashCompact(TURF_WAR_DRAW_REWARD)}</strong> per player.
           `;
         } else {
-          const weWon = war.status === "won_vault" || war.status === "won_score";
+          const weWon = normalizedStatus === "won";
           const winnerCrew = weWon ? crewId : war.opponent;
-          const winnerStatus = weWon
-            ? war.status
-            : (oppWar?.status === "won_vault" || oppWar?.status === "won_score"
-              ? oppWar.status
-              : ((oppWar?.vault || {}).filledAt ? "won_vault" : "won_score"));
-          const reward = getTurfWarRewardForStatus(winnerStatus);
-          const winReason = winnerStatus === "won_vault"
-            ? "cracked the vault first"
-            : "won on battle score";
+          const reward = getTurfWarRewardForStatus(weWon ? war.status : oppWar?.status);
+          const winnerAverage = weWon ? ourAverage : theirAverage;
 
           title = weWon ? "Turf War Won" : "Turf War Lost";
           bodyHTML = `
-            <strong>${escapeHTML(winnerCrew)}</strong> ${winReason}.<br /><br />
-            Final vault: <strong>${formatCashCompact(ourTotal)}</strong> to <strong>${formatCashCompact(theirTotal)}</strong>.<br />
-            Winning crew reward: <strong>${formatCashCompact(reward)}</strong> per player, plus the daily participation bonus.
+            <strong>${escapeHTML(winnerCrew)}</strong> won on <strong>average heist per active player</strong>.<br /><br />
+            Total heist: <strong>${formatCashCompact(ourTotal)}</strong> to <strong>${formatCashCompact(theirTotal)}</strong>.<br />
+            Average per active player: <strong>${formatCashCompact(ourAverage)}</strong> to <strong>${formatCashCompact(theirAverage)}</strong>.<br />
+            Winning average: <strong>${formatCashCompact(winnerAverage)}</strong> per player.<br />
+            Reward available: <strong>${formatCashCompact(reward)}</strong> per player.
           `;
         }
 
@@ -9207,7 +9269,7 @@
               maybeQueueTurfWarMatchAnnouncement(crewId, weekKey, war);
             }
 
-            if (war.status === "active" || war.status === "no_match") continue;
+            if (!isResolvedTurfWarStatus(war.status)) continue;
 
             const oppSnap = await db.ref(`turfWars/${weekKey}/${war.opponent}`).once("value");
             maybeQueueTurfWarResultAnnouncement(
@@ -9216,6 +9278,7 @@
               war,
               oppSnap.val() || {},
             );
+            claimTurfWarReward(crewId, weekKey).catch(() => {});
           } catch (e) {
           }
         }
@@ -9258,7 +9321,7 @@
                     Your crew is registered for this week's battle.<br>
                     Matchups are determined on <strong style="color:#f8fafc;">Wednesday night</strong>.<br>
                     Battles run <strong style="color:#f8fafc;">Thursday through Sunday</strong>.<br><br>
-                    Keep playing to improve your crew's ranking!
+                    Keep playing so your crew is ready for the matchup.
                   </div>
                 </div>`;
             } else if (war && war.status === "no_match") {
@@ -9376,31 +9439,50 @@
         const list = document.getElementById("lb-list");
         const ourVault = war.vault || {};
         const theirVault = oppWar.vault || {};
-        const vaultTarget = ourVault.target || 1;
         const ourProgress = ourVault.current || 0;
         const theirProgress = theirVault.current || 0;
-        const ourPct = Math.min(100, (ourProgress / vaultTarget) * 100);
-        const theirPct = Math.min(100, (theirProgress / vaultTarget) * 100);
-        const ourMembers = (registry[activeGroup] || {}).memberCount || 1;
-        const theirMembers = (registry[opponent] || {}).memberCount || 1;
+        const leaderTotal = Math.max(ourProgress, theirProgress, 1);
+        const ourPct = Math.min(100, (ourProgress / leaderTotal) * 100);
+        const theirPct = Math.min(100, (theirProgress / leaderTotal) * 100);
         const weekEnd = getWeekEndForKey(weekKey);
         const isEnded = new Date() >= weekEnd;
-
-        // Battle score
-        const ourScore = calculateBattleScore(ourProgress, ourParticipation, ourMembers);
-        const theirScore = calculateBattleScore(theirProgress, theirParticipation, theirMembers);
+        const ourActivePlayers = typeof war.activePlayers === "number"
+          ? war.activePlayers
+          : ourParticipation;
+        const theirActivePlayers = typeof oppWar.activePlayers === "number"
+          ? oppWar.activePlayers
+          : theirParticipation;
+        const ourAverage = Math.round(
+          typeof war.scoreAverage === "number"
+            ? war.scoreAverage
+            : calculateTurfWarAverage(ourProgress, ourActivePlayers),
+        );
+        const theirAverage = Math.round(
+          typeof oppWar.scoreAverage === "number"
+            ? oppWar.scoreAverage
+            : calculateTurfWarAverage(theirProgress, theirActivePlayers),
+        );
+        const leadComparison = compareTurfWarAverages(
+          ourProgress,
+          ourActivePlayers,
+          theirProgress,
+          theirActivePlayers,
+        );
+        const leadMessage = leadComparison === 0
+          ? `🤝 Tied on average at <strong>${formatCashCompact(ourAverage)}</strong> per active player`
+          : leadComparison > 0
+            ? `⚔️ <strong>${escapeHTML(activeGroup)}</strong> leads on average by <strong>${formatCashCompact(Math.abs(ourAverage - theirAverage))}</strong> per player`
+            : `⚔️ <strong>${escapeHTML(opponent)}</strong> leads on average by <strong>${formatCashCompact(Math.abs(theirAverage - ourAverage))}</strong> per player`;
 
         // Result banner
         let resultHTML = "";
-        const status = war.status;
-        if (status === "won_vault") {
-          resultHTML = `<div class="battle-result-banner won">🏦 VAULT CRACKED! Your crew won the race!</div>`;
-        } else if (status === "won_score") {
-          resultHTML = `<div class="battle-result-banner won">⚔️ VICTORY! Your crew won on score!</div>`;
+        const status = normalizeTurfWarStatus(war.status);
+        if (status === "won") {
+          resultHTML = `<div class="battle-result-banner won">⚔️ VICTORY! Your crew won on average heist per player.</div>`;
         } else if (status === "lost") {
           resultHTML = `<div class="battle-result-banner lost">💀 Defeated. Rival crew took this one.</div>`;
         } else if (status === "draw") {
-          resultHTML = `<div class="battle-result-banner draw">🤝 DRAW! Evenly matched this week.</div>`;
+          resultHTML = `<div class="battle-result-banner draw">🤝 DRAW! Both crews finished with the same average.</div>`;
         }
 
         // Contributors
@@ -9429,11 +9511,12 @@
         if (historyEntries.length > 0) {
           historyHTML = `<div class="turf-history"><h4>Battle History</h4>`;
           historyEntries.forEach(([wk, h]) => {
-            const resultClass = h.result.startsWith("won") ? "result-won" :
-                                h.result === "draw" ? "result-draw" : "result-lost";
-            const resultText = h.result.startsWith("won") ? "Won" :
-                               h.result === "draw" ? "Draw" : "Lost";
-            const rewardText = h.reward ? ` (+${formatCashCompact(h.reward)})` : "";
+            const normalizedResult = normalizeTurfWarStatus(h.result);
+            const resultClass = normalizedResult === "won" ? "result-won" :
+                                normalizedResult === "draw" ? "result-draw" : "result-lost";
+            const resultText = getTurfWarOutcomeLabel(h.result);
+            const rewardAmount = h.rewardPerPlayer || h.reward || 0;
+            const rewardText = rewardAmount ? ` (+${formatCashCompact(rewardAmount)})` : "";
             historyHTML += `
               <div class="turf-history-row">
                 <span>${wk}</span>
@@ -9459,7 +9542,7 @@
           ${resultHTML}
 
           <div class="vault-progress-container">
-            <h4>Vault Race</h4>
+            <h4>Total Heist</h4>
             <div class="vault-crew-row">
               <div class="vault-crew-label">
                 <span>${escapeHTML(activeGroup)}</span>
@@ -9478,19 +9561,21 @@
                 <div class="vault-bar-fill theirs" style="width:${theirPct}%"></div>
               </div>
             </div>
-            <div class="vault-target-label">Target: ${formatCashCompact(vaultTarget)}</div>
+            <div class="vault-target-label">Winner is decided by average heist per active player.</div>
           </div>
 
           <div class="turf-war-stats">
             <div>
-              <div class="stat-value">${formatCashCompact(ourScore)} vs ${formatCashCompact(theirScore)}</div>
-              <div class="stat-label">Battle Score</div>
+              <div class="stat-value">${formatCashCompact(ourAverage)} vs ${formatCashCompact(theirAverage)}</div>
+              <div class="stat-label">Avg Per Active Player</div>
             </div>
             <div>
-              <div class="stat-value">${ourParticipation}/${ourMembers} vs ${theirParticipation}/${theirMembers}</div>
-              <div class="stat-label">Participation</div>
+              <div class="stat-value">${ourActivePlayers} vs ${theirActivePlayers}</div>
+              <div class="stat-label">Active Players</div>
             </div>
           </div>
+
+          <div class="vault-target-label" style="margin-top:10px;">${leadMessage}</div>
 
           ${!isEnded ? `<div class="turf-war-timer">⏰ ${formatTimeRemaining(weekEnd)}</div>` : ""}
 
@@ -9503,7 +9588,7 @@
           turfWarListenerRef = db.ref(`turfWars/${weekKey}/${opponent}/vault/current`);
           turfWarListenerRef.on("value", (snap) => {
             const newVal = snap.val() || 0;
-            const newPct = Math.min(100, (newVal / vaultTarget) * 100);
+            const newPct = Math.min(100, (newVal / Math.max(ourProgress, newVal, 1)) * 100);
             const fillEl = list.querySelector(".vault-bar-fill.theirs");
             const labelEl = list.querySelectorAll(".vault-crew-label")[1];
             if (fillEl) fillEl.style.width = `${newPct}%`;
@@ -9563,24 +9648,6 @@
         if (days > 0) return `${days}d ${hours}h remaining`;
         const mins = Math.floor((diff % 3600000) / 60000);
         return `${hours}h ${mins}m remaining`;
-      }
-
-      // Calculate vault target scaled to crew sizes
-      function calculateVaultTarget(ourSize, theirSize) {
-        const smaller = Math.max(Math.min(ourSize, theirSize), 1);
-        return Math.floor(
-          TURF_WAR_VAULT_MAX_DAILY_PER_PLAYER * smaller *
-          TURF_WAR_BATTLE_DAYS * TURF_WAR_VAULT_FILL_FACTOR
-        );
-      }
-
-      // Calculate battle score with participation multiplier
-      function calculateBattleScore(totalCash, participation, memberCount) {
-        if (participation === 0) return 0;
-        const avgCash = totalCash / participation;
-        const participationRate = participation / Math.max(memberCount, 1);
-        const multiplier = Math.max(0.7, Math.min(1.5, 1.0 + (participationRate - 0.5)));
-        return Math.floor(avgCash * multiplier);
       }
 
       // Register crew for this week's Turf War
@@ -9687,22 +9754,25 @@
                 return;
               }
 
-              // Calculate vault target
-              const ourSize = registry[crewId].memberCount;
-              const theirSize = registry[opponent].memberCount;
-              const vaultTarget = calculateVaultTarget(ourSize, theirSize);
-
               // Write match for both crews
               const updates = {};
               updates[`turfWars/${weekKey}/${crewId}/opponent`] = opponent;
               updates[`turfWars/${weekKey}/${crewId}/status`] = "active";
-              updates[`turfWars/${weekKey}/${crewId}/vault/target`] = vaultTarget;
-              updates[`turfWars/${weekKey}/${crewId}/vault/current`] = updates[`turfWars/${weekKey}/${crewId}/vault/current`] || 0;
+              updates[`turfWars/${weekKey}/${crewId}/vault/current`] = 0;
+              updates[`turfWars/${weekKey}/${crewId}/vault/contributors`] = null;
+              updates[`turfWars/${weekKey}/${crewId}/vault/filledAt`] = null;
+              updates[`turfWars/${weekKey}/${crewId}/scoreAverage`] = null;
+              updates[`turfWars/${weekKey}/${crewId}/activePlayers`] = null;
+              updates[`turfWars/${weekKey}/${crewId}/totalHeist`] = 0;
 
               updates[`turfWars/${weekKey}/${opponent}/opponent`] = crewId;
               updates[`turfWars/${weekKey}/${opponent}/status`] = "active";
-              updates[`turfWars/${weekKey}/${opponent}/vault/target`] = vaultTarget;
               updates[`turfWars/${weekKey}/${opponent}/vault/current`] = 0;
+              updates[`turfWars/${weekKey}/${opponent}/vault/contributors`] = null;
+              updates[`turfWars/${weekKey}/${opponent}/vault/filledAt`] = null;
+              updates[`turfWars/${weekKey}/${opponent}/scoreAverage`] = null;
+              updates[`turfWars/${weekKey}/${opponent}/activePlayers`] = null;
+              updates[`turfWars/${weekKey}/${opponent}/totalHeist`] = 0;
 
               db.ref().update(updates).then(() => resolve(opponent)).catch(() => resolve(null));
             });
@@ -9806,21 +9876,11 @@
           const war = snap.val();
           if (!war || !war.opponent || war.status !== "active") return;
 
-          const vaultRef = db.ref(`turfWars/${weekKey}/${crewId}/vault`);
-
-          // Atomically increment vault total, then check if vault is filled
           db.ref(`turfWars/${weekKey}/${crewId}/vault/current`)
-            .transaction((current) => (current || 0) + cashEarned)
-            .then(() => {
-              // Check if vault is now filled (after transaction commits)
-              vaultRef.once("value", (vaultSnap) => {
-                const vault = vaultSnap.val() || {};
-                if (vault.current >= vault.target && !vault.filledAt) {
-                  db.ref(`turfWars/${weekKey}/${crewId}/vault/filledAt`)
-                    .set(firebase.database.ServerValue.TIMESTAMP);
-                }
-              });
-            });
+            .transaction((current) => (current || 0) + cashEarned);
+
+          db.ref(`turfWars/${weekKey}/${crewId}/totalHeist`)
+            .transaction((current) => (current || 0) + cashEarned);
 
           // Track individual contribution
           db.ref(`turfWars/${weekKey}/${crewId}/vault/contributors/${nickname}`)
@@ -9847,120 +9907,104 @@
             const oppWar = oppSnap.val();
             if (!oppWar) return;
 
-            const ourVault = war.vault || {};
-            const theirVault = oppWar.vault || {};
-
-            let result;
-
-            // Win condition 1: Vault race (first to fill)
-            if (ourVault.filledAt && theirVault.filledAt) {
-              result = ourVault.filledAt < theirVault.filledAt ? "won_vault" :
-                       ourVault.filledAt > theirVault.filledAt ? "lost" : "draw";
-            } else if (ourVault.filledAt && !theirVault.filledAt) {
-              result = "won_vault";
-            } else if (!ourVault.filledAt && theirVault.filledAt) {
-              result = "lost";
-            } else {
-              // Win condition 2: Battle score
-              // Need participation data from weekly scores
-              resolveByScore(crewId, opponent, weekKey, war, oppWar);
-              return;
-            }
-
-            writeTurfWarResult(crewId, opponent, weekKey, result, ourVault, theirVault);
+            resolveTurfWarByAverage(crewId, opponent, weekKey);
           });
         });
       }
 
-      // Resolve by weekly score when neither crew filled vault
-      function resolveByScore(crewId, opponent, weekKey, war, oppWar) {
-        // Use only the Thursday-Sunday battle window for score resolution.
+      function resolveTurfWarByAverage(crewId, opponent, weekKey) {
         const weekDates = getTurfWarBattleDates(weekKey);
 
-        let ourTotal = 0, ourParticipants = new Set(), ourMemberCount = 0;
-        let theirTotal = 0, theirParticipants = new Set(), theirMemberCount = 0;
+        let ourTotal = 0;
+        let theirTotal = 0;
+        let ourParticipants = new Set();
+        let theirParticipants = new Set();
+        let loaded = 0;
+        const totalToLoad = weekDates.length * 2;
 
-        // Get member counts from registry
-        db.ref(`turfWarRegistry/${weekKey}`).once("value", (regSnap) => {
-          const reg = regSnap.val() || {};
-          ourMemberCount = (reg[crewId] || {}).memberCount || 1;
-          theirMemberCount = (reg[opponent] || {}).memberCount || 1;
-
-          // Get our weekly scores
-          let loaded = 0;
-          const totalToLoad = weekDates.length * 2;
-
-          weekDates.forEach((dateKey) => {
-            db.ref(`scores/${crewId}/${dateKey}`).once("value", (s) => {
-              const dayScores = s.val() || {};
-              Object.entries(dayScores).forEach(([nick, data]) => {
-                ourTotal += data.cash || 0;
-                ourParticipants.add(nick);
-              });
-              loaded++;
-              if (loaded === totalToLoad) finalizeScore();
+        weekDates.forEach((dateKey) => {
+          db.ref(`scores/${crewId}/${dateKey}`).once("value", (s) => {
+            const dayScores = s.val() || {};
+            Object.entries(dayScores).forEach(([nick, data]) => {
+              ourTotal += data.cash || 0;
+              ourParticipants.add(nick);
             });
-
-            db.ref(`scores/${opponent}/${dateKey}`).once("value", (s) => {
-              const dayScores = s.val() || {};
-              Object.entries(dayScores).forEach(([nick, data]) => {
-                theirTotal += data.cash || 0;
-                theirParticipants.add(nick);
-              });
-              loaded++;
-              if (loaded === totalToLoad) finalizeScore();
-            });
+            loaded++;
+            if (loaded === totalToLoad) finalizeScore();
           });
 
-          function finalizeScore() {
-            const ourScore = calculateBattleScore(ourTotal, ourParticipants.size, ourMemberCount);
-            const theirScore = calculateBattleScore(theirTotal, theirParticipants.size, theirMemberCount);
-
-            let result;
-            const margin = Math.max(ourScore, theirScore) > 0
-              ? Math.abs(ourScore - theirScore) / Math.max(ourScore, theirScore)
-              : 0;
-
-            if (margin <= TURF_WAR_DRAW_THRESHOLD) {
-              result = "draw";
-            } else if (ourScore > theirScore) {
-              result = "won_score";
-            } else {
-              result = "lost";
-            }
-
-            writeTurfWarResult(crewId, opponent, weekKey, result,
-              war.vault || {}, oppWar.vault || {});
-          }
+          db.ref(`scores/${opponent}/${dateKey}`).once("value", (s) => {
+            const dayScores = s.val() || {};
+            Object.entries(dayScores).forEach(([nick, data]) => {
+              theirTotal += data.cash || 0;
+              theirParticipants.add(nick);
+            });
+            loaded++;
+            if (loaded === totalToLoad) finalizeScore();
+          });
         });
+
+        function finalizeScore() {
+          const ourActivePlayers = ourParticipants.size;
+          const theirActivePlayers = theirParticipants.size;
+          const comparison = compareTurfWarAverages(
+            ourTotal,
+            ourActivePlayers,
+            theirTotal,
+            theirActivePlayers,
+          );
+          const result = comparison === 0 ? "draw" : comparison > 0 ? "won" : "lost";
+
+          writeTurfWarResult(crewId, opponent, weekKey, result, {
+            ourTotal,
+            theirTotal,
+            ourActivePlayers,
+            theirActivePlayers,
+          });
+        }
       }
 
       // Write the final result and history
-      function writeTurfWarResult(crewId, opponent, weekKey, result, ourVault, theirVault) {
+      function writeTurfWarResult(crewId, opponent, weekKey, result, summary) {
         const updates = {};
+        const ourResult = normalizeTurfWarStatus(result);
+        const oppResult = ourResult === "draw" ? "draw" : ourResult === "won" ? "lost" : "won";
+        const ourAverage = Math.round(calculateTurfWarAverage(summary.ourTotal, summary.ourActivePlayers));
+        const theirAverage = Math.round(calculateTurfWarAverage(summary.theirTotal, summary.theirActivePlayers));
+        const rewardPerPlayer = getTurfWarRewardForStatus(ourResult);
+        const opponentRewardPerPlayer = getTurfWarRewardForStatus(oppResult);
 
-        // Determine opponent's mirror result
-        const oppResult = result === "draw" ? "draw" :
-                          result === "won_vault" ? "lost" :
-                          result === "won_score" ? "lost" :
-                          // We lost — check if opponent won by vault or score
-                          theirVault.filledAt ? "won_vault" : "won_score";
+        updates[`turfWars/${weekKey}/${crewId}/status`] = ourResult;
+        updates[`turfWars/${weekKey}/${crewId}/totalHeist`] = summary.ourTotal;
+        updates[`turfWars/${weekKey}/${crewId}/activePlayers`] = summary.ourActivePlayers;
+        updates[`turfWars/${weekKey}/${crewId}/scoreAverage`] = ourAverage;
 
-        updates[`turfWars/${weekKey}/${crewId}/status`] = result;
         updates[`turfWars/${weekKey}/${opponent}/status`] = oppResult;
+        updates[`turfWars/${weekKey}/${opponent}/totalHeist`] = summary.theirTotal;
+        updates[`turfWars/${weekKey}/${opponent}/activePlayers`] = summary.theirActivePlayers;
+        updates[`turfWars/${weekKey}/${opponent}/scoreAverage`] = theirAverage;
 
-        // Write history for both crews
         updates[`turfWarHistory/${crewId}/${weekKey}`] = {
           opponent: opponent,
-          result: result,
-          ourTotal: ourVault.current || 0,
-          theirTotal: theirVault.current || 0,
+          result: ourResult,
+          ourTotal: summary.ourTotal,
+          theirTotal: summary.theirTotal,
+          ourActivePlayers: summary.ourActivePlayers,
+          theirActivePlayers: summary.theirActivePlayers,
+          ourAverage: ourAverage,
+          theirAverage: theirAverage,
+          rewardPerPlayer: rewardPerPlayer,
         };
         updates[`turfWarHistory/${opponent}/${weekKey}`] = {
           opponent: crewId,
           result: oppResult,
-          ourTotal: theirVault.current || 0,
-          theirTotal: ourVault.current || 0,
+          ourTotal: summary.theirTotal,
+          theirTotal: summary.ourTotal,
+          ourActivePlayers: summary.theirActivePlayers,
+          theirActivePlayers: summary.ourActivePlayers,
+          ourAverage: theirAverage,
+          theirAverage: ourAverage,
+          rewardPerPlayer: opponentRewardPerPlayer,
         };
 
         db.ref().update(updates).then(() => {
@@ -9974,59 +10018,59 @@
       }
 
       // Claim Turf War reward for current player
-      function claimTurfWarReward(crewId, weekKey) {
+      async function claimTurfWarReward(crewId, weekKey) {
         if (!db || !userNick) return;
 
         const claimKey = `tumblerTurfWarClaimed_${weekKey}_${crewId}`;
         if (localStorage.getItem(claimKey)) return; // Already claimed
 
-        db.ref(`turfWars/${weekKey}/${crewId}`).once("value", (snap) => {
-          const war = snap.val();
-          if (!war || war.status === "active" || war.status === "no_match") return;
+        const snap = await db.ref(`turfWars/${weekKey}/${crewId}`).once("value");
+        const war = snap.val();
+        if (!war || !isResolvedTurfWarStatus(war.status)) return;
 
-          let reward = 0;
-          if (war.status === "won_vault") {
-            reward = TURF_WAR_VAULT_WIN_REWARD;
-          } else if (war.status === "won_score") {
-            reward = TURF_WAR_SCORE_WIN_REWARD;
-          } else if (war.status === "draw") {
-            reward = TURF_WAR_DRAW_REWARD;
-          } else if (war.status === "lost") {
-            reward = TURF_WAR_LOSS_REWARD;
+        const reward = getTurfWarRewardForStatus(war.status);
+        if (reward === 0) return;
+
+        const weekDates = getTurfWarBattleDates(weekKey);
+        let playedThisBattle = false;
+
+        for (const dateKey of weekDates) {
+          const playerSnap = await db.ref(`scores/${crewId}/${dateKey}/${userNick}`).once("value");
+          if (playerSnap.val()) {
+            playedThisBattle = true;
+            break;
           }
+        }
 
-          if (reward === 0) return;
+        if (!playedThisBattle) return;
 
-          // Count days played this week for participation bonus
-          const weekDates = getTurfWarBattleDates(weekKey);
-          let daysPlayed = 0;
-          let checked = 0;
-
-          weekDates.forEach((dateKey) => {
-            db.ref(`scores/${crewId}/${dateKey}/${userNick}`).once("value", (s) => {
-              if (s.val()) daysPlayed++;
-              checked++;
-
-              if (checked === weekDates.length) {
-                const totalReward = reward + (daysPlayed * TURF_WAR_DAILY_PARTICIPATION_BONUS);
-
-                // Add to career cash
-                db.ref(`career/${crewId}/${userNick}/totalCash`)
-                  .transaction((current) => (current || 0) + totalReward);
-
-                // Update local stats
-                const localStats = JSON.parse(localStorage.getItem("tumblerStats")) || {};
-                localStats.totalCash = (localStats.totalCash || 0) + totalReward;
-                localStorage.setItem("tumblerStats", JSON.stringify(localStats));
-
-                // Write to history
-                db.ref(`turfWarHistory/${crewId}/${weekKey}/reward`).set(totalReward);
-
-                localStorage.setItem(claimKey, "done");
-              }
-            });
-          });
+        const claimedRef = db.ref(`turfWarHistory/${crewId}/${weekKey}/claimedBy/${userNick}`);
+        const claimAttempt = await claimedRef.transaction((current) => {
+          if (current) return;
+          return {
+            reward: reward,
+            claimedAt: Date.now(),
+          };
         });
+
+        if (!claimAttempt.committed) {
+          localStorage.setItem(claimKey, "done");
+          return;
+        }
+
+        try {
+          await db.ref(`career/${crewId}/${userNick}/totalCash`)
+            .transaction((current) => (current || 0) + reward);
+
+          const localStats = JSON.parse(localStorage.getItem("tumblerStats")) || {};
+          localStats.totalCash = (localStats.totalCash || 0) + reward;
+          localStorage.setItem("tumblerStats", JSON.stringify(localStats));
+          stats = localStats;
+
+          localStorage.setItem(claimKey, "done");
+        } catch (e) {
+          await claimedRef.remove().catch(() => {});
+        }
       }
 
       // Helper: get date keys for a given week
