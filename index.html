@@ -1346,6 +1346,43 @@
         padding: 15px;
         margin-bottom: 12px;
       }
+      .turf-war-primary-score {
+        background: linear-gradient(180deg, rgba(106, 170, 100, 0.16), rgba(15, 23, 42, 0.95));
+        border: 1px solid rgba(106, 170, 100, 0.45);
+        border-radius: 14px;
+        padding: 16px;
+        margin-bottom: 12px;
+        text-align: center;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.22);
+      }
+      .turf-war-primary-score .score-kicker {
+        font-size: 0.68rem;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: #bbf7d0;
+        margin-bottom: 8px;
+      }
+      .turf-war-primary-score .score-values {
+        display: flex;
+        align-items: baseline;
+        justify-content: center;
+        gap: 10px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .turf-war-primary-score .score-values strong {
+        font-size: 1.35rem;
+        color: #f8fafc;
+      }
+      .turf-war-primary-score .score-values span {
+        font-size: 0.8rem;
+        color: #94a3b8;
+      }
+      .turf-war-primary-score .score-note {
+        font-size: 0.76rem;
+        line-height: 1.5;
+        color: #dbeafe;
+      }
       .vault-progress-container h4 {
         margin: 0 0 10px 0;
         font-size: 0.8rem;
@@ -1410,6 +1447,12 @@
         font-size: 0.65rem;
         color: #94a3b8;
         margin-top: 2px;
+      }
+      .turf-war-stats.compact .stat-value {
+        font-size: 0.82rem;
+      }
+      .turf-war-stats.compact .stat-label {
+        font-size: 0.62rem;
       }
 
       .turf-war-timer {
@@ -9541,8 +9584,32 @@
 
           ${resultHTML}
 
+          <div class="turf-war-primary-score">
+            <div class="score-kicker">Winner Deciding Stat</div>
+            <div class="score-values">
+              <strong>${formatCashCompact(ourAverage)}</strong>
+              <span>vs</span>
+              <strong>${formatCashCompact(theirAverage)}</strong>
+            </div>
+            <div class="score-note">
+              Average heist per active player decides Turf War.<br>
+              ${leadMessage}
+            </div>
+          </div>
+
+          <div class="turf-war-stats">
+            <div>
+              <div class="stat-value">${ourActivePlayers} vs ${theirActivePlayers}</div>
+              <div class="stat-label">Active Players</div>
+            </div>
+            <div>
+              <div class="stat-value">${formatCashCompact(ourProgress)} vs ${formatCashCompact(theirProgress)}</div>
+              <div class="stat-label">Total Heist</div>
+            </div>
+          </div>
+
           <div class="vault-progress-container">
-            <h4>Total Heist</h4>
+            <h4>Supporting Totals</h4>
             <div class="vault-crew-row">
               <div class="vault-crew-label">
                 <span>${escapeHTML(activeGroup)}</span>
@@ -9561,21 +9628,8 @@
                 <div class="vault-bar-fill theirs" style="width:${theirPct}%"></div>
               </div>
             </div>
-            <div class="vault-target-label">Winner is decided by average heist per active player.</div>
+            <div class="vault-target-label">Total heist is shown for context, but average per active player decides the winner.</div>
           </div>
-
-          <div class="turf-war-stats">
-            <div>
-              <div class="stat-value">${formatCashCompact(ourAverage)} vs ${formatCashCompact(theirAverage)}</div>
-              <div class="stat-label">Avg Per Active Player</div>
-            </div>
-            <div>
-              <div class="stat-value">${ourActivePlayers} vs ${theirActivePlayers}</div>
-              <div class="stat-label">Active Players</div>
-            </div>
-          </div>
-
-          <div class="vault-target-label" style="margin-top:10px;">${leadMessage}</div>
 
           ${!isEnded ? `<div class="turf-war-timer">⏰ ${formatTimeRemaining(weekEnd)}</div>` : ""}
 
