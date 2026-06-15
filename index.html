@@ -3832,25 +3832,30 @@
           </button>
 
           <div class="tab-container">
-            <button class="tab-btn active" onclick="switchTab('daily')">
+            <button class="tab-btn active" data-tab="daily" onclick="switchTab('daily')">
               Today's Take
             </button>
-            <button class="tab-btn" onclick="switchTab('yesterday')">
+            <button class="tab-btn" data-tab="yesterday" onclick="switchTab('yesterday')">
               Yesterday's Take
             </button>
-            <button class="tab-btn" onclick="switchTab('overall')">
+            <button class="tab-btn" data-tab="overall" onclick="switchTab('overall')">
               Career Stash
             </button>
-            <button class="tab-btn" onclick="switchTab('efficiency')">
+            <button class="tab-btn" data-tab="efficiency" onclick="switchTab('efficiency')">
               Efficiency
             </button>
-            <button class="tab-btn" onclick="switchTab('best')">
+            <button class="tab-btn" data-tab="best" onclick="switchTab('best')">
               Best Heist
             </button>
-            <button class="tab-btn" onclick="switchTab('week')">
+            <button class="tab-btn" data-tab="week" onclick="switchTab('week')">
               This Week
             </button>
-            <button class="tab-btn" onclick="switchTab('turfwar')">
+            <button
+              id="turf-war-tab-btn"
+              class="tab-btn"
+              data-tab="turfwar"
+              onclick="switchTab('turfwar')"
+            >
               Turf War
             </button>
           </div>
@@ -4272,6 +4277,7 @@
       const TURF_WAR_LOSS_REWARD = 500;
       const TURF_WAR_BATTLE_DAYS = 4;
       const TURF_WAR_REGISTRATION_CUTOFF_DAY = 3; // Wednesday (0=Sun, 3=Wed)
+      const SHOW_TURF_WARS_UI = false;
       const TURF_WAR_RULES_NOTICE_KEY = "tumblerTurfWarRulesNotice_v2";
 
       // ==================== SOUND EFFECTS ====================
@@ -7631,6 +7637,7 @@
       function setupForegroundMessaging() {
         if (!messaging) return;
         messaging.onMessage(async (payload) => {
+          if (isTurfWarNotificationPayload(payload)) return;
           // Don't show play-reminder notifications if user already played today
           const alreadyPlayed = await hasPlayedToday();
           if (alreadyPlayed) return;
@@ -7697,6 +7704,50 @@
       let turfWarListenerRef = null;
       let announcementModalOpen = false;
       const announcementQueue = [];
+
+      function turfWarsUiEnabled() {
+        return SHOW_TURF_WARS_UI;
+      }
+
+      function isTurfWarMessagingContent(...parts) {
+        if (turfWarsUiEnabled()) return false;
+        const combined = parts
+          .filter(Boolean)
+          .join(" ")
+          .toLowerCase();
+        return combined.includes("turf war")
+          || combined.includes("turf wars")
+          || combined.includes("turfwar");
+      }
+
+      function isTurfWarNotificationPayload(payload = {}) {
+        return isTurfWarMessagingContent(
+          payload.notification?.title,
+          payload.notification?.body,
+          payload.data?.title,
+          payload.data?.body,
+          payload.data?.tag,
+          payload.data?.url,
+        );
+      }
+
+      function updateTurfWarUIVisibility() {
+        const turfWarTabButton = document.getElementById("turf-war-tab-btn");
+        if (turfWarTabButton) {
+          turfWarTabButton.style.display = turfWarsUiEnabled() ? "" : "none";
+        }
+
+        const turfRulesModal = document.getElementById("turf-rules-modal");
+        if (turfRulesModal && !turfWarsUiEnabled()) {
+          turfRulesModal.style.display = "none";
+        }
+
+        if (!turfWarsUiEnabled() && currentTab === "turfwar") {
+          currentTab = "daily";
+        }
+      }
+
+      updateTurfWarUIVisibility();
 
       if (userNick && userGroups.length > 0) {
         maybeQueueTurfWarRulesUpdateAnnouncement();
@@ -8238,16 +8289,21 @@
       }
 
       function switchTab(tab) {
+        const nextTab = tab === "turfwar" && !turfWarsUiEnabled() ? "daily" : tab;
+
         // Clean up Turf War listener when switching away
-        if (currentTab === "turfwar" && tab !== "turfwar" && turfWarListenerRef) {
+        if (currentTab === "turfwar" && nextTab !== "turfwar" && turfWarListenerRef) {
           turfWarListenerRef.off();
           turfWarListenerRef = null;
         }
-        currentTab = tab;
+        currentTab = nextTab;
         document
           .querySelectorAll(".tab-btn")
           .forEach((b) => b.classList.remove("active"));
-        event.target.classList.add("active");
+        const activeTabButton = document.querySelector(`.tab-btn[data-tab="${currentTab}"]`);
+        if (activeTabButton) {
+          activeTabButton.classList.add("active");
+        }
         loadLeaderboardData();
       }
 
@@ -8296,6 +8352,19 @@
         }
 
         // Turf War has its own data loading path
+        if (currentTab === "turfwar") {
+          if (!turfWarsUiEnabled()) {
+            currentTab = "daily";
+            const dailyTabButton = document.querySelector('.tab-btn[data-tab="daily"]');
+            document
+              .querySelectorAll(".tab-btn")
+              .forEach((b) => b.classList.remove("active"));
+            if (dailyTabButton) {
+              dailyTabButton.classList.add("active");
+            }
+          }
+        }
+
         if (currentTab === "turfwar") {
           loadTurfWarData();
           return;
@@ -9085,6 +9154,7 @@
       // ==================== TURF WAR SYSTEM ====================
 
       function showTurfRules() {
+        if (!turfWarsUiEnabled()) return;
         document.getElementById("turf-rules-modal").style.display = "flex";
       }
 
@@ -9103,6 +9173,7 @@
         bodyHTML,
         buttonLabel = "Got it",
       }) {
+        if (isTurfWarMessagingContent(title, bodyHTML)) return;
         announcementQueue.push({ title, bodyHTML, buttonLabel });
         if (!announcementModalOpen) {
           showNextAnnouncementModal();
@@ -9144,6 +9215,7 @@
       }
 
       function maybeQueueTurfWarRulesUpdateAnnouncement() {
+        if (!turfWarsUiEnabled()) return;
         if (localStorage.getItem(TURF_WAR_RULES_NOTICE_KEY)) return;
 
         queueAnnouncementModal({
@@ -9215,6 +9287,7 @@
       }
 
       function maybeQueueTurfWarMatchAnnouncement(crewId, weekKey, war) {
+        if (!turfWarsUiEnabled()) return;
         if (!war || !war.opponent || war.status !== "active") return;
 
         const { matchupKey } = getTurfWarAnnouncementKeys(weekKey, crewId);
@@ -9238,6 +9311,7 @@
       }
 
       function maybeQueueTurfWarResultAnnouncement(crewId, weekKey, war, oppWar) {
+        if (!turfWarsUiEnabled()) return;
         if (!war || !war.opponent || !isResolvedTurfWarStatus(war.status)) {
           return;
         }

@@ -10,7 +10,7 @@ importScripts("https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-comp
 // ── CACHE CONFIG ────────────────────────────────────────────────────────────
 // Bump the version number any time you update index.html or other assets.
 // This forces the old cache to clear and the new files to download.
-const CACHE_VERSION = "tumbler-v3";
+const CACHE_VERSION = "tumbler-v4";
 
 const CACHE_ASSETS = [
   "/Tumbler/",
@@ -109,6 +109,27 @@ firebase.initializeApp({
 
 const messaging = firebase.messaging();
 
+function isTurfWarMessagingContent(...parts) {
+  const combined = parts
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+  return combined.includes("turf war")
+    || combined.includes("turf wars")
+    || combined.includes("turfwar");
+}
+
+function isTurfWarNotificationPayload(payload = {}) {
+  return isTurfWarMessagingContent(
+    payload.notification?.title,
+    payload.notification?.body,
+    payload.data?.title,
+    payload.data?.body,
+    payload.data?.tag,
+    payload.data?.url,
+  );
+}
+
 function getLocalDateStamp(dateObj = new Date()) {
   const year = dateObj.getFullYear();
   const month = String(dateObj.getMonth() + 1).padStart(2, "0");
@@ -146,6 +167,11 @@ function hasPlayedTodayIDB() {
 
 messaging.onBackgroundMessage(async (payload) => {
   console.log("[SW] Background message received:", payload);
+
+  if (isTurfWarNotificationPayload(payload)) {
+    console.log("[SW] Suppressing Turf War notification for public release");
+    return;
+  }
 
   // Don't show play-reminder notifications if user already played today
   const alreadyPlayed = await hasPlayedTodayIDB();
