@@ -4766,8 +4766,27 @@
       let answerList = [];
       let dailyWords = [];
       let slotConstraints = [];
-      let keyboardLayout =
-        localStorage.getItem("tumblerKeyboardLayout") || "qwerty"; // 'abc' or 'qwerty'
+      const DEFAULT_KEYBOARD_LAYOUT = "abc";
+      const KEYBOARD_LAYOUT_STORAGE_KEY = "tumblerKeyboardLayout";
+
+      function isValidKeyboardLayout(layout) {
+        return layout === "abc" || layout === "qwerty";
+      }
+
+      function getKeyboardLayoutPreference() {
+        const savedLayout = localStorage.getItem(KEYBOARD_LAYOUT_STORAGE_KEY);
+        return isValidKeyboardLayout(savedLayout)
+          ? savedLayout
+          : DEFAULT_KEYBOARD_LAYOUT;
+      }
+
+      function saveKeyboardLayoutPreference(layout) {
+        if (isValidKeyboardLayout(layout)) {
+          localStorage.setItem(KEYBOARD_LAYOUT_STORAGE_KEY, layout);
+        }
+      }
+
+      let keyboardLayout = getKeyboardLayoutPreference(); // 'abc' or 'qwerty'
 
       const board = document.getElementById("game-board");
       const keyboardContainer = document.getElementById("keyboard");
@@ -5940,7 +5959,7 @@
 
       function toggleKeyboardLayout() {
         keyboardLayout = keyboardLayout === "abc" ? "qwerty" : "abc";
-        localStorage.setItem("tumblerKeyboardLayout", keyboardLayout);
+        saveKeyboardLayoutPreference(keyboardLayout);
 
         // Update button text
         const layoutText = document.getElementById("keyboard-layout-text");
