@@ -3229,6 +3229,18 @@
         ></div>
 
         <div
+          id="ready-sync-status"
+          style="
+            font-size: 0.8rem;
+            color: var(--color-close);
+            line-height: 1.4;
+            margin-bottom: 12px;
+            text-align: center;
+            min-height: 1.2em;
+          "
+        ></div>
+
+        <div
           style="
             font-size: 0.85rem;
             color: #cbd5e1;
@@ -3241,7 +3253,7 @@
         </div>
 
         <div style="display: flex; gap: 10px; flex-direction: column">
-          <button class="tutorial-btn" onclick="startCracking()">
+          <button class="tutorial-btn" id="ready-start-btn" onclick="startCracking()">
             START CRACKING
           </button>
           <button
@@ -3793,6 +3805,17 @@
           >
             Recover Existing Codename
           </button>
+          <div
+            id="setup-status"
+            style="
+              font-size: 0.8rem;
+              color: #94a3b8;
+              margin-top: 10px;
+              text-align: center;
+              line-height: 1.4;
+              min-height: 1.1em;
+            "
+          ></div>
         </div>
 
         <div id="view-leaderboard" style="display: none">
@@ -4757,6 +4780,8 @@
         .map(() => Array(4).fill(""));
       let isGameOver = false;
       let isInputEnabled = false;
+      let dailyScoreSyncReady = false;
+      let dailyScoreSyncCheck = null;
       let startTime = null;
       let timerInterval = null;
       let countdownInterval = null;
@@ -4792,9 +4817,108 @@
       const keyboardContainer = document.getElementById("keyboard");
       const messageContainer = document.getElementById("message-container");
 
+      function isSameLocalDay(firstDate, secondDate) {
+        const first = new Date(firstDate);
+        const second = new Date(secondDate);
+        first.setHours(0, 0, 0, 0);
+        second.setHours(0, 0, 0, 0);
+        return first.getTime() === second.getTime();
+      }
+
+      function isPlayingTodaysPuzzle() {
+        return isSameLocalDay(new Date(), currentPlayDate);
+      }
+
+      function requiresDailyScoreSync() {
+        return isPlayingTodaysPuzzle() && !!userNick && userGroups.length > 0;
+      }
+
+      function canAcceptGameInput() {
+        return !requiresDailyScoreSync() || dailyScoreSyncReady;
+      }
+
       function setInputEnabled(enabled) {
-        isInputEnabled = enabled && !isGameOver;
+        isInputEnabled = enabled && !isGameOver && canAcceptGameInput();
         keyboardContainer.classList.toggle("locked", !isInputEnabled);
+      }
+
+      function waitForFirebaseConnection(timeoutMs = 5000) {
+        if (!db || navigator.onLine === false) {
+          return Promise.resolve(false);
+        }
+
+        return new Promise((resolve) => {
+          const connectedRef = db.ref(".info/connected");
+          let settled = false;
+
+          const finish = (isConnected) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            connectedRef.off("value", handleValue);
+            resolve(isConnected);
+          };
+
+          const handleValue = (snapshot) => {
+            if (snapshot.val() === true) {
+              finish(true);
+            }
+          };
+
+          const timer = setTimeout(() => finish(false), timeoutMs);
+          connectedRef.on("value", handleValue, () => finish(false));
+        });
+      }
+
+      async function refreshDailyScoreSyncState(options = {}) {
+        if (!requiresDailyScoreSync()) {
+          dailyScoreSyncReady = true;
+          return true;
+        }
+
+        if (dailyScoreSyncCheck) return dailyScoreSyncCheck;
+
+        dailyScoreSyncReady = false;
+        setInputEnabled(false);
+
+        dailyScoreSyncCheck = waitForFirebaseConnection(options.timeoutMs)
+          .then((isReady) => {
+            dailyScoreSyncReady = isReady;
+
+            const statusEl = document.getElementById("ready-sync-status");
+            const startBtn = document.getElementById("ready-start-btn");
+            if (statusEl) {
+              statusEl.textContent = isReady
+                ? "Database connected. Scores will be saved."
+                : "Reconnect to save your score before starting.";
+              statusEl.style.color = isReady ? "var(--color-correct)" : "var(--color-close)";
+            }
+            if (startBtn) {
+              startBtn.disabled = !isReady;
+              startBtn.style.opacity = isReady ? "1" : "0.55";
+              startBtn.style.cursor = isReady ? "pointer" : "not-allowed";
+            }
+
+            return isReady;
+          })
+          .finally(() => {
+            dailyScoreSyncCheck = null;
+          });
+
+        return dailyScoreSyncCheck;
+      }
+
+      async function ensureDailyScoreSyncBeforeInput() {
+        if (!requiresDailyScoreSync()) return true;
+        if (dailyScoreSyncReady) return true;
+
+        showMessage("Checking database connection...");
+        const isReady = await refreshDailyScoreSyncState({ timeoutMs: 5000 });
+        if (!isReady) {
+          showMessage("Reconnect before playing today's puzzle.");
+          playSound("error");
+        }
+        return isReady;
       }
 
       // Load stats from localStorage, including NEW: totalCash
@@ -5412,8 +5536,18 @@
         updateActiveRow();
         updateKeyboardVisuals();
         updateCurrentSum();
-        setInputEnabled(true);
-        startTimer();
+        if (requiresDailyScoreSync()) {
+          setInputEnabled(false);
+          showMessage("Checking connection before continuing...");
+          refreshDailyScoreSyncState().then((isReady) => {
+            if (!isReady || isGameOver) return;
+            setInputEnabled(true);
+            startTimer();
+          });
+        } else {
+          setInputEnabled(true);
+          startTimer();
+        }
 
         return true;
       }
@@ -6032,6 +6166,13 @@
 
       function addLetter(letter) {
         if (!isInputEnabled) return;
+        if (!canAcceptGameInput()) {
+          setInputEnabled(false);
+          refreshDailyScoreSyncState();
+          showMessage("Reconnect before playing today's puzzle.");
+          playSound("error");
+          return;
+        }
         if (isGameOver) return;
         if (currentTile >= WORD_LENGTH) return;
 
@@ -6112,9 +6253,13 @@
         setTimeout(() => (row.style.transform = "translateX(0)"), 300);
       }
 
-      function submitGuess() {
+      async function submitGuess() {
         if (!isInputEnabled) return;
         if (isGameOver) return;
+        if (!(await ensureDailyScoreSyncBeforeInput())) {
+          shakeRow();
+          return;
+        }
 
         // NEW: Prevent duplicate submissions during evaluation
         if (document.querySelector(".row.evaluating")) {
@@ -6407,6 +6552,7 @@
 
         const recoverBtn = document.getElementById("recover-profile-btn");
         if (recoverBtn) recoverBtn.style.display = userNick ? "none" : "block";
+        setSetupStatus("");
       }
 
       function hideJoinNewCrew() {
@@ -7024,8 +7170,7 @@
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const isReturningToToday =
-          currentPlayDate.getTime() === today.getTime();
+        const isReturningToToday = isPlayingTodaysPuzzle();
 
         // Remove any existing countdown containers
         const existingCountdown = document.getElementById(
@@ -7048,20 +7193,26 @@
         } else {
           // New game or archive (fresh start)
           createBoard();
-          setInputEnabled(true);
+          setInputEnabled(false);
           createKeyboard();
           resetSlotConstraints();
           updateActiveRow();
           updateKeyboardVisuals();
           document.removeEventListener("keydown", handleKeydown);
           document.addEventListener("keydown", handleKeydown);
-          startTimer();
 
           // Update header text
           const isArchive = !isReturningToToday;
           document.querySelector(".sub-text").textContent = isArchive
             ? `ARCHIVE: ${dateObj.toLocaleDateString()}`
             : "Crack the code";
+
+          if (isArchive) {
+            setInputEnabled(true);
+            startTimer();
+          } else {
+            showReadyModal();
+          }
         }
         updateStreakIndicator();
       }
@@ -7257,7 +7408,11 @@
         document.getElementById("tutorial-modal").style.display = "flex";
       }
 
-      function closeTutorial() {
+      async function closeTutorial() {
+        if (!(await ensureDailyScoreSyncBeforeInput())) {
+          return;
+        }
+
         document.getElementById("tutorial-modal").style.display = "none";
         setInputEnabled(true);
         // Only start timer if it hasn't been started yet
@@ -7305,6 +7460,8 @@
       function showReadyModal() {
         const modal = document.getElementById("ready-modal");
         const puzzleNum = getPuzzleNumber(currentPlayDate);
+        const syncStatusEl = document.getElementById("ready-sync-status");
+        const startBtn = document.getElementById("ready-start-btn");
 
         document.getElementById("ready-puzzle-number").textContent =
           `TUMBLER #${puzzleNum}`;
@@ -7330,14 +7487,51 @@
           });
         }
 
+        if (syncStatusEl) {
+          syncStatusEl.textContent = "";
+          syncStatusEl.style.color = "var(--color-close)";
+        }
+        if (startBtn) {
+          const canStartImmediately = canAcceptGameInput();
+          startBtn.disabled = !canStartImmediately;
+          startBtn.style.opacity = canStartImmediately ? "1" : "0.55";
+          startBtn.style.cursor = canStartImmediately ? "pointer" : "not-allowed";
+        }
+
         setInputEnabled(false);
         modal.style.display = "flex";
+        refreshDailyScoreSyncState();
       }
 
-      function startCracking() {
+      async function startCracking() {
+        const startBtn = document.getElementById("ready-start-btn");
+        const originalText = startBtn ? startBtn.textContent : "";
+
+        if (startBtn) {
+          startBtn.disabled = true;
+          startBtn.textContent = "CHECKING...";
+          startBtn.style.opacity = "0.55";
+          startBtn.style.cursor = "not-allowed";
+        }
+
+        const canStart = await ensureDailyScoreSyncBeforeInput();
+        if (!canStart) {
+          if (startBtn) {
+            startBtn.textContent = originalText || "START CRACKING";
+          }
+          return;
+        }
+
         document.getElementById("ready-modal").style.display = "none";
         setInputEnabled(true);
         startTimer();
+
+        if (startBtn) {
+          startBtn.textContent = originalText || "START CRACKING";
+          startBtn.disabled = false;
+          startBtn.style.opacity = "1";
+          startBtn.style.cursor = "pointer";
+        }
       }
 
       document.getElementById("stats-modal").addEventListener("click", (e) => {
@@ -8061,6 +8255,7 @@
 
       function openGroupModal() {
         document.getElementById("group-modal").style.display = "flex";
+        setSetupStatus("");
         document.getElementById("player-nick").disabled = false;
         const joinBtn = document.getElementById("join-group-btn");
         if (joinBtn) joinBtn.textContent = "Join / Create Crew";
@@ -8107,8 +8302,67 @@
         }
       }
 
+      // Firebase RTDB .once() never rejects when the client is offline - it just
+      // waits for a connection forever. Without a timeout the recover tap looks
+      // like a dead button.
+      const RECOVERY_LOOKUP_TIMEOUT_MS = 8000;
+
+      function withTimeout(promise, ms) {
+        let timer = null;
+        return Promise.race([
+          Promise.resolve(promise).finally(() => clearTimeout(timer)),
+          new Promise((_, reject) => {
+            timer = setTimeout(() => reject(new Error("timeout")), ms);
+          }),
+        ]);
+      }
+
+      function setSetupStatus(message, tone = "info") {
+        const el = document.getElementById("setup-status");
+        if (!el) return;
+        el.textContent = message || "";
+        el.style.color =
+          tone === "error"
+            ? "#f87171"
+            : tone === "success"
+              ? "#4ade80"
+              : "#94a3b8";
+      }
+
+      // Mobile browsers silently swallow alert()/confirm() once the user ticks
+      // "prevent this page from creating more dialogs", so always mirror inline.
+      function notifySetup(message, tone = "error") {
+        setSetupStatus(message, tone);
+        try {
+          alert(message);
+        } catch (e) {}
+      }
+
       async function recoverCodename() {
-        await joinGroup({ recoverExistingProfile: true });
+        const btn = document.getElementById("recover-profile-btn");
+        if (btn && btn.disabled) return;
+
+        const originalText = btn ? btn.textContent : "";
+        if (btn) {
+          btn.disabled = true;
+          btn.style.opacity = "0.6";
+          btn.style.cursor = "not-allowed";
+          btn.textContent = "Recovering...";
+        }
+        setSetupStatus("Looking up your saved profile...");
+
+        try {
+          await joinGroup({ recoverExistingProfile: true });
+        } catch (e) {
+          notifySetup("Recovery failed. Please try again.");
+        } finally {
+          if (btn) {
+            btn.disabled = false;
+            btn.style.opacity = "1";
+            btn.style.cursor = "";
+            btn.textContent = originalText || "Recover Existing Codename";
+          }
+        }
       }
 
       async function joinGroup(options = {}) {
@@ -8127,34 +8381,36 @@
         let isImportingExistingProfile = false;
 
         if (!isReusingCurrentNick && nick.length < 2) {
-          alert("Name must be 2+ chars.");
+          notifySetup("Name must be 2+ chars.");
           return;
         }
 
         if (group.length < 3) {
-          alert("Crew ID must be 3+ chars.");
+          notifySetup("Crew ID must be 3+ chars.");
           return;
         }
 
         // Validate: only alphanumeric, underscores, hyphens (blocks Firebase-unsafe chars and XSS)
         const safePattern = /^[A-Z0-9_-]+$/;
         if (!isReusingCurrentNick && !safePattern.test(nick)) {
-          alert("Codename can only use letters, numbers, hyphens, and underscores.");
+          notifySetup("Codename can only use letters, numbers, hyphens, and underscores.");
           return;
         }
 
         if (!safePattern.test(group)) {
-          alert("Crew ID can only use letters, numbers, hyphens, and underscores.");
+          notifySetup("Crew ID can only use letters, numbers, hyphens, and underscores.");
           return;
         }
 
         if (recoverExistingProfile && userNick) {
-          alert("Recovery is only available before choosing a codename on this device.");
+          notifySetup(
+            `This device is already signed in as ${userNick}. Clear that codename first, or recover on a fresh device.`,
+          );
           return;
         }
 
         if (recoverExistingProfile && !db) {
-          alert("Recovery needs a connection to saved profiles. Please try again.");
+          notifySetup("Recovery needs a connection to saved profiles. Please try again.");
           return;
         }
 
@@ -8171,27 +8427,38 @@
         // over a different codename already stored on this device.
         if (db && !isReusingCurrentNick) {
           try {
-            const profileSnap = await db.ref(`userProfile/${nick}`).once("value");
+            const profileSnap = await withTimeout(
+              db.ref(`userProfile/${nick}`).once("value"),
+              RECOVERY_LOOKUP_TIMEOUT_MS,
+            );
             if (profileSnap.exists()) {
               if (!recoverExistingProfile || userNick) {
-                alert("This name is already taken. Use recovery if this is your codename.");
+                notifySetup("This name is already taken. Use recovery if this is your codename.");
                 return;
               }
 
               const shouldImport = confirm(
                 `Codename ${nick} already exists. Import its saved stats to this device? Only continue if this is your codename.`,
               );
-              if (!shouldImport) return;
+              if (!shouldImport) {
+                setSetupStatus("Recovery cancelled.");
+                return;
+              }
 
               existingProfileData = profileSnap.val() || {};
               isImportingExistingProfile = true;
             } else if (recoverExistingProfile) {
-              alert("No saved profile found for that codename. Check the spelling or create a new one.");
+              notifySetup("No saved profile found for that codename. Check the spelling or create a new one.");
               return;
             }
           } catch (e) {
+            const timedOut = e && e.message === "timeout";
             if (recoverExistingProfile) {
-              alert("Couldn't check saved profiles right now. Please try again.");
+              notifySetup(
+                timedOut
+                  ? "Couldn't reach the server. Check your connection and try again."
+                  : "Couldn't check saved profiles right now. Please try again.",
+              );
               return;
             }
             // If Firebase is unreachable, allow offline play
@@ -8274,7 +8541,10 @@
         hideJoinNewCrew();
 
         if (isImportingExistingProfile) {
+          setSetupStatus("✅ Stats imported. Welcome back!", "success");
           showMessage("✅ Stats imported. Welcome back!");
+        } else {
+          setSetupStatus("");
         }
 
         syncNotificationRegistration().catch(() => {});
@@ -10001,7 +10271,21 @@
 
       // Listen for reconnection to flush queue
       if (typeof window !== "undefined") {
-        window.addEventListener("online", flushOfflineVaultQueue);
+        window.addEventListener("online", () => {
+          flushOfflineVaultQueue();
+          refreshDailyScoreSyncState().then((isReady) => {
+            if (isReady && !isGameOver && startTime) {
+              setInputEnabled(true);
+            }
+          });
+        });
+        window.addEventListener("offline", () => {
+          dailyScoreSyncReady = false;
+          if (requiresDailyScoreSync()) {
+            setInputEnabled(false);
+            showMessage("Connection lost. Reconnect to keep playing.");
+          }
+        });
       }
 
       function updateTurfWarVault(crewId, cashEarned, nickname) {
@@ -10257,6 +10541,7 @@
       window.openGroupModal = openGroupModal;
       window.closeGroupModal = closeGroupModal;
       window.joinGroup = joinGroup;
+      window.recoverCodename = recoverCodename;
       window.logoutGroup = logoutGroup;
       window.switchTab = switchTab;
       window.submitScoreToFirebase = submitScoreToFirebase;
