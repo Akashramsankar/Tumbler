@@ -3816,6 +3816,26 @@
               min-height: 1.1em;
             "
           ></div>
+          <button
+            id="setup-signout"
+            type="button"
+            onclick="signOutOfDevice()"
+            style="
+              display: none;
+              width: 100%;
+              margin: 6px auto 0;
+              padding: 6px;
+              background: none;
+              border: none;
+              color: #94a3b8;
+              text-decoration: underline;
+              font-size: 0.8rem;
+              font-family: inherit;
+              cursor: pointer;
+            "
+          >
+            Not you? Sign out of this device
+          </button>
         </div>
 
         <div id="view-leaderboard" style="display: none">
@@ -6540,8 +6560,7 @@
       function showJoinNewCrew() {
         // Show the setup form for joining a new crew
         document.getElementById("view-setup").style.display = "block";
-        document.getElementById("player-nick").value = userNick || "";
-        document.getElementById("player-nick").disabled = !!userNick;
+        refreshSetupIdentity();
         document.getElementById("group-id").value = ""; // Clear crew ID field
         document.getElementById("group-id").disabled = false;
         document.getElementById("group-id").focus();
@@ -6549,10 +6568,6 @@
         // Change button text
         const joinBtn = document.getElementById("join-group-btn");
         if (joinBtn) joinBtn.textContent = "Join New Crew";
-
-        const recoverBtn = document.getElementById("recover-profile-btn");
-        if (recoverBtn) recoverBtn.style.display = userNick ? "none" : "block";
-        setSetupStatus("");
       }
 
       function hideJoinNewCrew() {
@@ -8255,12 +8270,9 @@
 
       function openGroupModal() {
         document.getElementById("group-modal").style.display = "flex";
-        setSetupStatus("");
-        document.getElementById("player-nick").disabled = false;
         const joinBtn = document.getElementById("join-group-btn");
         if (joinBtn) joinBtn.textContent = "Join / Create Crew";
-        const recoverBtn = document.getElementById("recover-profile-btn");
-        if (recoverBtn) recoverBtn.style.display = userNick ? "none" : "block";
+        refreshSetupIdentity();
 
         // Check for invite crew in session
         const inviteCrew = sessionStorage.getItem("inviteCrew");
@@ -8336,6 +8348,61 @@
         try {
           alert(message);
         } catch (e) {}
+      }
+
+      // Setup form state depends on whether this device already holds a codename:
+      // signed in -> codename locked, Recover hidden, sign-out offered.
+      function refreshSetupIdentity() {
+        const nickInput = document.getElementById("player-nick");
+        if (nickInput) {
+          if (userNick) nickInput.value = userNick;
+          nickInput.disabled = !!userNick;
+        }
+        const recoverBtn = document.getElementById("recover-profile-btn");
+        if (recoverBtn) recoverBtn.style.display = userNick ? "none" : "block";
+        const signOutBtn = document.getElementById("setup-signout");
+        if (signOutBtn) signOutBtn.style.display = userNick ? "block" : "none";
+        setSetupStatus(userNick ? `Signed in on this device as ${userNick}.` : "");
+      }
+
+      async function signOutOfDevice() {
+        if (!userNick) return;
+
+        const ok = confirm(
+          `Sign out of this device?\n\nThis removes codename ${userNick}, its crews and local stats from this phone only. Stats already saved to the server are kept and can be brought back with "Recover Existing Codename".`,
+        );
+        if (!ok) return;
+
+        const signOutBtn = document.getElementById("setup-signout");
+        if (signOutBtn) {
+          signOutBtn.disabled = true;
+          signOutBtn.textContent = "Signing out...";
+        }
+        setSetupStatus("Saving your latest stats before signing out...");
+
+        // Push whatever this device has so nothing unsynced is lost, and stop
+        // crew notifications from reaching a phone that no longer owns the name.
+        try {
+          saveProfileToFirebase();
+          await withTimeout(
+            removeFcmTokenRegistrations(userGroups, userNick),
+            RECOVERY_LOOKUP_TIMEOUT_MS,
+          );
+        } catch (e) {}
+
+        [
+          "tumblerNick",
+          "tumblerGroups",
+          "tumblerActiveGroup",
+          GROUPS_UPDATED_AT_KEY,
+          "tumblerStats",
+          "tumblerStreakRecovered",
+          "tumblerVaultQueue",
+        ].forEach((key) => localStorage.removeItem(key));
+        sessionStorage.removeItem("inviteCrew");
+
+        // Reload so every in-memory listener/state starts clean.
+        window.location.reload();
       }
 
       async function recoverCodename() {
@@ -8433,7 +8500,11 @@
             );
             if (profileSnap.exists()) {
               if (!recoverExistingProfile || userNick) {
-                notifySetup("This name is already taken. Use recovery if this is your codename.");
+                notifySetup(
+                  userNick
+                    ? `This device is already signed in as ${userNick}, so ${nick} can't be used here.`
+                    : "This name is already taken. Use recovery if this is your codename.",
+                );
                 return;
               }
 
@@ -8571,6 +8642,7 @@
           } else {
             activeGroup = "";
             localStorage.removeItem("tumblerActiveGroup");
+            refreshSetupIdentity();
             document.getElementById("view-setup").style.display = "block";
             document.getElementById("view-leaderboard").style.display = "none";
           }
@@ -10542,6 +10614,7 @@
       window.closeGroupModal = closeGroupModal;
       window.joinGroup = joinGroup;
       window.recoverCodename = recoverCodename;
+      window.signOutOfDevice = signOutOfDevice;
       window.logoutGroup = logoutGroup;
       window.switchTab = switchTab;
       window.submitScoreToFirebase = submitScoreToFirebase;
