@@ -83,6 +83,8 @@
         --accent: #2f5d8a;
         --accent-ink: #244a6e;
         --accent-soft: rgba(47, 93, 138, 0.1);
+        --accent-solid: #2f5d8a;
+        --hover: rgba(27, 25, 22, 0.06);
 
         --safe-top-inset: env(safe-area-inset-top, 0px);
         --safe-left-inset: env(safe-area-inset-left, 0px);
@@ -357,6 +359,7 @@
 
       .toolbar-btn:hover {
         border-color: var(--ink);
+        background: var(--hover);
       }
 
       .intel-tool { display: flex; justify-content: center; }
@@ -536,9 +539,10 @@
       .stat-item { text-align: center; }
 
       .stat-value {
-        font-family: var(--font-display);
-        font-size: 2rem;
+        font-family: var(--font-ui);
+        font-size: 1.6rem;
         font-weight: 800;
+        letter-spacing: -0.02em;
         color: var(--ink);
         line-height: 1.1;
       }
@@ -611,7 +615,17 @@
       }
 
       .close-stats:hover,
-      .group-action-btn.secondary:hover { background: var(--surface-2); }
+      .group-action-btn.secondary:hover { background: var(--hover); }
+
+      /* Accent action (Share crew invite, Buy recovery) — same in both themes */
+      .group-action-btn.accent,
+      .tutorial-btn.accent {
+        background: var(--accent-solid);
+        color: #fff;
+        border-color: var(--accent-solid);
+      }
+      .group-action-btn.accent:hover,
+      .tutorial-btn.accent:hover { filter: brightness(1.08); background: var(--accent-solid); }
 
       .group-action-btn { margin-top: 10px; }
       .group-action-btn.secondary { margin-top: 10px; }
@@ -1116,7 +1130,7 @@
       .tile.evaluated .indicator { opacity: 1; }
 
       /* ==================== DISTRIBUTION ==================== */
-      .distribution-bars { display: flex; flex-direction: column; gap: 6px; }
+      #distribution-bars, .distribution-bars { display: flex; flex-direction: column; gap: 8px; }
 
       .distribution-row {
         display: flex;
@@ -1126,8 +1140,8 @@
       }
 
       .distribution-label {
-        font-family: var(--font-display);
-        font-size: 0.9rem;
+        font-family: var(--font-ui);
+        font-size: 0.8rem;
         font-weight: 700;
         width: 14px;
         text-align: right;
@@ -1137,7 +1151,7 @@
       .distribution-bar {
         background: var(--rule-strong);
         color: #fff;
-        height: 20px;
+        height: 22px;
         min-width: 22px;
         border-radius: 3px;
         display: flex;
@@ -1390,7 +1404,7 @@
       }
 
       .lb-rank {
-        font-family: var(--font-display);
+        font-family: var(--font-ui);
         font-size: 1.15rem;
         font-weight: 800;
         width: 32px;
@@ -1758,7 +1772,7 @@
         .stash-display > div:not(.stash-value):not(.stash-label) { font-size: 0.8rem !important; gap: 5px !important; }
         .stats-grid { gap: 8px; margin: 12px 0; }
         .stat-value { font-size: 1.6rem; }
-        .distribution-bars { gap: 5px; }
+        #distribution-bars, .distribution-bars { gap: 7px; }
         .distribution-bar { height: 18px; font-size: 0.7rem; }
         .tutorial-btn, .close-stats { padding: 11px 14px; font-size: 0.9rem; }
         #win-modal h2 { font-size: 1.45rem; margin-bottom: 12px; }
@@ -1797,7 +1811,7 @@
         .stats-grid { gap: 6px; margin: 10px 0; padding-top: 10px; }
         .stat-value { font-size: 1.4rem; }
         .stat-label { font-size: 0.58rem; }
-        .distribution-bars { gap: 4px; }
+        #distribution-bars, .distribution-bars { gap: 7px; }
         .distribution-bar { height: 16px; font-size: 0.65rem; }
         .tutorial-btn, .close-stats { padding: 10px 12px; font-size: 0.86rem; }
         #win-modal h2 { font-size: 1.35rem; margin-bottom: 10px; }
@@ -1845,7 +1859,7 @@
         .stats-grid { gap: 5px; margin: 8px 0; padding-top: 8px; }
         .stat-value { font-size: 1.25rem; }
         .stat-label { font-size: 0.54rem; }
-        .distribution-bars { gap: 3px; }
+        #distribution-bars, .distribution-bars { gap: 6px; }
         .distribution-bar { height: 14px; font-size: 0.6rem; }
         .tutorial-btn, .close-stats { padding: 9px 10px; font-size: 0.82rem; }
         #win-modal h2 { font-size: 1.25rem; margin-bottom: 8px; }
@@ -1873,7 +1887,7 @@
         .stats-grid { gap: 4px; margin: 6px 0; padding-top: 6px; }
         .stat-value { font-size: 1.1rem; }
         .stat-label { font-size: 0.5rem; }
-        .distribution-bars { gap: 2px; }
+        #distribution-bars, .distribution-bars { gap: 6px; }
         .distribution-bar { height: 12px; font-size: 0.55rem; }
         .tutorial-btn, .close-stats { padding: 8px; font-size: 0.78rem; }
         #win-modal h2 { font-size: 1.15rem; margin-bottom: 6px; }
@@ -1903,7 +1917,7 @@
         .stats-grid { margin: 10px 0; gap: 8px; padding-top: 10px; }
         .stat-value { font-size: 1.5rem; }
         #win-modal h2 { font-size: 1.4rem; margin-bottom: 10px; }
-        .distribution-bars { gap: 4px; }
+        #distribution-bars, .distribution-bars { gap: 7px; }
         .distribution-bar { height: 18px; font-size: 0.72rem; }
         .tutorial-btn, .close-stats { padding: 10px 16px; font-size: 0.9rem; margin-top: 10px; }
       }
@@ -1916,7 +1930,7 @@
         .stats-grid { margin: 8px 0; gap: 6px; padding-top: 8px; }
         .stat-value { font-size: 1.35rem; }
         #win-modal h2 { font-size: 1.3rem; margin-bottom: 8px; }
-        .distribution-bars { gap: 3px; }
+        #distribution-bars, .distribution-bars { gap: 6px; }
         .distribution-bar { height: 16px; font-size: 0.68rem; }
         .tutorial-btn, .close-stats { padding: 9px 14px; font-size: 0.86rem; margin-top: 8px; }
       }
@@ -1931,7 +1945,7 @@
         .stat-value { font-size: 1.2rem; }
         .stat-label { font-size: 0.56rem; }
         #win-modal h2 { font-size: 1.2rem; margin-bottom: 6px; }
-        .distribution-bars { gap: 2px; }
+        #distribution-bars, .distribution-bars { gap: 6px; }
         .distribution-bar { height: 14px; font-size: 0.62rem; }
         .tutorial-btn, .close-stats { padding: 8px 12px; font-size: 0.82rem; margin-top: 6px; }
         #win-modal .stats-content > div[style*="margin: 10px 0"] { margin: 6px 0 !important; }
@@ -1947,7 +1961,7 @@
         .stat-value { font-size: 1.05rem; }
         .stat-label { font-size: 0.5rem; }
         #win-modal h2 { font-size: 1.1rem; margin-bottom: 5px; }
-        .distribution-bars { gap: 2px; }
+        #distribution-bars, .distribution-bars { gap: 6px; }
         .distribution-bar { height: 12px; font-size: 0.58rem; }
         .tutorial-btn, .close-stats { padding: 7px 10px; font-size: 0.78rem; margin-top: 5px; }
         #win-modal .tutorial-content > div[style*="margin"] { margin: 5px 0 !important; }
@@ -1964,7 +1978,7 @@
         #win-modal .stats-grid { margin: 6px 0 !important; gap: 4px !important; padding-top: 6px !important; }
         #win-modal .stat-value { font-size: 1.1rem !important; }
         #win-modal .stat-label { font-size: 0.53rem !important; }
-        #win-modal .distribution-row { margin-bottom: 1px !important; }
+        #win-modal .distribution-row { margin-bottom: 0 !important; }
         #win-modal .distribution-bar { height: 13px !important; font-size: 0.55rem !important; }
         #win-modal .tutorial-btn, #win-modal .close-stats { padding: 8px 10px !important; font-size: 0.8rem !important; }
         #win-crew-context { padding: 4px 8px !important; margin-bottom: 4px !important; font-size: 0.65rem !important; }
@@ -2079,7 +2093,7 @@
         margin-bottom: 10px;
       }
       .panel-count {
-        font-family: var(--font-display);
+        font-family: var(--font-ui);
         font-weight: 800;
         font-size: 1.2rem;
         color: var(--ink);
@@ -2090,8 +2104,9 @@
         margin-top: 12px;
       }
       .panel-stat-value {
-        font-family: var(--font-display);
-        font-size: 1.8rem;
+        font-family: var(--font-ui);
+        font-size: 1.5rem;
+        letter-spacing: -0.02em;
         font-weight: 800;
         color: var(--ink);
         line-height: 1.1;
@@ -2172,6 +2187,8 @@
           --accent: #7fa7d0;
           --accent-ink: #9dbde0;
           --accent-soft: rgba(127, 167, 208, 0.16);
+          --accent-solid: #3b6f9f;
+          --hover: rgba(255, 255, 255, 0.08);
           --color-correct: #3a9c66;
           --color-close: #d1a032;
           --color-far: #d15a4f;
@@ -2206,6 +2223,8 @@
         --accent: #7fa7d0;
         --accent-ink: #9dbde0;
         --accent-soft: rgba(127, 167, 208, 0.16);
+        --accent-solid: #3b6f9f;
+        --hover: rgba(255, 255, 255, 0.08);
         --color-correct: #3a9c66;
         --color-close: #d1a032;
         --color-far: #d15a4f;
@@ -2681,7 +2700,7 @@
         <div id="win-crew-context" style="display:none; text-align:center; padding:6px 10px; margin-bottom:8px; background:var(--safe-inset); border:1px solid var(--safe-border); border-radius:8px; font-size:0.72rem; color:var(--ink-soft); line-height:1.4;"></div>
 
         <div style="margin: 10px 0; text-align: center">
-          <div style="font-size: 0.75rem; color: var(--ink-muted); margin-bottom: 6px">
+          <div class="stash-label" style="margin-bottom: 8px">
             Guess distribution
           </div>
           <div id="distribution-bars"></div>
@@ -3052,9 +3071,9 @@
 
           <!-- Add Share Crew Button -->
           <button
-            class="group-action-btn secondary"
+            class="group-action-btn accent"
             onclick="shareCrewInvite()"
-            style="margin-bottom: 15px; background: var(--color-close)"
+            style="margin-bottom: 15px"
           >
             Share crew invite
           </button>
@@ -3368,9 +3387,9 @@
         <div style="display: flex; gap: 10px; flex-direction: column">
           <button
             id="streak-alert-recovery-btn"
-            class="tutorial-btn"
+            class="tutorial-btn accent"
             onclick="buyRecoveryFromAlert()"
-            style="background: var(--color-close); width: 100%"
+            style="width: 100%"
           >
             Buy recovery · $30,000
           </button>
