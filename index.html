@@ -77,6 +77,8 @@
         --ink-faint: #76716a;
         --rule: #dcd7cc;
         --rule-strong: #a39d92;
+        --tick: #a39d92;
+        --tick-opacity: 0.45;
         --surface: #ffffff;
         --surface-2: #f1ede4;
 
@@ -1031,7 +1033,7 @@
         position: absolute;
         inset: -8px;
         border-radius: 50%;
-        background: repeating-conic-gradient(from -1.2deg, var(--rule-strong) 0deg 2.4deg, transparent 2.4deg 30deg);
+        background: repeating-conic-gradient(from -1.2deg, var(--tick) 0deg 2.4deg, transparent 2.4deg 30deg);
         -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
         mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 3px));
         opacity: 0;
@@ -1041,7 +1043,7 @@
 
       .tile::after { content: none; }
 
-      .row.active .tile::before { opacity: 0.45; }
+      .row.active .tile::before { opacity: var(--tick-opacity); }
 
       .tile[data-status="filled"] {
         border-color: var(--ink);
@@ -2180,8 +2182,10 @@
           --ink-soft: #d4cfc5;
           --ink-muted: #a39d92;
           --ink-faint: #7c766c;
-          --rule: #343028;
+          --rule: #3d3830;
           --rule-strong: #5b554b;
+          --tick: #9a9387;
+          --tick-opacity: 0.7;
           --surface: #1f1d19;
           --surface-2: #26231e;
           --accent: #7fa7d0;
@@ -2216,8 +2220,10 @@
         --ink-soft: #d4cfc5;
         --ink-muted: #a39d92;
         --ink-faint: #7c766c;
-        --rule: #343028;
+        --rule: #3d3830;
         --rule-strong: #5b554b;
+        --tick: #9a9387;
+        --tick-opacity: 0.7;
         --surface: #1f1d19;
         --surface-2: #26231e;
         --accent: #7fa7d0;
