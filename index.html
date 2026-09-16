@@ -1405,10 +1405,13 @@
       }
 
       .keyboard-toggle-btn {
-        background: transparent;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--surface-2);
         color: var(--ink-muted);
-        border: none;
-        padding: 6px 12px;
+        border: 1px solid var(--rule);
+        padding: 3px 3px 3px 10px;
         border-radius: 999px;
         cursor: pointer;
         font-size: 0.72rem;
@@ -1416,10 +1419,29 @@
         letter-spacing: 0.08em;
         text-transform: uppercase;
         font-family: var(--font-ui);
-        transition: all 0.15s;
+        transition: border-color 0.15s ease;
       }
 
-      .keyboard-toggle-btn:hover { background: var(--surface-2); color: var(--ink); }
+      .keyboard-toggle-btn:hover { border-color: var(--ink); }
+
+      .keyboard-toggle-btn .ico { flex: 0 0 auto; }
+
+      .keyboard-toggle-seg {
+        display: inline-flex;
+        gap: 2px;
+      }
+
+      .keyboard-toggle-opt {
+        padding: 5px 10px;
+        border-radius: 999px;
+        color: var(--ink-muted);
+        transition: background 0.15s ease, color 0.15s ease;
+      }
+
+      .keyboard-toggle-opt.active {
+        background: var(--ink);
+        color: var(--paper);
+      }
 
       /* ==================== TOAST ==================== */
       #message-container {
@@ -2133,7 +2155,6 @@
       .slide-icon { color: var(--accent); }
       .tool-icon { color: var(--accent); margin-top: 0; display: flex; }
       .lb-score-sub .ico { vertical-align: -2px; margin-left: 2px; opacity: 0.7; }
-      .keyboard-toggle-btn .ico { margin-right: 6px; vertical-align: -3px; }
       #ready-crew-status:empty, #ready-sync-status:empty { display: none; }
 
       /* ==================== STREAK CARD (header) ==================== */
@@ -2954,8 +2975,12 @@
     </div>
 
     <div class="keyboard-toggle">
-      <button class="keyboard-toggle-btn" onclick="toggleKeyboardLayout()">
-        <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></svg><span id="keyboard-layout-text">QWERTY</span>
+      <button class="keyboard-toggle-btn" onclick="toggleKeyboardLayout()" aria-label="Switch keyboard layout" title="Switch keyboard layout">
+        <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></svg>
+        <span class="keyboard-toggle-seg" id="keyboard-layout-text">
+          <span class="keyboard-toggle-opt" data-layout="abc">ABC</span>
+          <span class="keyboard-toggle-opt" data-layout="qwerty">QWERTY</span>
+        </span>
       </button>
     </div>
 
@@ -4560,10 +4585,7 @@
         try {
           await loadDictionaries();
 
-          const layoutText = document.getElementById("keyboard-layout-text");
-          if (layoutText) {
-            layoutText.textContent = keyboardLayout.toUpperCase();
-          }
+          updateKeyboardToggleUI();
           _tgt.s(getDailyWord());
 
           // Check if already played today
@@ -5465,15 +5487,16 @@
         keyboardContainer.classList.toggle("locked", !isInputEnabled);
       }
 
+      function updateKeyboardToggleUI() {
+        document.querySelectorAll(".keyboard-toggle-opt").forEach((opt) => {
+          opt.classList.toggle("active", opt.dataset.layout === keyboardLayout);
+        });
+      }
+
       function toggleKeyboardLayout() {
         keyboardLayout = keyboardLayout === "abc" ? "qwerty" : "abc";
         saveKeyboardLayoutPreference(keyboardLayout);
-
-        // Update button text
-        const layoutText = document.getElementById("keyboard-layout-text");
-        if (layoutText) {
-          layoutText.textContent = keyboardLayout.toUpperCase();
-        }
+        updateKeyboardToggleUI();
 
         // Store current keyboard state (which keys are colored/disabled)
         const keyStates = {};
