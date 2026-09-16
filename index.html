@@ -356,10 +356,115 @@
         display: inline-flex;
         align-items: center;
         gap: 6px;
+        white-space: nowrap;
         transition: border-color 0.15s ease, background 0.15s ease;
       }
 
       .toolbar-btn:hover {
+        border-color: var(--ink);
+        background: var(--hover);
+      }
+
+      /* ==================== MORE GAMES ==================== */
+      .more-games-intro {
+        color: var(--ink-muted);
+        font-size: 0.85rem;
+        margin: -6px 0 14px;
+        line-height: 1.4;
+      }
+
+      .game-card {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        width: 100%;
+        padding: 14px 16px;
+        margin-bottom: 10px;
+        background: var(--safe-inset);
+        border: 1px solid var(--safe-border);
+        border-radius: 12px;
+        color: var(--ink);
+        text-decoration: none;
+        text-align: left;
+        transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
+      }
+
+      .game-card:hover {
+        border-color: var(--ink);
+        background: var(--hover);
+        transform: translateY(-1px);
+      }
+
+      .game-card-mark {
+        flex: 0 0 44px;
+        width: 44px;
+        height: 44px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: var(--accent-soft);
+        color: var(--accent-ink);
+      }
+
+      .game-card-body { flex: 1; min-width: 0; }
+
+      .game-card-title {
+        display: block;
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 1.05rem;
+        line-height: 1.2;
+        margin-bottom: 3px;
+      }
+
+      .game-card-desc {
+        display: block;
+        font-size: 0.78rem;
+        color: var(--ink-muted);
+        line-height: 1.35;
+      }
+
+      .game-card-arrow {
+        flex: 0 0 auto;
+        color: var(--ink-muted);
+      }
+
+      /* Compact row in the win modal */
+      .win-more-games {
+        margin: 4px 0 10px;
+        padding: 10px 12px;
+        background: var(--safe-inset);
+        border: 1px solid var(--safe-border);
+        border-radius: 8px;
+        text-align: center;
+      }
+
+      .win-more-games .stash-label { margin-bottom: 8px; }
+
+      .win-more-games-row {
+        display: flex;
+        gap: 8px;
+      }
+
+      .win-game-link {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 9px 10px;
+        border-radius: 999px;
+        background: var(--card);
+        border: 1px solid var(--rule);
+        color: var(--ink);
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-decoration: none;
+        transition: border-color 0.15s ease, background 0.15s ease;
+      }
+
+      .win-game-link:hover {
         border-color: var(--ink);
         background: var(--hover);
       }
@@ -377,6 +482,7 @@
         font-size: 0.85rem;
         font-weight: 600;
         font-family: var(--font-ui);
+        white-space: nowrap;
         transition: border-color 0.15s ease, background 0.15s ease;
         text-align: center;
         min-width: 0;
@@ -1870,6 +1976,12 @@
         .mute-btn { width: 32px; right: 58px !important; }
       }
 
+      @media (max-width: 360px) {
+        .toolbar { gap: 6px; }
+        .toolbar-btn, .intel-btn { padding: 0 10px; }
+        .toolbar-btn .toolbar-label { display: none; }
+      }
+
       @media (max-width: 340px) {
         body { padding: 0 6px 12px; }
         .tile { width: 44px; height: 44px; font-size: 1.3rem; }
@@ -2600,6 +2712,34 @@
       </div>
     </div>
 
+    <!-- More Games Modal -->
+    <div id="more-games-modal" class="stats-modal" onclick="if(event.target===this)closeMoreGames()" role="dialog" aria-modal="true" aria-labelledby="more-games-title">
+      <div class="stats-content">
+        <h2 id="more-games-title" style="margin-top: 0; text-align: center">More games</h2>
+        <p class="more-games-intro">Two more daily word puzzles from the same workshop. Each opens in a new tab.</p>
+
+        <a class="game-card" href="https://akashramsankar.github.io/currents/" target="_blank" rel="noopener">
+          <span class="game-card-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12c3-4 6-4 9 0s6 4 9 0"/><path d="M3 17c3-4 6-4 9 0s6 4 9 0"/><path d="M3 7c3-4 6-4 9 0s6 4 9 0"/></svg></span>
+          <span class="game-card-body">
+            <span class="game-card-title">Currents</span>
+            <span class="game-card-desc">Slide the grid until the answer's letters link up into one unbroken circuit.</span>
+          </span>
+          <svg class="game-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+        </a>
+
+        <a class="game-card" href="https://akashramsankar.github.io/TypeSet/" target="_blank" rel="noopener">
+          <span class="game-card-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/></svg></span>
+          <span class="game-card-body">
+            <span class="game-card-title">Typeset</span>
+            <span class="game-card-desc">Drag letter blocks into the 5×5 press so every row and column reads as a word.</span>
+          </span>
+          <svg class="game-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+        </a>
+
+        <button class="close-stats" onclick="closeMoreGames()">Close</button>
+      </div>
+    </div>
+
     <!-- Trends Modal -->
     <div id="trends-modal" class="stats-modal" style="display:none;">
       <div class="stats-content" style="max-height: 85vh; overflow-y: auto;">
@@ -2712,6 +2852,14 @@
           <div id="distribution-bars"></div>
         </div>
 
+        <div class="win-more-games">
+          <div class="stash-label">Keep playing</div>
+          <div class="win-more-games-row">
+            <a class="win-game-link" href="https://akashramsankar.github.io/currents/" target="_blank" rel="noopener">Currents<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg></a>
+            <a class="win-game-link" href="https://akashramsankar.github.io/TypeSet/" target="_blank" rel="noopener">Typeset<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg></a>
+          </div>
+        </div>
+
         <div id="win-trend-insight" onclick="closeWinModal(); showTrends();" style="display:none; cursor:pointer; text-align:center; padding:6px 10px; margin-bottom:8px; background:rgba(106,170,100,0.08); border:1px solid rgba(106,170,100,0.25); border-radius:8px; font-size:0.75rem; color:var(--ink-soft); line-height:1.3;"></div>
 
         <div style="display:flex; gap:8px; margin-top:8px;">
@@ -2730,6 +2878,7 @@
 
     <div class="toolbar">
       <button class="toolbar-btn" onclick="openGroupModal()"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a5 5 0 0 1 6 5.8"/></svg><span>Crew</span></button>
+      <button class="toolbar-btn" onclick="openMoreGames()" aria-label="More games"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/></svg><span class="toolbar-label">Games</span></button>
       <button class="intel-btn" id="intel-btn" onclick="confirmIntel()"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M20 20l-4.2-4.2"/></svg>View intel<span>$1,000</span></button>
     </div>
 
@@ -6439,6 +6588,14 @@
 
       function closeTrends() {
         document.getElementById("trends-modal").style.display = "none";
+      }
+
+      function openMoreGames() {
+        document.getElementById("more-games-modal").style.display = "flex";
+      }
+
+      function closeMoreGames() {
+        document.getElementById("more-games-modal").style.display = "none";
       }
 
       function collectGameHistory() {
