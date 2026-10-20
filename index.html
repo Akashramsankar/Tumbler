@@ -7391,6 +7391,7 @@
 
       // Startup init — userNick/userGroups now declared
       if (db && userNick) {
+        markUserVisit();
         syncAllStatsFromFirebase();
         if (userGroups.length > 0) {
           userGroups.forEach((group) => initTurfWar(group));
@@ -8809,6 +8810,14 @@
         }
 
         db.ref(`userProfile/${userNick}`).update(profileUpdate);
+      }
+
+      function markUserVisit() {
+        if (!db || !userNick) return;
+
+        db.ref(`userProfile/${userNick}`).update({
+          lastUpdatedAt: firebase.database.ServerValue.TIMESTAMP,
+        }).catch(() => {});
       }
 
       function hasPlayedTodayCheck() {
