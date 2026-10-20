@@ -8802,7 +8802,7 @@
           lastStreakMilestone: localStats.lastStreakMilestone || 0,
           bestSingleHeist: localStats.bestSingleHeist || 0,
           previousStreak: localStats.previousStreak || 0,
-          lastUpdated: Date.now(),
+          lastUpdated: firebase.database.ServerValue.TIMESTAMP,
         };
         const groupsUpdatedAt = getLocalGroupsUpdatedAt();
         if (groupsUpdatedAt) {
@@ -8816,7 +8816,7 @@
         if (!db || !userNick) return;
 
         db.ref(`userProfile/${userNick}`).update({
-          lastUpdatedAt: firebase.database.ServerValue.TIMESTAMP,
+          lastUpdated: firebase.database.ServerValue.TIMESTAMP,
         }).catch(() => {});
       }
 
