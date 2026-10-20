@@ -4194,7 +4194,7 @@
 
       let dictionary = new Set();
       let answerList = [];
-      let dailyWords = [];
+      let dailyWordsByDate = {};
       let slotConstraints = [];
       const DEFAULT_KEYBOARD_LAYOUT = "abc";
       const KEYBOARD_LAYOUT_STORAGE_KEY = "tumblerKeyboardLayout";
@@ -5347,15 +5347,45 @@
 
         const dailyResponse = await fetch("daily-words.json");
         const dailyData = await dailyResponse.json();
-        dailyWords = dailyData.map((w) => w.toUpperCase());
+
+        if (
+          !dailyData ||
+          Array.isArray(dailyData) ||
+          typeof dailyData !== "object"
+        ) {
+          throw new Error("Daily words must be a date-to-word object");
+        }
+
+        dailyWordsByDate = Object.fromEntries(
+          Object.entries(dailyData).map(([date, word]) => {
+            const parsedDate = new Date(`${date}T00:00:00Z`);
+
+            if (
+              !/^\d{4}-\d{2}-\d{2}$/.test(date) ||
+              Number.isNaN(parsedDate.getTime()) ||
+              parsedDate.toISOString().slice(0, 10) !== date
+            ) {
+              throw new Error(`Invalid daily word date: ${date}`);
+            }
+
+            if (typeof word !== "string" || !/^[a-z]{4}$/i.test(word)) {
+              throw new Error(`Invalid daily word for ${date}: ${word}`);
+            }
+
+            return [date, word.toUpperCase()];
+          }),
+        );
       }
 
       function getDailyWord(dateObj = new Date()) {
-        const daysPassed = getLocalDayNumber(dateObj) - getLocalDayNumber(GAME_EPOCH);
-        const index = daysPassed % dailyWords.length;
-        const safeIndex = index < 0 ? index + dailyWords.length : index;
+        const date = getLocalDateStamp(dateObj);
+        const word = dailyWordsByDate[date];
 
-        return dailyWords[safeIndex];
+        if (!word) {
+          throw new Error(`No daily word configured for ${date}`);
+        }
+
+        return word;
       }
 
       // NEW: Function to calculate cash prize
