@@ -430,6 +430,148 @@
         color: var(--ink-muted);
       }
 
+      .game-card.featured {
+        border-color: var(--accent);
+        cursor: pointer;
+        font: inherit;
+      }
+
+      /* ==================== WEEKLY HEIST ==================== */
+      body.weekly-open { overflow: hidden; }
+
+      #weekly-screen {
+        display: none;
+        position: fixed;
+        inset: 0;
+        z-index: 900;
+        background: var(--paper);
+        color: var(--ink);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      body.weekly-open #weekly-screen { display: block; }
+
+      .weekly-inner {
+        max-width: 500px;
+        margin: 0 auto;
+        padding: 12px 16px 24px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+      }
+
+      .weekly-topbar {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+      }
+
+      .weekly-title {
+        font-family: var(--font-display);
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin: 0;
+        text-align: center;
+        flex: 1;
+      }
+
+      .weekly-sub {
+        font-size: 0.8rem;
+        color: var(--ink-muted);
+        text-align: center;
+        margin-bottom: 10px;
+      }
+
+      .weekly-pips {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+        margin-bottom: 10px;
+      }
+
+      .weekly-pip {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        border: 2px solid var(--rule-strong);
+      }
+
+      .weekly-pip.current { border-color: var(--accent); }
+      .weekly-pip.done { background: var(--color-correct); border-color: var(--color-correct); }
+      .weekly-pip.failed { background: var(--color-far); border-color: var(--color-far); }
+
+      .weekly-board {
+        position: relative;
+        padding: 8px 0 6px 26px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 14px;
+        max-width: 100%;
+        touch-action: manipulation;
+        -webkit-user-select: none;
+        user-select: none;
+        counter-reset: attempt;
+      }
+
+      .weekly-clue-label {
+        font-size: 0.68rem;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--ink-muted);
+        margin: 0 0 -4px -26px;
+      }
+
+      .row.weekly-clue-row { counter-increment: none; opacity: 0.85; }
+      .row.weekly-clue-row::before { content: "↳"; }
+
+      .weekly-panel {
+        width: 100%;
+        background: var(--card);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow-card);
+        padding: 22px 20px;
+        text-align: center;
+        margin-top: 8px;
+      }
+
+      .weekly-rules {
+        text-align: left;
+        font-size: 0.86rem;
+        line-height: 1.5;
+        color: var(--ink-soft);
+        padding-left: 18px;
+        margin: 12px 0 18px;
+      }
+
+      .weekly-rules li { margin-bottom: 6px; }
+
+      .weekly-vault-list {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        justify-content: center;
+        margin: 12px 0 16px;
+      }
+
+      .weekly-vault-chip {
+        font-family: var(--font-display);
+        font-weight: 700;
+        font-size: 0.85rem;
+        letter-spacing: 0.08em;
+        padding: 5px 10px;
+        border-radius: 999px;
+        background: var(--safe-inset);
+        border: 1px solid var(--safe-border);
+      }
+
+      .weekly-vault-chip.cracked { border-color: var(--color-correct); color: var(--color-cash); }
+
       /* Compact row in the win modal */
       .win-more-games {
         margin: 4px 0 10px;
@@ -1274,7 +1416,8 @@
       .distribution-bar.current { background: var(--color-correct); color: #fff; }
 
       /* ==================== KEYBOARD (keycaps) ==================== */
-      #keyboard {
+      #keyboard,
+      #weekly-keyboard {
         width: 100%;
         max-width: 500px;
         padding: 0;
@@ -1284,7 +1427,8 @@
         user-select: none;
       }
 
-      #keyboard.locked { opacity: 0.5; pointer-events: none; }
+      #keyboard.locked,
+      #weekly-keyboard.locked { opacity: 0.5; pointer-events: none; }
 
       .key-row {
         display: flex;
@@ -2037,7 +2181,7 @@
       }
 
       @media (max-width: 280px) {
-        #keyboard { max-width: 100%; padding: 0 2px; }
+        #keyboard, #weekly-keyboard { max-width: 100%; padding: 0 2px; }
         .key { height: 36px; font-size: 0.72rem; padding: 0 1px; }
         .key::after { display: none; }
         .key-row { gap: 2px; margin-bottom: 2px; }
@@ -2682,6 +2826,12 @@
           >
             <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.6"/><path d="M15.5 14.2a5 5 0 0 1 6 5.8"/></svg>View crew
           </button>
+          <button
+            class="tutorial-btn crew-btn-compact"
+            onclick="openWeeklyHeist()"
+          >
+            <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2"/></svg>Weekly heist · up to $25,000
+          </button>
         </div>
       </div>
     </div>
@@ -2737,7 +2887,16 @@
     <div id="more-games-modal" class="stats-modal" onclick="if(event.target===this)closeMoreGames()" role="dialog" aria-modal="true" aria-labelledby="more-games-title">
       <div class="stats-content">
         <h2 id="more-games-title" style="margin-top: 0; text-align: center">More games</h2>
-        <p class="more-games-intro">Two more daily word puzzles from the same workshop.</p>
+        <p class="more-games-intro">A weekly heist, plus two more daily word puzzles from the same workshop.</p>
+
+        <button type="button" class="game-card featured" onclick="openWeeklyHeist()">
+          <span class="game-card-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="15" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/><circle cx="12" cy="15" r="2"/></svg></span>
+          <span class="game-card-body">
+            <span class="game-card-title">Weekly heist</span>
+            <span class="game-card-desc">Crack 5 vaults back to back. Each code you crack is your clue for the next. Up to $25,000.</span>
+          </span>
+          <svg class="game-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 6l6 6-6 6"/></svg>
+        </button>
 
         <a class="game-card" href="https://akashramsankar.github.io/currents/" target="_blank" rel="noopener">
           <span class="game-card-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 12c3-4 6-4 9 0s6 4 9 0"/><path d="M3 17c3-4 6-4 9 0s6 4 9 0"/><path d="M3 7c3-4 6-4 9 0s6 4 9 0"/></svg></span>
@@ -2758,6 +2917,70 @@
         </a>
 
         <button class="close-stats" onclick="closeMoreGames()">Close</button>
+      </div>
+    </div>
+
+    <!-- Weekly Heist Screen -->
+    <div id="weekly-screen" role="dialog" aria-modal="true" aria-labelledby="weekly-title">
+      <div class="weekly-inner">
+        <div class="weekly-topbar">
+          <button class="toolbar-btn" onclick="closeWeeklyHeist()" aria-label="Back to daily puzzle"><svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"/></svg><span>Daily</span></button>
+          <h2 class="weekly-title" id="weekly-title">Weekly heist</h2>
+          <div class="timer-display" style="margin: 0">
+            <span id="weekly-timer">00:00</span>
+          </div>
+        </div>
+        <div class="weekly-sub" id="weekly-sub"></div>
+        <div class="weekly-pips" id="weekly-pips"></div>
+        <div id="weekly-message-container" style="min-height: 30px; display: flex; justify-content: center; align-items: center; width: 100%"></div>
+
+        <!-- Intro -->
+        <div class="weekly-panel" id="weekly-intro" style="display: none">
+          <div class="stash-label">This week's job</div>
+          <div class="stash-value" style="color: var(--color-cash)">Up to $25,000</div>
+          <ul class="weekly-rules">
+            <li>Crack <strong>5 vaults</strong> in a row, 6 tries each. Same dials as the daily: ▲/▼ is close (1–9), ▲▲/▼▼ is far (10+).</li>
+            <li>Each code you crack becomes the <strong>clue</strong> for the next vault. It's dialled in for free, so read the arrows and work out the next code.</li>
+            <li>One clock runs for the whole heist and keeps running if you leave. Fewer tries and a faster time pay more.</li>
+            <li>Fail any vault and the heist is blown: no payout. One attempt per week, resets Monday.</li>
+          </ul>
+          <button class="tutorial-btn" id="weekly-start-btn" onclick="startWeeklyHeist()" style="width: 100%">Start the heist</button>
+        </div>
+
+        <!-- Play -->
+        <div id="weekly-play" style="display: none; width: 100%; flex-direction: column; align-items: center">
+          <div id="weekly-board" class="weekly-board"></div>
+          <div id="weekly-keyboard"></div>
+        </div>
+
+        <!-- Result -->
+        <div class="weekly-panel" id="weekly-result" style="display: none">
+          <h2 id="weekly-result-title" style="margin-top: 0">Heist complete</h2>
+          <div class="stash-display">
+            <div class="stash-label">Stolen this week</div>
+            <div class="stash-value" id="weekly-result-cash">$0</div>
+          </div>
+          <div class="stats-grid">
+            <div class="stat-item">
+              <div class="stat-value" id="weekly-result-vaults">0/5</div>
+              <div class="stat-label">Vaults</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="weekly-result-tries">0</div>
+              <div class="stat-label">Tries</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-value" id="weekly-result-time">0:00</div>
+              <div class="stat-label">Time</div>
+            </div>
+          </div>
+          <div class="weekly-vault-list" id="weekly-result-codes"></div>
+          <div class="weekly-sub" id="weekly-result-reset"></div>
+          <div style="display: flex; gap: 8px">
+            <button class="tutorial-btn" onclick="shareWeeklyResult()" style="flex: 1; margin: 0">Share</button>
+            <button class="close-stats" onclick="closeWeeklyHeist()" style="flex: 1; margin: 0">Back to daily</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -3271,11 +3494,11 @@
             <button class="tab-btn" data-tab="efficiency" onclick="switchTab('efficiency')">
               Efficiency
             </button>
-            <button class="tab-btn" data-tab="best" onclick="switchTab('best')">
-              Best heist
-            </button>
             <button class="tab-btn" data-tab="week" onclick="switchTab('week')">
               This week
+            </button>
+            <button class="tab-btn" data-tab="heist" onclick="switchTab('heist')">
+              Weekly heist
             </button>
             <button
               id="turf-war-tab-btn"
@@ -5668,8 +5891,12 @@
       }
 
       function showMessage(msg) {
-        messageContainer.innerHTML = `<div class="toast">${msg}</div>`;
-        setTimeout(() => (messageContainer.innerHTML = ""), 2000);
+        // Route toasts to the weekly screen while it covers the daily board
+        const container = document.body.classList.contains("weekly-open")
+          ? document.getElementById("weekly-message-container")
+          : messageContainer;
+        container.innerHTML = `<div class="toast">${msg}</div>`;
+        setTimeout(() => (container.innerHTML = ""), 2000);
       }
 
       function shakeRow() {
@@ -5918,6 +6145,7 @@
       }
 
       function handleKeydown(e) {
+        if (document.body.classList.contains("weekly-open")) return;
         if (!isInputEnabled) return;
         const key = e.key.toUpperCase();
         if (key === "ENTER") submitGuess();
@@ -5928,7 +6156,11 @@
       function applyFeedbackConstraint(slotIndex, guessVal, diff) {
         const constraint = slotConstraints[slotIndex];
         if (!constraint) return;
+        narrowSlotConstraint(constraint, guessVal, diff);
+      }
 
+      // Shared by the daily and weekly boards
+      function narrowSlotConstraint(constraint, guessVal, diff) {
         if (diff === 0) {
           constraint.min = guessVal;
           constraint.max = guessVal;
@@ -8142,6 +8374,11 @@
           return;
         }
 
+        if (currentTab === "heist") {
+          loadHeistLeaderboard();
+          return;
+        }
+
         const timeout = setTimeout(() => {
           list.innerHTML =
             '<div style="text-align:center; padding:20px; color:orange;">Connection Timeout.<br>Check your  Internet.</div>';
@@ -8283,10 +8520,6 @@
                         const effA = (a.cash || 0) / Math.max(a.wins, 1);
                         const effB = (b.cash || 0) / Math.max(b.wins, 1);
                         return effB - effA;
-                      } else if (currentTab === "best") {
-                        return (
-                          (b.bestSingleHeist || 0) - (a.bestSingleHeist || 0)
-                        );
                       } else {
                         return (b.totalCash || 0) - (a.totalCash || 0);
                       }
@@ -8367,8 +8600,6 @@
             currentScore = Math.floor(
               (stats.cash || 0) / Math.max(stats.wins || 1, 1),
             );
-          } else if (type === "best") {
-            currentScore = stats.bestSingleHeist || 0;
           } else if (type === "week") {
             currentScore = stats.cash;
           } else {
@@ -8417,9 +8648,6 @@
             const efficiency = Math.floor((stats.cash || 0) / gamesWon);
             scoreMain = `$${efficiency.toLocaleString()}/game`;
             scoreSub = `${gamesWon} daily games`;
-          } else if (type === "best") {
-            scoreMain = `$${(stats.bestSingleHeist || 0).toLocaleString()}`;
-            scoreSub = `Best single heist`;
           } else if (type === "week") {
             scoreMain = `$${stats.cash.toLocaleString()}`;
             scoreSub = `${stats.wins} wins this week`;
@@ -8469,6 +8697,104 @@
           `;
           list.insertAdjacentHTML("beforeend", html);
         });
+      }
+
+      // Weekly heist board: separate from daily totals, only ranks crew
+      // members who played this week's heist
+      function loadHeistLeaderboard() {
+        const list = document.getElementById("lb-list");
+        document.getElementById("lb-crew-stats").style.display = "none";
+        list.innerHTML =
+          '<div style="text-align:center; padding:20px; color:var(--ink-faint);">Loading heist results...</div>';
+
+        const weekKey = getWeekKey();
+        const crewId = activeGroup;
+        Promise.all([
+          db.ref(`weeklyScores/${crewId}/${weekKey}`).once("value"),
+          db.ref(`groups/${crewId}/members`).once("value"),
+        ])
+          .then(([scoresSnap, membersSnap]) => {
+            // Ignore late results if the user switched tab or crew meanwhile
+            if (currentTab !== "heist" || activeGroup !== crewId) return;
+
+            const scores = scoresSnap.val() || {};
+            const members = Object.keys(membersSnap.val() || {});
+            const sorted = Object.entries(scores).sort(
+              ([, a], [, b]) =>
+                (b.cash || 0) - (a.cash || 0) ||
+                (b.vaults || 0) - (a.vaults || 0) ||
+                (a.time || 0) - (b.time || 0),
+            );
+            const notPlayed = members.filter((nick) => !scores[nick]);
+            const formatTime = (s) =>
+              `${Math.floor((s || 0) / 60)}:${String((s || 0) % 60).padStart(2, "0")}`;
+
+            const playButton = scores[userNick]
+              ? ""
+              : `<button class="tutorial-btn" onclick="closeGroupModal(); openWeeklyHeist();" style="width:100%; margin-top:10px;">Play this week's heist</button>`;
+
+            list.innerHTML = `<div style="background: var(--safe-inset); padding: 12px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--safe-border); text-align: center;">
+              <div style="font-size: 0.85rem; color: var(--color-correct); font-weight: 700; margin-bottom: 6px;">This week's heist</div>
+              <div style="font-size: 0.75rem; color: var(--ink-soft); line-height: 1.4;">
+                Same 5 vaults for the whole crew. Ranked by cash, then time.<br>
+                <span style="font-size: 0.7rem; color: var(--ink-muted);">Counts toward career stash only, not daily or weekly totals.</span>
+              </div>
+              <div style="margin-top: 8px; font-size: 0.75rem; color: var(--color-close);">${getTimeUntilMonday()}</div>
+              ${playButton}
+            </div>`;
+
+            if (!sorted.length) {
+              list.insertAdjacentHTML(
+                "beforeend",
+                '<div style="text-align:center; padding:20px; color:var(--ink-faint);">Nobody has pulled this week\'s heist yet.</div>',
+              );
+            }
+
+            let currentRank = 1;
+            sorted.forEach(([nick, score], index) => {
+              const prev = sorted[index - 1]?.[1];
+              if (
+                prev &&
+                ((prev.cash || 0) !== (score.cash || 0) ||
+                  (prev.vaults || 0) !== (score.vaults || 0) ||
+                  (prev.time || 0) !== (score.time || 0))
+              ) {
+                currentRank = index + 1;
+              }
+
+              const isMe = nick === userNick;
+              const rankClass = currentRank <= 3 ? `top-${currentRank}` : "";
+              const scoreSub =
+                (score.cash || 0) > 0
+                  ? `5/5 vaults · ${score.attempts} tries · ${formatTime(score.time)}`
+                  : `Blown at vault ${(score.vaults || 0) + 1}`;
+
+              list.insertAdjacentHTML(
+                "beforeend",
+                `<div class="lb-row" style="${isMe ? "background:rgba(106, 170, 100, 0.1);" : ""}">
+                  <div class="lb-rank ${rankClass}">${currentRank}</div>
+                  <div class="lb-user">${escapeHTML(nick)} ${isMe ? "(You)" : ""}</div>
+                  <div class="lb-score">
+                    <div class="lb-score-main">$${(score.cash || 0).toLocaleString()}</div>
+                    <div class="lb-score-sub">${scoreSub}</div>
+                  </div>
+                </div>`,
+              );
+            });
+
+            if (notPlayed.length) {
+              list.insertAdjacentHTML(
+                "beforeend",
+                `<div style="margin-top: 12px; font-size: 0.78rem; color: var(--ink-muted); text-align: center; line-height: 1.5;">
+                  Not attempted yet: ${notPlayed.map(escapeHTML).join(", ")}
+                </div>`,
+              );
+            }
+          })
+          .catch(() => {
+            if (currentTab !== "heist") return;
+            list.innerHTML = `<div style="text-align:center; padding:20px; color:var(--color-far);">Couldn't load heist results.<br>Check your connection or Firebase Rules.</div>`;
+          });
       }
 
       // --- SUBMISSION HELPERS ---
@@ -10105,6 +10431,822 @@
         } catch (e) {
         }
         localStorage.setItem("tumblerMigration_ATM_AATM", "done");
+      })();
+    </script>
+    <script>
+      // ==================== WEEKLY HEIST ====================
+      // Five vaults cracked back to back on one clock. Each cracked code is
+      // dialled in for free as the clue row of the next vault.
+      // Cash goes to the career stash only: crew weekly totals, badges and turf
+      // wars read daily scores (scores/...), never weeklyScores/...
+      // Wrapped in an IIFE so the week's codes aren't reachable from the console.
+      (() => {
+        const WEEKLY_VAULT_COUNT = 5;
+        const WEEKLY_CASH_BASE_VALUE = 25000; // also the max payout
+        const WEEKLY_CASH_ATTEMPT_PENALTY = 500;
+        const WEEKLY_CASH_SPEED_BONUS_CAP = 300; // seconds
+        const WEEKLY_CASH_PER_SECOND_BONUS = 10;
+        const WEEKLY_CASH_MINIMUM_PAYOUT = 1250;
+        // Common-used.json isn't curated like daily-words.json; never show these
+        const WEEKLY_BLOCKED_WORDS = new Set([
+          "ANAL", "ARSE", "BONG", "BOOB", "BUTT", "CLIT", "COCK", "COON",
+          "CRAP", "CUNT", "DAGO", "DAMN", "DICK", "DOPE", "DYKE", "FAGS",
+          "FUCK", "GOOK", "HELL", "HOES", "HOMO", "HUMP", "JIZZ", "KIKE",
+          "MILF", "NAZI", "NUDE", "PAKI", "PIMP", "PISS", "PORN", "PUBE",
+          "RAPE", "SEXY", "SHIT", "SLUT", "SMUT", "SPAZ", "SPIC", "SUCK",
+          "THOT", "TITS", "TURD", "TWAT", "WANK", "WOPS",
+        ]);
+
+        let weekly = null;
+        let weeklyTimerInterval = null;
+        let returnToReadyModal = false;
+
+        function getWeeklyResultKey(weekKey) {
+          return `tumblerWeekly_${weekKey}`;
+        }
+
+        function getWeeklyActiveKey(weekKey) {
+          return `tumblerWeeklyActive_${weekKey}`;
+        }
+
+        // mulberry32: same week key → same vaults on every device
+        function seededRandom(seed) {
+          let t = seed >>> 0;
+          return () => {
+            t = (t + 0x6d2b79f5) >>> 0;
+            let r = Math.imul(t ^ (t >>> 15), 1 | t);
+            r = (r + Math.imul(r ^ (r >>> 7), 61 | r)) ^ r;
+            return ((r ^ (r >>> 14)) >>> 0) / 4294967296;
+          };
+        }
+
+        function getWeeklyWords(weekKey) {
+          const pool = answerList.filter(
+            (w) =>
+              /^[A-Z]{4}$/.test(w) &&
+              dictionary.has(w) &&
+              !WEEKLY_BLOCKED_WORDS.has(w),
+          );
+          const rand = seededRandom(hashCode(`weekly-heist-${weekKey}`));
+          const words = [];
+          while (words.length < WEEKLY_VAULT_COUNT && pool.length) {
+            words.push(pool.splice(Math.floor(rand() * pool.length), 1)[0]);
+          }
+          return words;
+        }
+
+        function calculateWeeklyCash(attempts, timeInSeconds) {
+          let cash = WEEKLY_CASH_BASE_VALUE - attempts * WEEKLY_CASH_ATTEMPT_PENALTY;
+          cash +=
+            Math.max(0, WEEKLY_CASH_SPEED_BONUS_CAP - timeInSeconds) *
+            WEEKLY_CASH_PER_SECOND_BONUS;
+          return Math.min(
+            WEEKLY_CASH_BASE_VALUE,
+            Math.max(WEEKLY_CASH_MINIMUM_PAYOUT, cash),
+          );
+        }
+
+        function formatWeeklyTime(totalSeconds) {
+          const minutes = Math.floor(totalSeconds / 60);
+          const seconds = totalSeconds % 60;
+          return `${minutes}:${String(seconds).padStart(2, "0")}`;
+        }
+
+        function formatWeeklyCash(value) {
+          return `$${new Intl.NumberFormat("en-US").format(value || 0)}`;
+        }
+
+        // ---------- State ----------
+
+        function loadWeeklyState(weekKey) {
+          const state = {
+            weekKey,
+            words: getWeeklyWords(weekKey),
+            vaultIndex: 0,
+            completed: [], // submitted rows of each cracked vault
+            rows: [], // submitted rows of the current vault
+            current: [], // letters being typed
+            startTime: null,
+            isBusy: false,
+            constraints: null,
+            result: null,
+          };
+
+          try {
+            const result = JSON.parse(
+              localStorage.getItem(getWeeklyResultKey(weekKey)) || "null",
+            );
+            if (result) {
+              state.result = result;
+              return state;
+            }
+
+            const active = JSON.parse(
+              localStorage.getItem(getWeeklyActiveKey(weekKey)) || "null",
+            );
+            if (
+              active &&
+              active.startTime &&
+              Number.isInteger(active.vaultIndex) &&
+              active.vaultIndex >= 0 &&
+              active.vaultIndex < WEEKLY_VAULT_COUNT &&
+              Array.isArray(active.completed) &&
+              Array.isArray(active.rows)
+            ) {
+              state.vaultIndex = active.vaultIndex;
+              state.completed = active.completed;
+              state.rows = active.rows;
+              state.startTime = active.startTime;
+            }
+          } catch (e) {
+          }
+
+          return state;
+        }
+
+        function saveWeeklyActive() {
+          localStorage.setItem(
+            getWeeklyActiveKey(weekly.weekKey),
+            JSON.stringify({
+              vaultIndex: weekly.vaultIndex,
+              completed: weekly.completed,
+              rows: weekly.rows,
+              startTime: weekly.startTime,
+            }),
+          );
+        }
+
+        function getWeeklyTarget() {
+          return weekly.words[weekly.vaultIndex];
+        }
+
+        function getWeeklyClue() {
+          return weekly.vaultIndex > 0 ? weekly.words[weekly.vaultIndex - 1] : null;
+        }
+
+        function refreshWeeklyConstraints() {
+          const target = getWeeklyTarget();
+          const clue = getWeeklyClue();
+          const evaluated = clue ? [clue, ...weekly.rows] : weekly.rows;
+
+          weekly.constraints = Array.from({ length: WORD_LENGTH }, () => ({
+            min: ASCII_A,
+            max: ASCII_Z,
+          }));
+          evaluated.forEach((word) => {
+            for (let i = 0; i < WORD_LENGTH; i++) {
+              const guessVal = word.charCodeAt(i);
+              narrowSlotConstraint(
+                weekly.constraints[i],
+                guessVal,
+                target.charCodeAt(i) - guessVal,
+              );
+            }
+          });
+        }
+
+        function canTypeWeekly() {
+          return (
+            !!weekly &&
+            !!weekly.startTime &&
+            !weekly.result &&
+            !weekly.isBusy &&
+            document.body.classList.contains("weekly-open")
+          );
+        }
+
+        // ---------- Views ----------
+
+        function setWeeklyView(view) {
+          document.getElementById("weekly-intro").style.display =
+            view === "intro" ? "block" : "none";
+          document.getElementById("weekly-play").style.display =
+            view === "play" ? "flex" : "none";
+          document.getElementById("weekly-result").style.display =
+            view === "result" ? "block" : "none";
+
+          const weekNum = Number(weekly.weekKey.split("-W")[1]);
+          let sub = `Week ${weekNum} · resets Monday`;
+          if (view === "play") {
+            sub = `Week ${weekNum} · Vault ${weekly.vaultIndex + 1} of ${WEEKLY_VAULT_COUNT}`;
+          }
+          document.getElementById("weekly-sub").textContent = sub;
+          renderWeeklyPips();
+        }
+
+        function renderWeeklyPips() {
+          const pips = document.getElementById("weekly-pips");
+          const result = weekly.result;
+          const cracked = result ? result.vaultsCracked : weekly.completed.length;
+          pips.innerHTML = "";
+          for (let i = 0; i < WEEKLY_VAULT_COUNT; i++) {
+            const pip = document.createElement("span");
+            pip.className = "weekly-pip";
+            if (i < cracked) pip.classList.add("done");
+            else if (result && !result.won && i === cracked) pip.classList.add("failed");
+            else if (!result && weekly.startTime && i === weekly.vaultIndex) pip.classList.add("current");
+            pips.appendChild(pip);
+          }
+        }
+
+        function getDialFeedback(guessLetter, targetLetter) {
+          const diff = targetLetter.charCodeAt(0) - guessLetter.charCodeAt(0);
+          if (diff === 0) return { status: "correct", dir: "", symbol: "" };
+          const isFar = Math.abs(diff) > CLOSE_DISTANCE;
+          const isUp = diff > 0;
+          return {
+            status: isFar ? "far" : "close",
+            dir: isUp ? "up" : "down",
+            symbol: isFar ? (isUp ? "▲▲" : "▼▼") : isUp ? "▲" : "▼",
+          };
+        }
+
+        function createWeeklyRow(id, letters) {
+          const rowDiv = document.createElement("div");
+          rowDiv.className = "row";
+          rowDiv.id = id;
+
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tile = document.createElement("div");
+            tile.className = "tile";
+            tile.id = `${id}-tile-${c}`;
+
+            const letterSpan = document.createElement("span");
+            letterSpan.className = "letter";
+            letterSpan.textContent = letters[c] || "";
+            tile.appendChild(letterSpan);
+
+            const indicatorSpan = document.createElement("span");
+            indicatorSpan.className = "indicator";
+            tile.appendChild(indicatorSpan);
+
+            if (letters[c]) tile.setAttribute("data-status", "filled");
+            rowDiv.appendChild(tile);
+          }
+          return rowDiv;
+        }
+
+        function revealWeeklyRow(rowEl, word, animate) {
+          const target = getWeeklyTarget();
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tile = rowEl.children[c];
+            const feedback = getDialFeedback(word[c], target[c]);
+            const apply = () => {
+              tile.classList.add("evaluated", feedback.status);
+              if (feedback.dir) tile.classList.add(feedback.dir);
+              tile.querySelector(".indicator").innerHTML = feedback.symbol;
+              if (animate) playSound(feedback.status);
+            };
+            if (animate) setTimeout(apply, c * 200);
+            else apply();
+          }
+        }
+
+        function renderWeeklyBoard({ animateClue = false } = {}) {
+          const boardEl = document.getElementById("weekly-board");
+          boardEl.innerHTML = "";
+
+          const clue = getWeeklyClue();
+          if (clue) {
+            const label = document.createElement("div");
+            label.className = "weekly-clue-label";
+            label.textContent = `Clue · vault ${weekly.vaultIndex} code`;
+            boardEl.appendChild(label);
+
+            const clueRow = createWeeklyRow("wk-clue", clue.split(""));
+            clueRow.classList.add("weekly-clue-row");
+            boardEl.appendChild(clueRow);
+            revealWeeklyRow(clueRow, clue, animateClue);
+          }
+
+          for (let r = 0; r < MAX_TRIES; r++) {
+            const word = weekly.rows[r];
+            const rowEl = createWeeklyRow(`wk-row-${r}`, word ? word.split("") : []);
+            boardEl.appendChild(rowEl);
+            if (word) revealWeeklyRow(rowEl, word, false);
+          }
+
+          refreshWeeklyConstraints();
+          updateWeeklyActiveRow();
+          createWeeklyKeyboard();
+        }
+
+        function updateWeeklyActiveRow() {
+          document
+            .querySelectorAll("#weekly-board .row")
+            .forEach((row) => row.classList.remove("active"));
+          if (weekly.result) return;
+          const row = document.getElementById(`wk-row-${weekly.rows.length}`);
+          if (row) row.classList.add("active");
+        }
+
+        function updateWeeklyCurrentRow() {
+          const row = document.getElementById(`wk-row-${weekly.rows.length}`);
+          if (!row) return;
+          for (let c = 0; c < WORD_LENGTH; c++) {
+            const tile = row.children[c];
+            const letter = weekly.current[c] || "";
+            tile.querySelector(".letter").textContent = letter;
+            if (letter) tile.setAttribute("data-status", "filled");
+            else tile.removeAttribute("data-status");
+          }
+        }
+
+        function shakeWeeklyRow() {
+          const row = document.getElementById(`wk-row-${weekly.rows.length}`);
+          if (!row) return;
+          row.style.transform = "translateX(5px)";
+          setTimeout(() => (row.style.transform = "translateX(-5px)"), 100);
+          setTimeout(() => (row.style.transform = "translateX(5px)"), 200);
+          setTimeout(() => (row.style.transform = "translateX(0)"), 300);
+        }
+
+        // ---------- Keyboard ----------
+
+        function createWeeklyKeyboard() {
+          const container = document.getElementById("weekly-keyboard");
+          container.innerHTML = "";
+
+          const layouts = {
+            abc: ["ABCDEFGHIJ", "KLMNOPQRST", "UVWXYZ"],
+            qwerty: ["QWERTYUIOP", "ASDFGHJKL", "ZXCVBNM"],
+          };
+
+          layouts[keyboardLayout].forEach((rowString, index) => {
+            const rowDiv = document.createElement("div");
+            rowDiv.classList.add("key-row");
+
+            if (index === 2) {
+              const enterKey = createKey("ENTER", "wide");
+              enterKey.onclick = (e) => {
+                e.preventDefault();
+                submitWeeklyGuess();
+              };
+              rowDiv.appendChild(enterKey);
+            }
+
+            for (const char of rowString) {
+              const key = createKey(char, "");
+              key.id = `wk-key-${char}`;
+              key.onclick = (e) => {
+                e.preventDefault();
+                addWeeklyLetter(char);
+              };
+              rowDiv.appendChild(key);
+            }
+
+            if (index === 2) {
+              const backKey = createKey("⌫", "wide");
+              backKey.onclick = (e) => {
+                e.preventDefault();
+                deleteWeeklyLetter();
+              };
+              rowDiv.appendChild(backKey);
+            }
+            container.appendChild(rowDiv);
+          });
+
+          updateWeeklyKeyboard();
+        }
+
+        function updateWeeklyKeyboard() {
+          const container = document.getElementById("weekly-keyboard");
+          container.classList.toggle("locked", !canTypeWeekly());
+          if (!weekly.constraints) return;
+
+          const lockedLetters = new Set(
+            weekly.constraints
+              .filter((c) => c.min === c.max)
+              .map((c) => String.fromCharCode(c.min)),
+          );
+          const range = weekly.constraints[weekly.current.length];
+
+          container.querySelectorAll(".key").forEach((key) => {
+            if (key.classList.contains("wide")) return;
+            const letter = key.textContent;
+            const keyVal = letter.charCodeAt(0);
+            key.classList.toggle("correct", lockedLetters.has(letter));
+            if (range && (keyVal < range.min || keyVal > range.max)) {
+              key.setAttribute("data-disabled", "true");
+            } else {
+              key.removeAttribute("data-disabled");
+            }
+          });
+        }
+
+        function addWeeklyLetter(letter) {
+          if (!canTypeWeekly()) return;
+          if (weekly.current.length >= WORD_LENGTH) return;
+
+          const key = document.getElementById(`wk-key-${letter}`);
+          if (key && key.hasAttribute("data-disabled")) {
+            showMessage("That letter is ruled out for this position");
+            shakeWeeklyRow();
+            playSound("error");
+            return;
+          }
+
+          weekly.current.push(letter);
+          playSound("keypress");
+          updateWeeklyCurrentRow();
+          updateWeeklyKeyboard();
+        }
+
+        function deleteWeeklyLetter() {
+          if (!canTypeWeekly()) return;
+          if (!weekly.current.length) return;
+          weekly.current.pop();
+          updateWeeklyCurrentRow();
+          updateWeeklyKeyboard();
+        }
+
+        document.addEventListener("keydown", (e) => {
+          if (!document.body.classList.contains("weekly-open")) return;
+          if (e.metaKey || e.ctrlKey || e.altKey) return;
+          if (/^(INPUT|TEXTAREA)$/.test(e.target.tagName)) return;
+          const key = e.key.toUpperCase();
+          if (key === "ENTER") submitWeeklyGuess();
+          else if (key === "BACKSPACE") deleteWeeklyLetter();
+          else if (/^[A-Z]$/.test(key)) addWeeklyLetter(key);
+        });
+
+        // ---------- Play ----------
+
+        function submitWeeklyGuess() {
+          if (!canTypeWeekly()) return;
+
+          if (weekly.current.length < WORD_LENGTH) {
+            showMessage("Enter all four letters");
+            shakeWeeklyRow();
+            playSound("error");
+            return;
+          }
+
+          const word = weekly.current.join("");
+          if (!dictionary.has(word)) {
+            showMessage("Not in word list");
+            shakeWeeklyRow();
+            playSound("error");
+            return;
+          }
+
+          const rowEl = document.getElementById(`wk-row-${weekly.rows.length}`);
+          const target = getWeeklyTarget();
+          const isCracked = word === target;
+          const solveTime = Math.floor((Date.now() - weekly.startTime) / 1000);
+
+          weekly.rows.push(word);
+          weekly.current = [];
+          weekly.isBusy = true;
+          updateWeeklyKeyboard();
+          revealWeeklyRow(rowEl, word, true);
+
+          // Commit the outcome now so a reload mid-animation can't lose it
+          let outcome = "continue";
+          if (isCracked) {
+            weekly.completed.push(weekly.rows);
+            outcome =
+              weekly.completed.length === WEEKLY_VAULT_COUNT ? "won" : "next";
+          } else if (weekly.rows.length >= MAX_TRIES) {
+            outcome = "lost";
+          }
+
+          if (outcome === "won" || outcome === "lost") {
+            stopWeeklyTimer();
+            finishWeeklyHeist(outcome === "won", solveTime);
+          } else if (outcome === "next") {
+            weekly.vaultIndex++;
+            weekly.rows = [];
+            saveWeeklyActive();
+          } else {
+            saveWeeklyActive();
+          }
+
+          setTimeout(() => {
+            if (outcome === "continue") {
+              weekly.isBusy = false;
+              refreshWeeklyConstraints();
+              updateWeeklyActiveRow();
+              updateWeeklyKeyboard();
+              return;
+            }
+
+            if (outcome === "next") {
+              playSound("win");
+              const left = WEEKLY_VAULT_COUNT - weekly.vaultIndex;
+              showMessage(
+                `Vault ${weekly.vaultIndex} cracked · ${left} to go`,
+              );
+              setTimeout(() => {
+                weekly.isBusy = false;
+                setWeeklyView("play");
+                renderWeeklyBoard({ animateClue: true });
+              }, 1100);
+              return;
+            }
+
+            if (outcome === "won") {
+              playSound("win");
+              createScreenFlash();
+              setTimeout(() => {
+                createConfetti();
+                createCashRain();
+              }, 400);
+            } else {
+              showMessage(`The code was ${target}`);
+            }
+            setTimeout(() => showWeeklyResult(weekly.result, true), 1600);
+          }, WORD_LENGTH * 200 + 300);
+        }
+
+        function finishWeeklyHeist(won, solveTime) {
+          const vaults = won
+            ? weekly.completed
+            : [...weekly.completed, weekly.rows];
+          const attempts = vaults.reduce((sum, rows) => sum + rows.length, 0);
+          const cash = won ? calculateWeeklyCash(attempts, solveTime) : 0;
+
+          weekly.result = {
+            weekKey: weekly.weekKey,
+            won,
+            cash,
+            attempts,
+            solveTime,
+            vaultsCracked: weekly.completed.length,
+            vaults,
+            words: weekly.words,
+            timestamp: Date.now(),
+          };
+
+          localStorage.setItem(
+            getWeeklyResultKey(weekly.weekKey),
+            JSON.stringify(weekly.result),
+          );
+          localStorage.removeItem(getWeeklyActiveKey(weekly.weekKey));
+
+          if (cash > 0) {
+            stats.totalCash += cash;
+            stats.gameplayCash += cash;
+            localStorage.setItem("tumblerStats", JSON.stringify(stats));
+            saveProfileToFirebase();
+          }
+
+          submitWeeklyScoreToFirebase(weekly.result);
+        }
+
+        // ---------- Firebase ----------
+
+        function submitWeeklyScoreToFirebase(result) {
+          if (!db || userGroups.length === 0 || !userNick) return;
+
+          userGroups.forEach((group) => {
+            // Kept out of scores/... so it never counts toward crew weekly totals
+            db.ref(`weeklyScores/${group}/${result.weekKey}/${userNick}`).set({
+              cash: result.cash,
+              attempts: result.attempts,
+              time: result.solveTime,
+              vaults: result.vaultsCracked,
+              timestamp: Date.now(),
+            });
+
+            if (result.cash > 0) {
+              const careerRef = db.ref(`career/${group}/${userNick}`);
+              careerRef.once("value", (snapshot) => {
+                const existingData = snapshot.val() || {};
+                careerRef.update({
+                  totalCash: (existingData.totalCash || 0) + result.cash,
+                });
+              });
+            }
+          });
+        }
+
+        // Catches a heist already played on another device this week
+        async function fetchRemoteWeeklyResult(weekKey) {
+          if (!db || userGroups.length === 0 || !userNick) return null;
+          try {
+            for (const group of userGroups) {
+              const snapshot = await withTimeout(
+                db.ref(`weeklyScores/${group}/${weekKey}/${userNick}`).once("value"),
+                5000,
+              );
+              const score = snapshot.val();
+              if (score) {
+                return {
+                  weekKey,
+                  won: score.cash > 0,
+                  cash: score.cash || 0,
+                  attempts: score.attempts || 0,
+                  solveTime: score.time || 0,
+                  vaultsCracked: score.vaults || 0,
+                  vaults: null,
+                  words: getWeeklyWords(weekKey),
+                  timestamp: score.timestamp || Date.now(),
+                };
+              }
+            }
+          } catch (e) {
+          }
+          return null;
+        }
+
+        // ---------- Timer ----------
+
+        function startWeeklyTimer() {
+          stopWeeklyTimer();
+          const timerEl = document.getElementById("weekly-timer");
+          const tick = () => {
+            timerEl.textContent = formatWeeklyTime(
+              Math.floor((Date.now() - weekly.startTime) / 1000),
+            );
+          };
+          tick();
+          weeklyTimerInterval = setInterval(tick, 1000);
+        }
+
+        function stopWeeklyTimer() {
+          if (weeklyTimerInterval) {
+            clearInterval(weeklyTimerInterval);
+            weeklyTimerInterval = null;
+          }
+        }
+
+        // ---------- Result ----------
+
+        function showWeeklyResult(result, animate) {
+          setWeeklyView("result");
+          stopWeeklyTimer();
+          document.getElementById("weekly-timer").textContent = formatWeeklyTime(
+            result.solveTime || 0,
+          );
+
+          document.getElementById("weekly-result-title").textContent = result.won
+            ? "Heist complete"
+            : "Heist blown";
+          if (animate && result.cash > 0) {
+            animateCountUp("weekly-result-cash", result.cash);
+          } else {
+            document.getElementById("weekly-result-cash").textContent =
+              formatWeeklyCash(result.cash);
+          }
+          document.getElementById("weekly-result-vaults").textContent =
+            `${result.vaultsCracked}/${WEEKLY_VAULT_COUNT}`;
+          document.getElementById("weekly-result-tries").textContent =
+            result.attempts;
+          document.getElementById("weekly-result-time").textContent =
+            formatWeeklyTime(result.solveTime || 0);
+
+          const codesEl = document.getElementById("weekly-result-codes");
+          codesEl.innerHTML = "";
+          // Only reveal codes up to the vault the heist ended on
+          const revealCount = Math.min(
+            WEEKLY_VAULT_COUNT,
+            result.vaultsCracked + (result.won ? 0 : 1),
+          );
+          (result.words || []).slice(0, revealCount).forEach((word, i) => {
+            const chip = document.createElement("span");
+            chip.className = "weekly-vault-chip";
+            if (i < result.vaultsCracked) chip.classList.add("cracked");
+            chip.textContent = word;
+            codesEl.appendChild(chip);
+          });
+
+          document.getElementById("weekly-result-reset").textContent =
+            `Next heist: ${getTimeUntilMonday().replace(" until reset", "")}`;
+        }
+
+        function generateWeeklyShareText(result) {
+          let text = `Tumbler Weekly Heist ${result.weekKey} ${result.won ? "🔓" : "🚨"}\n`;
+          text += `💰 Stole: ${formatWeeklyCash(result.cash)}\n`;
+          text += `🏦 ${result.vaultsCracked}/${WEEKLY_VAULT_COUNT} vaults · ${result.attempts} tries · ⏱️ ${formatWeeklyTime(result.solveTime || 0)}\n`;
+
+          if (Array.isArray(result.vaults)) {
+            text += "\n";
+            result.vaults.forEach((rows, i) => {
+              const cracked = i < result.vaultsCracked;
+              text += `${cracked ? "🔒" : "❌"} Vault ${i + 1}: ${rows.length} ${rows.length === 1 ? "try" : "tries"}\n`;
+            });
+          }
+
+          text += `\nPlay: https://akashramsankar.github.io/Tumbler/`;
+          return text;
+        }
+
+        async function shareWeeklyResult() {
+          if (!weekly || !weekly.result) {
+            showMessage("Nothing to share yet");
+            return;
+          }
+
+          const shareText = generateWeeklyShareText(weekly.result);
+          if (
+            navigator.share &&
+            navigator.canShare &&
+            navigator.canShare({ text: shareText })
+          ) {
+            try {
+              await navigator.share({ text: shareText });
+              showMessage("Shared");
+            } catch (err) {
+              if (err.name !== "AbortError") {
+                copyToClipboard(shareText);
+              }
+            }
+          } else {
+            copyToClipboard(shareText);
+          }
+        }
+
+        // ---------- Open / close ----------
+
+        async function openWeeklyHeist() {
+          closeMoreGames();
+          const readyModal = document.getElementById("ready-modal");
+          if (readyModal.style.display === "flex") {
+            readyModal.style.display = "none";
+            returnToReadyModal = true;
+          }
+          document.body.classList.add("weekly-open");
+          document.getElementById("weekly-screen").scrollTop = 0;
+
+          if (!dictionary.size || !answerList.length) {
+            try {
+              await loadDictionaries();
+            } catch (e) {
+              showMessage("Error loading word lists. Please refresh.");
+              return;
+            }
+          }
+
+          const weekKey = getWeekKey();
+          if (!weekly || weekly.weekKey !== weekKey) {
+            weekly = loadWeeklyState(weekKey);
+          }
+
+          if (weekly.result) {
+            showWeeklyResult(weekly.result, false);
+            return;
+          }
+
+          if (weekly.startTime) {
+            setWeeklyView("play");
+            renderWeeklyBoard();
+            updateWeeklyCurrentRow();
+            updateWeeklyKeyboard();
+            startWeeklyTimer();
+            return;
+          }
+
+          document.getElementById("weekly-timer").textContent = "0:00";
+          setWeeklyView("intro");
+          const startBtn = document.getElementById("weekly-start-btn");
+          startBtn.disabled = true;
+          startBtn.textContent = "Checking…";
+
+          const remoteResult = await fetchRemoteWeeklyResult(weekKey);
+          if (remoteResult && !weekly.startTime) {
+            weekly.result = remoteResult;
+            localStorage.setItem(
+              getWeeklyResultKey(weekKey),
+              JSON.stringify(remoteResult),
+            );
+            showWeeklyResult(remoteResult, false);
+            return;
+          }
+
+          startBtn.disabled = false;
+          startBtn.textContent = "Start the heist";
+        }
+
+        function startWeeklyHeist() {
+          if (!weekly || weekly.startTime || weekly.result) return;
+          if (weekly.words.length < WEEKLY_VAULT_COUNT) {
+            showMessage("Error loading word lists. Please refresh.");
+            return;
+          }
+
+          weekly.startTime = Date.now();
+          saveWeeklyActive();
+          setWeeklyView("play");
+          renderWeeklyBoard();
+          startWeeklyTimer();
+        }
+
+        function closeWeeklyHeist() {
+          document.body.classList.remove("weekly-open");
+          stopWeeklyTimer();
+
+          // Daily puzzle not started yet → put its ready screen back
+          if (returnToReadyModal && !startTime && !isGameOver) {
+            showReadyModal();
+          }
+          returnToReadyModal = false;
+        }
+
+        window.openWeeklyHeist = openWeeklyHeist;
+        window.closeWeeklyHeist = closeWeeklyHeist;
+        window.startWeeklyHeist = startWeeklyHeist;
+        window.shareWeeklyResult = shareWeeklyResult;
       })();
     </script>
     <script>
