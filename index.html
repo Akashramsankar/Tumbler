@@ -2953,6 +2953,15 @@
         <!-- Play -->
         <div id="weekly-play" style="display: none; width: 100%; flex-direction: column; align-items: center">
           <div id="weekly-board" class="weekly-board"></div>
+          <div class="keyboard-toggle">
+            <button class="keyboard-toggle-btn" onclick="toggleKeyboardLayout()" aria-label="Switch keyboard layout" title="Switch keyboard layout">
+              <svg class="ico" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="2.5" y="6" width="19" height="12" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M6 14h.01M18 14h.01M9 14h6"/></svg>
+              <span class="keyboard-toggle-seg">
+                <span class="keyboard-toggle-opt" data-layout="abc">ABC</span>
+                <span class="keyboard-toggle-opt" data-layout="qwerty">QWERTY</span>
+              </span>
+            </button>
+          </div>
           <div id="weekly-keyboard"></div>
         </div>
 
@@ -5757,7 +5766,7 @@
 
         // Store current keyboard state (which keys are colored/disabled)
         const keyStates = {};
-        document.querySelectorAll(".key").forEach((key) => {
+        keyboardContainer.querySelectorAll(".key").forEach((key) => {
           if (!key.classList.contains("wide")) {
             const letter = key.textContent;
             keyStates[letter] = {
@@ -5786,6 +5795,9 @@
             }
           }
         });
+
+        // Weekly heist keyboard rebuilds its key states from its own constraints
+        if (window.refreshWeeklyKeyboard) window.refreshWeeklyKeyboard();
 
         playSound("keypress");
       }
@@ -11250,6 +11262,9 @@
         window.openWeeklyHeist = openWeeklyHeist;
         window.closeWeeklyHeist = closeWeeklyHeist;
         window.startWeeklyHeist = startWeeklyHeist;
+        window.refreshWeeklyKeyboard = () => {
+          if (weekly) createWeeklyKeyboard();
+        };
         window.shareWeeklyResult = shareWeeklyResult;
       })();
     </script>
