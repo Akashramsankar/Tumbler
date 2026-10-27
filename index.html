@@ -2947,7 +2947,10 @@
             <li>One clock runs for the whole heist and keeps running if you leave. Fewer tries and a faster time pay more.</li>
             <li>Fail any vault and the heist is blown: no payout. One attempt per week, resets Monday.</li>
           </ul>
-          <button class="tutorial-btn" id="weekly-start-btn" onclick="startWeeklyHeist()" style="width: 100%">Start the heist</button>
+          <div style="display: flex; gap: 8px">
+            <button class="close-stats" onclick="closeWeeklyHeist()" style="flex: 1; margin: 0">Back to daily</button>
+            <button class="tutorial-btn" id="weekly-start-btn" onclick="startWeeklyHeist()" style="flex: 1; margin: 0">Start the heist</button>
+          </div>
         </div>
 
         <!-- Play -->
