@@ -589,7 +589,9 @@
       }
 
       .win-game-link {
-        flex: 1;
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: nowrap;
         display: inline-flex;
         align-items: center;
         justify-content: center;
@@ -604,6 +606,8 @@
         text-decoration: none;
         transition: border-color 0.15s ease, background 0.15s ease;
       }
+
+      .win-game-link svg { flex-shrink: 0; }
 
       .win-game-link:hover {
         border-color: var(--ink);
@@ -2098,6 +2102,7 @@
         .help-icon, .calendar-btn, .theme-btn { width: 34px; height: 34px; }
         .calendar-btn { left: calc(26px + var(--safe-left-inset)); }
         .theme-btn { left: calc(58px + var(--safe-left-inset)); }
+        .toolbar-btn .toolbar-label { display: none; }
       }
 
       /* Narrow phones: the meta line stands alone under the wordmark */
@@ -2118,7 +2123,6 @@
         .legend { font-size: 0.64rem; gap: 10px; }
         .sub-text, .masthead-meta { font-size: 0.62rem; }
         .toolbar-btn, .intel-btn { height: 38px; padding: 0 12px; font-size: 0.76rem; }
-        .toolbar-btn .toolbar-label { display: none; }
 
         .tutorial-content { padding: 18px 14px 14px; }
         .slide-title { font-size: 1.25rem; }
@@ -2144,6 +2148,12 @@
 
         .stats-btn { height: 32px; padding: 0 8px; font-size: 0.68rem; }
         .mute-btn { width: 32px; right: 58px !important; }
+
+        #win-modal .tutorial-content { padding: 18px 14px 14px; }
+        .win-more-games { padding: 8px; }
+        .win-more-games-row { gap: 6px; }
+        .win-game-link { padding: 8px 4px; font-size: 0.76rem; }
+        .win-game-link svg { display: none; }
       }
 
       @media (max-width: 360px) {
@@ -2267,6 +2277,9 @@
         #win-crew-context { padding: 4px 8px !important; margin-bottom: 4px !important; font-size: 0.65rem !important; }
         #win-trend-insight { padding: 4px 8px !important; margin-bottom: 4px !important; font-size: 0.65rem !important; }
         #win-modal .tutorial-content > div[style*="margin"] { margin: 4px 0 !important; }
+        #win-modal .win-more-games { margin: 2px 0 6px; padding: 6px 8px; }
+        #win-modal .win-more-games .stash-label { margin-bottom: 5px; }
+        #win-modal .win-game-link { padding: 6px 4px; }
       }
 
       @media (max-height: 670px) and (max-width: 600px) {
