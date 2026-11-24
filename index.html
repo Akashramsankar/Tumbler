@@ -588,6 +588,7 @@
         grid-template-columns: 1fr 1fr;
         gap: 8px;
       }
+      .win-more-games-row > :last-child:nth-child(odd) { grid-column: 1 / -1; } /* an odd last link spans the row */
 
       .win-game-link {
         flex: 1 1 0;
@@ -2950,6 +2951,14 @@
           </span>
           <svg class="game-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
         </a>
+        <a class="game-card" href="https://akashramsankar.github.io/fulcrum/" target="_blank" rel="noopener">
+          <span class="game-card-mark"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 10h18"/><path d="M12 11l4 8H8z"/><rect x="4" y="5" width="4" height="5" rx="1"/></svg></span>
+          <span class="game-card-body">
+            <span class="game-card-title">Fulcrum</span>
+            <span class="game-card-desc">Build 3–5 letter words and place them on a tipped beam. Spend heavy letters wisely to level it.</span>
+          </span>
+          <svg class="game-card-arrow" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+        </a>
 
         <button class="close-stats" onclick="closeMoreGames()">Close</button>
       </div>
@@ -3150,6 +3159,7 @@
             <a class="win-game-link" href="https://akashramsankar.github.io/TypeSet/" target="_blank" rel="noopener">Typeset<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg></a>
             <a class="win-game-link" href="https://akashramsankar.github.io/Cascade/" target="_blank" rel="noopener">Cascade<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg></a>
             <a class="win-game-link" href="https://akashramsankar.github.io/pathword/" target="_blank" rel="noopener">Pathword<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg></a>
+            <a class="win-game-link" href="https://akashramsankar.github.io/fulcrum/" target="_blank" rel="noopener">Fulcrum<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg></a>
           </div>
         </div>
 
