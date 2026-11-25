@@ -2583,7 +2583,33 @@
           transition-duration: 0.01ms !important;
         }
       }
-    </style>
+    
+  /* ==================== NEW GAME BANNER ==================== */
+  .new-game-banner{
+    width:100%; max-width:420px; display:flex; align-items:center; gap:4px;
+    background:var(--surface); border:1px solid var(--rule); border-radius:12px;
+    padding:4px 4px 4px 12px; box-sizing:border-box;
+  }
+  .new-game-banner[hidden]{display:none;}
+  .ngb-link{
+    flex:1; min-width:0; display:flex; align-items:center; gap:10px;
+    color:var(--ink-soft); text-decoration:none; font-size:.85rem; line-height:1.3; padding:6px 0;
+  }
+  .ngb-link b{color:var(--ink); font-weight:700;}
+  .ngb-link:hover .ngb-text{text-decoration:underline; text-underline-offset:2px;}
+  .ngb-tag{
+    flex:none; font-size:.62rem; font-weight:700; letter-spacing:.12em; text-transform:uppercase;
+    color:var(--accent-ink); background:var(--accent-soft); border-radius:999px; padding:3px 8px;
+  }
+  .ngb-text{flex:1; min-width:0;}
+  .ngb-link svg,.ngb-close svg{width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:none;}
+  .ngb-link svg{color:var(--accent-ink);}
+  .ngb-close{
+    flex:none; width:32px; height:32px; border:none; background:transparent; color:var(--ink-muted);
+    border-radius:999px; cursor:pointer; display:inline-flex; align-items:center; justify-content:center;
+  }
+  .ngb-close:hover{background:var(--surface-2); color:var(--ink);}
+</style>
   </head>
   <body>
     <header>
@@ -2659,6 +2685,22 @@
         <svg class="ico" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 9.5v5h3.5L12 18.5v-13L7.5 9.5H4z"/><path d="M15.5 9a4 4 0 0 1 0 6"/><path d="M18 6.5a7.5 7.5 0 0 1 0 11"/></svg>
       </button>
     </header>
+
+  <div class="new-game-banner" id="newGameBanner">
+    <a class="ngb-link" href="https://akashramsankar.github.io/fulcrum/" target="_blank" rel="noopener">
+      <span class="ngb-tag">New</span>
+      <span class="ngb-text">Try <b>Fulcrum</b>, our new daily word balance puzzle</span>
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 17L17 7"/><path d="M9 7h8v8"/></svg>
+    </a>
+    <button class="ngb-close" type="button" aria-label="Dismiss Fulcrum banner" title="Dismiss"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  </div>
+  <script>
+    (function(){
+      var b=document.getElementById('newGameBanner'), K='fulcrum_banner_dismissed';
+      try{ if(localStorage.getItem(K)) b.hidden=true; }catch(e){}
+      b.querySelector('.ngb-close').addEventListener('click',function(){ b.hidden=true; try{localStorage.setItem(K,'1');}catch(e){} });
+    })();
+  </script>
 
 
     <script>
